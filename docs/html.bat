@@ -1,0 +1,1 @@
+make clean && sphinx-apidoc -o ./source ../rss &&  make html
