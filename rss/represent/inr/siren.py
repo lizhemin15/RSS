@@ -97,13 +97,12 @@ class SirenNet(nn.Module):
 
 
 def SIREN(parameter):
-    parameter_list = ['dim_in','dim_hidden','dim_out','num_layers','w0','wo_initial','use_bias']
     de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'w0':1,'w0_initial':30.,'use_bias':True}
-    for key in parameter_list:
+    for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
     return SirenNet(parameter['dim_in'], parameter['dim_hidden'], parameter['dim_out'], parameter['num_layers'],
-                    parameter['w0'], parameter['wo_initial'], parameter['use_bias'])
+                    parameter['w0'], parameter['w0_initial'], parameter['use_bias'])
 
 
 

@@ -22,6 +22,8 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
     elif data_type == 'syn':
         if data_path == 'circle':
             return syn_circle(data_shape)
+        else:
+            return syn_circle(data_shape)
     elif data_type == 'rgb_video' or data_type == 'gray_video':
         cap = cv2.VideoCapture(data_path)
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))

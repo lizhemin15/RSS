@@ -17,10 +17,9 @@ class rssnet(object):
     def __init__(self,parameters) -> None:
         self.init_parameter(parameters)
         self.init_net()
-        self.init_noise()
         self.init_reg()
         self.init_data()
-        self.init_task()
+        self.init_opt()
 
 
 
@@ -31,10 +30,9 @@ class rssnet(object):
         Args:
             key (str): The key of the parameter to initialize. Options are:
                 - net_p: The parameter used for the network.
-                - noise_p: The parameter used for the noise.
                 - reg_p: The parameter used for the regularization.
                 - data_p: The parameter used for the data.
-                - task_p: The parameter used for the task.
+                - opt_p: The parameter used for the task, loss is constructed here, and device is selected.
                 - train_p: The parameter used for the training.
                 - show_p: The parameter used for showing information.
                 - save_p: The parameter used for saving.
@@ -44,44 +42,44 @@ class rssnet(object):
         Raises:
             ValueError: If the input key is not one of the options.
         """
-        parameter_list = ['net_p','noise_p','reg_p','data_p','task_p','train_p','show_p','save_p']
+        parameter_list = ['net_p','reg_p','data_p','task_p','train_p','show_p','save_p']
         for key in parameter_list:
-            if key == 'net_p':
-                default_param = {'net_name':'SIREN'}
-            elif key == 'noise_p':
-                default_param = 'b'
-            elif key == 'reg_p':
-                default_param = {'s':1}
-            elif key == 'data_p':
-                default_param = None
-            elif key == 'task_p':
-                default_param = None
-            elif key == 'train_p':
-                default_param = None
-            elif key == 'show_p':
-                default_param = None
-            elif key == 'save_p':
-                default_param = None
-            else:
-                raise('Wrong key = ',key)
-            param_now = parameters.get(key,default_param)
+            param_now = parameters.get(key,{})
             setattr(self,key,param_now)
-            print(key,':',param_now)
-        return None
+            
 
     def init_net(self):
+        de_para_dict = {'net_name':'SIREN'}
+        for key in de_para_dict.keys():
+            param_now = self.net_p.get(key,de_para_dict.get(key))
+            self.net_p[key] = param_now
         self.net = represent.get_nn(self.net_p)
-
-    def init_noise(self):
-        pass
 
     def init_reg(self):
         pass
 
     def init_data(self):
-        pass
+        de_para_dict = {'data_path':None,'data_type':'syn','data_shape':(256,256),'down_sample':[1,1,1],
+                        'mask_type':'random','random_rate':0.0,'mask_path':None,'mask_shape':'same','seeds':88,'down_sample_rate':2,
+                        'noise_mode':None,'noise_parameter':0.0,
+                        'x_mode':'inr','batch_size':128,'shuffle_if':False,'xrange':1,'ymode':'completion'}
+        for key in de_para_dict.keys():
+            param_now = self.data_p.get(key,de_para_dict.get(key))
+            self.data_p[key] = param_now
+        print('data_p : ',self.data_p)
+        # all the data are numpy on cpu
+        self.data = toolbox.load_data(data_path=self.data_p['data_path'],data_type=self.data_p['data_type'],
+                                      data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'])
+        self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
+                                      data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],down_sample_rate=self.data_p['down_sample_rate'])
+        self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],seeds=self.data_p['seeds'])
+        self.data_train = toolbox.get_dataloader(x_mode=self.data_p['x_mode'],batch_size=self.data_p['batch_size'],
+                                                 shuffle_if=self.data_p['shuffle_if'],
+                                                data=self.data,mask=self.mask,xrange=self.data_p['xrange'],noisy_data=self.data_noise,
+                                                ymode=self.data_p['ymode'])
+        
 
-    def init_task(self):
+    def init_opt(self):
         pass
 
     def train(self):
@@ -95,6 +93,3 @@ class rssnet(object):
 
 
 
-def go():
-    print('gogogo')
-    pass

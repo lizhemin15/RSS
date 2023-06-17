@@ -109,9 +109,8 @@ class INR(nn.Module):
 
 
 def MLP(parameter):
-    parameter_list = ['dim_in','dim_hidden','dim_out','num_layers','activation']
     de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'activation':'tanh'}
-    for key in parameter_list:
+    for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
     return INR(dim_in=parameter['dim_in'], dim_hidden=parameter['dim_hidden'], dim_out=parameter['dim_out'], 

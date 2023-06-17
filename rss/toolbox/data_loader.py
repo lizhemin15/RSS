@@ -69,7 +69,8 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         data_train_loader,data_val_loader,data_test_loader = get_data_loader(xin=inrarr,data=data,
                                                             mask=mask,batch_size=batch_size,shuffle=shuffle_if,
                                                             noisy_data=noisy_data,ymode=ymode)
-        return data_train_loader,data_val_loader,data_test_loader
+        return {'train_loader':data_train_loader,'val_loader':data_val_loader,'test_loader':data_test_loader}
+    
 
     elif x_mode in ['splitinr','dmf','sparse','tf','dip']:
         # return a list
@@ -86,7 +87,8 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         return return_list
 
     else:
-        raise('Wrong x_mode= ',str(x_mode))
+        return None
+        # raise('Wrong x_mode= ',str(x_mode))
 
 def reshape2(data):
     xshape = data.shape
