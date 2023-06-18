@@ -113,6 +113,7 @@ def MLP(parameter):
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
+    print('MLP : ',parameter)
     return INR(dim_in=parameter['dim_in'], dim_hidden=parameter['dim_hidden'], dim_out=parameter['dim_out'], 
                num_layers=parameter['num_layers'], activation = parameter['activation'])
 

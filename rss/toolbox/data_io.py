@@ -66,8 +66,8 @@ def save_data(data_path,data_type='numpy',data=None):
 
 
 def syn_circle(data_shape):
-    x = np.squeeze(np.linspace(0, 1, data_shape[0]))
-    y = np.squeeze(np.linspace(0, 1, data_shape[1]))
+    x = np.squeeze(np.linspace(-1, 1, data_shape[0]))
+    y = np.squeeze(np.linspace(-1, 1, data_shape[1]))
     x1,y1 = np.meshgrid(x,y)
     z = np.sin(100*np.pi*np.sin(np.pi/3*np.sqrt(x1**2+y1**2)))
     z = z.astype('float32')/z.max()

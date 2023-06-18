@@ -101,6 +101,7 @@ def SIREN(parameter):
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
+    print('SIREN : ',parameter)
     return SirenNet(parameter['dim_in'], parameter['dim_hidden'], parameter['dim_out'], parameter['num_layers'],
                     parameter['w0'], parameter['w0_initial'], parameter['use_bias'])
 

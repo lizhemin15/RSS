@@ -67,6 +67,9 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         xin = t.tensor(xin).to(t.float32)
         mask = t.tensor(mask).to(t.float32)
         data = t.tensor(data).to(t.float32)
+        xin = to_device(xin,gpu_id)
+        mask = to_device(mask,gpu_id)
+        data = to_device(data,gpu_id)
         print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
         if ymode == 'completion':
             data_train_loader = (xin[(mask==1).reshape(-1)],data[mask==1])
@@ -87,9 +90,6 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         data_train_loader,data_val_loader,data_test_loader = get_data_tensor(xin=inrarr,data=data,
                                                             mask=mask,batch_size=batch_size,shuffle=shuffle_if,
                                                             noisy_data=noisy_data,ymode=ymode)
-        data_train_loader = to_device(data_train_loader,gpu_id)
-        data_val_loader = to_device(data_val_loader,gpu_id)
-        data_test_loader = to_device(data_test_loader,gpu_id)
         return {'train_tensor':data_train_loader,'val_tensor':data_val_loader,'test_tensor':data_test_loader}
 
 

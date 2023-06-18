@@ -12,6 +12,7 @@ __copyright__ = 'Copyright 2023 Zhemin Li'
 from rss import toolbox,represent
 from rss.represent.utils import to_device
 import torch.nn as nn
+import matplotlib.pyplot as plt
 # from rss.represent import get_nn
 __all__ = []
 
@@ -56,6 +57,7 @@ class rssnet(object):
         for key in de_para_dict.keys():
             param_now = self.net_p.get(key,de_para_dict.get(key))
             self.net_p[key] = param_now
+        print('net_p : ',self.net_p)
         self.net = represent.get_nn(self.net_p)
         self.net = to_device(self.net,self.net_p['gpu_id'])
 
@@ -115,7 +117,6 @@ class rssnet(object):
                 loss.backward()
                 self.net_opt.step()
             
-
     def log(self,name,content):
         if 'log_dict' not in self.__dict__:
             self.log_dict = {}
@@ -125,8 +126,14 @@ class rssnet(object):
             self.log_dict[name].append(content)
 
 
+
     def show(self):
-        pass
+        pre_img = self.net(self.data_train['test_tensor'][0])
+        show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
+        plt.imshow(show_img,'gray')
+        plt.show()
+        target = self.data_train['test_tensor'][1].unsqueeze(1)
+        print('Fidlity loss:',self.loss_fn(pre_img,target).detach().cpu().numpy())
 
     def save(self):
         pass
