@@ -2,13 +2,14 @@ import numpy as np
 import torch as t
 import torch.nn as nn
 from einops import rearrange
-
+from rss.represent.utils import to_device
 abc_str = 'abcdefghijklmnopqrstuvwxyz'
+
 
 
 def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
                    data=None,mask=None,xrange=1,noisy_data=None,
-                   ymode='completion'):
+                   ymode='completion',return_data_type='loader',gpu_id=0):
     # Given x_mode
     # Return a pytorch dataloader generator or generator list
     # Principle: process data on numpy untill the last step
@@ -61,6 +62,37 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         else:
             raise('Wrong ymode = ',ymode)
         return [data_train_loader,data_val_loader,data_test_loader]
+
+    def get_data_tensor(xin,data,mask,batch_size,shuffle,ymode='completion',noisy_data=None):
+        xin = t.tensor(xin).to(t.float32)
+        mask = t.tensor(mask).to(t.float32)
+        data = t.tensor(data).to(t.float32)
+        print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
+        if ymode == 'completion':
+            data_train_loader = (xin[(mask==1).reshape(-1)],data[mask==1])
+            data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
+            data_test_loader = (xin,data.reshape(-1,1))
+        elif ymode == 'denoising':
+            noisy_data = reshape2(noisy_data)
+            noisy_data = t.tensor(noisy_data).to(t.float32)
+            data_train_loader = (xin[(mask==1).reshape(-1)],noisy_data[mask==1])
+            data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
+            data_test_loader = (xin,data.reshape(-1,1))
+        else:
+            raise('Wrong ymode = ',ymode)
+        return [data_train_loader,data_val_loader,data_test_loader]
+
+
+    if return_data_type == 'tensor':
+        data_train_loader,data_val_loader,data_test_loader = get_data_tensor(xin=inrarr,data=data,
+                                                            mask=mask,batch_size=batch_size,shuffle=shuffle_if,
+                                                            noisy_data=noisy_data,ymode=ymode)
+        data_train_loader = to_device(data_train_loader,gpu_id)
+        data_val_loader = to_device(data_val_loader,gpu_id)
+        data_test_loader = to_device(data_test_loader,gpu_id)
+        return {'train_tensor':data_train_loader,'val_tensor':data_val_loader,'test_tensor':data_test_loader}
+
+
 
     if x_mode in ['inr','inr_feature','inr_combine']:
         # return a generator

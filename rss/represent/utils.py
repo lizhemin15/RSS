@@ -1,5 +1,5 @@
 import torch.nn.functional as F
-import torch
+import torch as t
 from torch import nn
 
 def get_act(act):
@@ -8,7 +8,7 @@ def get_act(act):
     elif act == 'sigmoid':
         act_return = F.sigmoid
     elif act == 'tanh':
-        act_return = torch.tanh
+        act_return = t.tanh
     elif act == 'softmax':
         act_return = F.softmax
     elif act == 'threshold':
@@ -44,8 +44,57 @@ def get_act(act):
     elif act == 'softshrink':
         act_return = F.softshrink
     elif act == 'sin':
-        act_return = torch.sin
+        act_return = t.sin
     elif act == 'identity':
         act_return = nn.Identity()
     else:
         print('Wrong act name:',act)
+    return act_return
+
+
+
+def get_opt(opt_type='Adam',parameters=None,lr=1e-3,weight_decay=0):
+    # Initial the optimizer of parameters in network
+    if opt_type == 'Adadelta':
+        optimizer = t.optim.Adadelta(parameters,lr=lr)
+    elif opt_type == 'Adagrad':
+        optimizer = t.optim.Adagrad(parameters,lr=lr)
+    elif opt_type == 'Adam':
+        optimizer = t.optim.Adam(parameters,lr=lr,weight_decay=weight_decay)
+    elif opt_type == 'RegAdam':
+        optimizer = t.optim.Adam(parameters,lr=lr, weight_decay=weight_decay)
+    elif opt_type == 'AdamW':
+        optimizer = t.optim.AdamW(parameters,lr=lr)
+    elif opt_type == 'SparseAdam':
+        optimizer = t.optim.SparseAdam(parameters,lr=lr)
+    elif opt_type == 'Adamax':
+        optimizer = t.optim.Adamax(parameters,lr=lr)
+    elif opt_type == 'ASGD':
+        optimizer = t.optim.ASGD(parameters,lr=lr)
+    elif opt_type == 'LBFGS':
+        optimizer = t.optim.LBFGS(parameters,lr=lr)
+    elif opt_type == 'SGD':
+        optimizer = t.optim.SGD(parameters,lr=lr)
+    elif opt_type == 'NAdam':
+        optimizer = t.optim.NAdam(parameters,lr=lr)
+    elif opt_type == 'RAdam':
+        optimizer = t.optim.RAdam(parameters,lr=lr)
+    elif opt_type == 'RMSprop':
+        optimizer = t.optim.RMSprop(parameters,lr=lr)
+    elif opt_type == 'Rprop':
+        optimizer = t.optim.Rprop(parameters,lr=lr)
+    elif opt_type == 'Lion':
+        from lion_pytorch import Lion
+        optimizer = Lion(parameters, lr = lr)
+    else:
+        raise('Wrong optimization type')
+    return optimizer
+
+
+def to_device(obj,device):
+    if t.cuda.is_available() and device != 'cpu':
+        obj = obj.cuda(device)
+    return obj
+
+
+
