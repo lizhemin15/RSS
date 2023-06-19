@@ -1,6 +1,6 @@
 from rss.represent.inr import MLP,SIREN
 import torch.nn as nn
-from rss.represent.tensor.dmf import DMF
+from rss.represent.tensor import DMF,TF
 
 
 def get_nn(parameter={}):
@@ -15,6 +15,8 @@ def get_nn(parameter={}):
         net = SIREN(parameter)
     elif net_name == 'DMF':
         net = DMF(parameter)
+    elif net_name == 'TF':
+        net = TF(parameter)
     else:
         raise('Wrong net_name = ',net_name)
     return net

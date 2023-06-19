@@ -32,3 +32,10 @@ class TensorFactorization(nn.Module):
             else:
                 Gnew = torch.einsum(einstr,[Gnew,pre[i]])
         return Gnew
+    
+def TF(parameter):
+    de_para_dict = {'dim_ori':[100,100],'dim_cor':[100,100],'mode':'tucker'}
+    for key in de_para_dict.keys():
+        param_now = parameter.get(key,de_para_dict.get(key))
+        parameter[key] = param_now
+    return TensorFactorization(parameter['dim_ori'],parameter['dim_cor'],parameter['mode'])

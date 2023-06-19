@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-class DMF(nn.Module):
+class DMF_net(nn.Module):
     def __init__(self,params):
         # Initial the parameter (Deep linear network)
         super().__init__()
@@ -32,5 +32,10 @@ class DMF(nn.Module):
 
 
 
-
+def DMF(parameter):
+    de_para_dict = {'sizes':[],'std_w':1e-3}
+    for key in de_para_dict.keys():
+        param_now = parameter.get(key,de_para_dict.get(key))
+        parameter[key] = param_now
+    return DMF_net(parameter)
 
