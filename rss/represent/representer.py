@@ -43,14 +43,15 @@ class Composition(nn.Module):
         else:
             return x
         
-class Parallel(nn.Module):
+class Contenate(nn.Module):
     def __init__(self,parameter):
         super().__init__()
         pass
 
 
     def forward(self,x_list):
-        # Union multiple network togerther
+        # Contenate multiple input togerther
+        
         pass
 
 
