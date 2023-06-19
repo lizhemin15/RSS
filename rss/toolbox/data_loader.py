@@ -65,32 +65,32 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
 
     def get_data_tensor(xin,data,mask,batch_size,shuffle,ymode='completion',noisy_data=None):
         xin = t.tensor(xin).to(t.float32)
-        mask = t.tensor(mask).to(t.float32)
+        # mask = t.tensor(mask).to(t.float32)
         data = t.tensor(data).to(t.float32)
         xin = to_device(xin,gpu_id)
-        mask = to_device(mask,gpu_id)
+        # mask = to_device(mask,gpu_id)
         data = to_device(data,gpu_id)
-        print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
+        # print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
         if ymode == 'completion':
-            data_train_loader = (xin[(mask==1).reshape(-1)],data[mask==1])
-            data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
+            data_train_loader = (xin,data.reshape(-1,1))
+            # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
             data_test_loader = (xin,data.reshape(-1,1))
         elif ymode == 'denoising':
             noisy_data = reshape2(noisy_data)
             noisy_data = t.tensor(noisy_data).to(t.float32)
-            data_train_loader = (xin[(mask==1).reshape(-1)],noisy_data[mask==1])
-            data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
+            data_train_loader = (xin,noisy_data.reshape(-1,1))
+            # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
             data_test_loader = (xin,data.reshape(-1,1))
         else:
             raise('Wrong ymode = ',ymode)
-        return [data_train_loader,data_val_loader,data_test_loader]
+        return [data_train_loader,data_test_loader]
 
 
     if return_data_type == 'tensor':
-        data_train_loader,data_val_loader,data_test_loader = get_data_tensor(xin=inrarr,data=data,
+        data_train_loader,data_test_loader = get_data_tensor(xin=inrarr,data=data,
                                                             mask=mask,batch_size=batch_size,shuffle=shuffle_if,
                                                             noisy_data=noisy_data,ymode=ymode)
-        return {'train_tensor':data_train_loader,'val_tensor':data_val_loader,'test_tensor':data_test_loader}
+        return {'obs_tensor':data_train_loader,'real_tensor':data_test_loader}
 
 
 

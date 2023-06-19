@@ -85,7 +85,6 @@ class rssnet(object):
             param_now = self.data_p.get(key,de_para_dict.get(key))
             self.data_p[key] = param_now
         # print('data_p : ',self.data_p)
-        # all the data are numpy on cpu
         self.data = toolbox.load_data(data_path=self.data_p['data_path'],data_type=self.data_p['data_type'],
                                       data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'])
         self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
@@ -121,10 +120,11 @@ class rssnet(object):
         # Construct loss function
         if self.data_p['return_data_type'] == 'tensor':
             for ite in range(self.train_p['train_epoch']):
-                pre = self.net(self.data_train['train_tensor'][0])
+                pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
                 if self.data_p['pre_full'] == True:
+                    print((self.mask==1).shape,pre.shape)
                     pre = pre[self.mask==1]
-                target = self.data_train['train_tensor'][1].reshape(pre.shape)
+                target = self.data_train['obs_tensor'][1][self.mask==1].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
@@ -132,14 +132,14 @@ class rssnet(object):
                 self.net_opt.step()
                 # test and val loss
                 with t.no_grad():
-                    pre = self.net(self.data_train['val_tensor'][0])
+                    pre = self.net(self.data_train['obs_tensor'][0][(self.mask==0).reshape(-1)])
                     if self.data_p['pre_full'] == True:
                         pre = pre[self.mask==0]
-                    target = self.data_train['val_tensor'][1].reshape(pre.shape)
+                    target = self.data_train['obs_tensor'][1][self.mask==0].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
-                    pre = self.net(self.data_train['test_tensor'][0])
-                    target = self.data_train['test_tensor'][1].reshape(pre.shape)
+                    pre = self.net(self.data_train['real_tensor'][0])
+                    target = self.data_train['real_tensor'][1].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
             print('loss on test set',self.log_dict['test_loss'][-1])
@@ -160,10 +160,10 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
         if self.show_p['show_content'] == 'recovered':
-            pre_img = self.net(self.data_train['test_tensor'][0])
+            pre_img = self.net(self.data_train['obs_tensor'][0])
             show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
         elif self.show_p['show_content'] == 'original':
-            show_img = self.data_train['test_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
+            show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
         if self.show_p['show_type'] == 'gray_img':
             plt.imshow(show_img,'gray')
         elif self.show_p['show_type'] == 'red_img':
