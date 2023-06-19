@@ -13,21 +13,27 @@ from rss import toolbox,represent
 from rss.represent.utils import to_device
 import torch.nn as nn
 import matplotlib.pyplot as plt
+import torch as t
+t.backends.cudnn.enabled = True
+t.backends.cudnn.benchmark = True 
 # from rss.represent import get_nn
 __all__ = []
 
 class rssnet(object):
     def __init__(self,parameters) -> None:
-        self.init_parameter(parameters)
+        parameter_list = ['net_p','reg_p','data_p','opt_p','train_p','show_p','save_p']
+        self.init_parameter(parameters,parameter_list)
         self.init_net()
         self.init_reg()
         self.init_data()
         self.init_opt()
         self.init_train()
+        self.update_parameter(parameter_list)
+        
 
 
 
-    def init_parameter(self,parameters):
+    def init_parameter(self,parameters,parameter_list):
         """
         Initialize a parameter.
 
@@ -46,18 +52,22 @@ class rssnet(object):
         Raises:
             ValueError: If the input key is not one of the options.
         """
-        parameter_list = ['net_p','reg_p','data_p','opt_p','train_p','show_p','save_p']
         for key in parameter_list:
             param_now = parameters.get(key,{})
             setattr(self,key,param_now)
-            
+    
+    def update_parameter(self,parameter_list):
+        self.parameter_all = {}
+        for key in parameter_list:
+            self.parameter_all[key] = getattr(self,key)
+            print(key,self.parameter_all[key])
 
     def init_net(self):
         de_para_dict = {'net_name':'SIREN','gpu_id':0}
         for key in de_para_dict.keys():
             param_now = self.net_p.get(key,de_para_dict.get(key))
             self.net_p[key] = param_now
-        print('net_p : ',self.net_p)
+        # print('net_p : ',self.net_p)
         self.net = represent.get_nn(self.net_p)
         self.net = to_device(self.net,self.net_p['gpu_id'])
 
@@ -73,7 +83,7 @@ class rssnet(object):
         for key in de_para_dict.keys():
             param_now = self.data_p.get(key,de_para_dict.get(key))
             self.data_p[key] = param_now
-        print('data_p : ',self.data_p)
+        # print('data_p : ',self.data_p)
         # all the data are numpy on cpu
         self.data = toolbox.load_data(data_path=self.data_p['data_path'],data_type=self.data_p['data_type'],
                                       data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'])
@@ -93,7 +103,7 @@ class rssnet(object):
         for key in de_para_dict.keys():
             param_now = self.opt_p.get(key,de_para_dict.get(key))
             self.opt_p[key] = param_now
-        print('opt_p : ',self.opt_p)
+        # print('opt_p : ',self.opt_p)
         self.net_opt = represent.get_opt(opt_type=self.opt_p['net']['opt_name'],parameters=self.net.parameters(),lr=self.opt_p['net']['lr'],weight_decay=self.opt_p['net']['weight_decay'])
 
     def init_train(self):
@@ -103,19 +113,30 @@ class rssnet(object):
             self.train_p[key] = param_now
         if self.train_p['loss_fn'] == 'mse':
             self.loss_fn = nn.MSELoss()
-        print('train_p : ',self.train_p)
+        # print('train_p : ',self.train_p)
 
     def train(self):
         # Construct loss function
-        for ite in range(self.train_p['train_epoch']):
-            if self.data_p['return_data_type'] == 'tensor':
+        if self.data_p['return_data_type'] == 'tensor':
+            for ite in range(self.train_p['train_epoch']):
                 pre = self.net(self.data_train['train_tensor'][0])
-                target = self.data_train['train_tensor'][1].unsqueeze(1)
+                target = self.data_train['train_tensor'][1].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
-                self.log('fid_loss',loss.detach().cpu().numpy())
+                self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
                 loss.backward()
                 self.net_opt.step()
+                # test and val loss
+                with t.no_grad():
+                    pre = self.net(self.data_train['val_tensor'][0])
+                    target = self.data_train['val_tensor'][1].reshape(pre.shape)
+                    loss = self.loss_fn(pre,target)
+                    self.log('val_loss',loss.item())
+                    pre = self.net(self.data_train['test_tensor'][0])
+                    target = self.data_train['test_tensor'][1].reshape(pre.shape)
+                    loss = self.loss_fn(pre,target)
+                    self.log('test_loss',loss.item())
+            print('loss on test set',self.log_dict['test_loss'][-1])
             
     def log(self,name,content):
         if 'log_dict' not in self.__dict__:
@@ -128,15 +149,30 @@ class rssnet(object):
 
 
     def show(self):
-        pre_img = self.net(self.data_train['test_tensor'][0])
-        show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
-        plt.imshow(show_img,'gray')
+        de_para_dict = {'show_type':'gray_img','show_content':'recovered'}
+        for key in de_para_dict.keys():
+            param_now = self.show_p.get(key,de_para_dict.get(key))
+            self.show_p[key] = param_now
+        if self.show_p['show_content'] == 'recovered':
+            pre_img = self.net(self.data_train['test_tensor'][0])
+            show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
+        elif self.show_p['show_content'] == 'original':
+            show_img = self.data_train['test_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
+        if self.show_p['show_type'] == 'gray_img':
+            plt.imshow(show_img,'gray')
+        elif self.show_p['show_type'] == 'red_img':
+            import seaborn as sns
+            sns.set()
+            plt.imshow(show_img)
+        plt.axis('off')
         plt.show()
-        target = self.data_train['test_tensor'][1].unsqueeze(1)
-        print('Fidlity loss:',self.loss_fn(pre_img,target).detach().cpu().numpy())
 
     def save(self):
-        pass
+        de_para_dict = {}
+        for key in de_para_dict.keys():
+            param_now = self.save_p.get(key,de_para_dict.get(key))
+            self.save_p[key] = param_now
+        
 
 
 

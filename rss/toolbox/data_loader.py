@@ -42,7 +42,7 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         xin = t.tensor(xin).to(t.float32)
         mask = t.tensor(mask).to(t.float32)
         data = t.tensor(data).to(t.float32)
-        print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
+        # print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
         if ymode == 'completion':
             data_train_set = t.utils.data.TensorDataset(xin[(mask==1).reshape(-1)],data[mask==1])
             data_train_loader = t.utils.data.DataLoader(data_train_set,batch_size = batch_size,shuffle=shuffle)
