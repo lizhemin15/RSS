@@ -42,3 +42,38 @@ class Composition(nn.Module):
             return x.reshape((self.net_list_para[0]['sizes'][0],self.net_list_para[0]['sizes'][-1]))
         else:
             return x
+        
+class Parallel(nn.Module):
+    def __init__(self,parameter):
+        super().__init__()
+        pass
+
+
+    def forward(self,x_list):
+        # Union multiple network togerther
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
