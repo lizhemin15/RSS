@@ -71,6 +71,7 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         # mask = to_device(mask,gpu_id)
         data = to_device(data,gpu_id)
         # print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
+        
         if ymode == 'completion':
             data_train_loader = (xin,data.reshape(-1,1))
             # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])

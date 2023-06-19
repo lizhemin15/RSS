@@ -30,9 +30,6 @@ class rssnet(object):
         self.init_train()
         self.update_parameter(parameter_list)
         
-
-
-
     def init_parameter(self,parameters,parameter_list):
         """
         Initialize a parameter.
@@ -89,7 +86,8 @@ class rssnet(object):
                                       data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'])
         self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
                                       data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
-                                      down_sample_rate=self.data_p['down_sample_rate'])
+                                      down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
+        self.mask = to_device(t.tensor(self.mask).to(t.float32),self.net_p['gpu_id'])
         self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],seeds=self.data_p['seeds'])
         self.data_train = toolbox.get_dataloader(x_mode=self.data_p['x_mode'],batch_size=self.data_p['batch_size'],
                                                  shuffle_if=self.data_p['shuffle_if'],
@@ -122,9 +120,8 @@ class rssnet(object):
             for ite in range(self.train_p['train_epoch']):
                 pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
                 if self.data_p['pre_full'] == True:
-                    print((self.mask==1).shape,pre.shape)
                     pre = pre[self.mask==1]
-                target = self.data_train['obs_tensor'][1][self.mask==1].reshape(pre.shape)
+                target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
@@ -135,7 +132,7 @@ class rssnet(object):
                     pre = self.net(self.data_train['obs_tensor'][0][(self.mask==0).reshape(-1)])
                     if self.data_p['pre_full'] == True:
                         pre = pre[self.mask==0]
-                    target = self.data_train['obs_tensor'][1][self.mask==0].reshape(pre.shape)
+                    target = self.data_train['obs_tensor'][1][(self.mask==0).reshape(-1)].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
                     pre = self.net(self.data_train['real_tensor'][0])
@@ -144,6 +141,8 @@ class rssnet(object):
                     self.log('test_loss',loss.item())
             print('loss on test set',self.log_dict['test_loss'][-1])
             
+
+
     def log(self,name,content):
         if 'log_dict' not in self.__dict__:
             self.log_dict = {}

@@ -1,9 +1,10 @@
 
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 
-def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,mask_shape='same',seeds=88,down_sample_rate=2):
+
+def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
+              mask_shape='same',seeds=88,down_sample_rate=2,gpu_id=0):
     np.random.seed(seeds)
     # random_rate is the rate of dropped pixels
     if mask_shape == 'same':
@@ -60,6 +61,6 @@ def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
                 mask[::down_sample_rate[0],::down_sample_rate[1],::down_sample_rate[2],::down_sample_rate[3]] = 1
             else:
                 raise('Do not support the dim of tensor > 4')
-        return mask
+            return mask
     else:
         raise('Wrong mask type = ',mask_type)
