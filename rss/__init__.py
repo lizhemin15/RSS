@@ -79,7 +79,8 @@ class rssnet(object):
         de_para_dict = {'data_path':None,'data_type':'syn','data_shape':(10,10),'down_sample':[1,1,1],
                         'mask_type':'random','random_rate':0.0,'mask_path':None,'mask_shape':'same','seeds':88,'down_sample_rate':2,
                         'noise_mode':None,'noise_parameter':0.0,
-                        'x_mode':'inr','batch_size':128,'shuffle_if':False,'xrange':1,'ymode':'completion','return_data_type':'tensor'}
+                        'x_mode':'inr','batch_size':128,'shuffle_if':False,'xrange':1,'ymode':'completion','return_data_type':'tensor',
+                        'pre_full':False}
         for key in de_para_dict.keys():
             param_now = self.data_p.get(key,de_para_dict.get(key))
             self.data_p[key] = param_now
@@ -88,7 +89,8 @@ class rssnet(object):
         self.data = toolbox.load_data(data_path=self.data_p['data_path'],data_type=self.data_p['data_type'],
                                       data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'])
         self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
-                                      data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],down_sample_rate=self.data_p['down_sample_rate'])
+                                      data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
+                                      down_sample_rate=self.data_p['down_sample_rate'])
         self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],seeds=self.data_p['seeds'])
         self.data_train = toolbox.get_dataloader(x_mode=self.data_p['x_mode'],batch_size=self.data_p['batch_size'],
                                                  shuffle_if=self.data_p['shuffle_if'],
@@ -120,6 +122,8 @@ class rssnet(object):
         if self.data_p['return_data_type'] == 'tensor':
             for ite in range(self.train_p['train_epoch']):
                 pre = self.net(self.data_train['train_tensor'][0])
+                if self.data_p['pre_full'] == True:
+                    pre = pre[self.mask==1]
                 target = self.data_train['train_tensor'][1].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
                 self.log('fid_loss',loss.item())
@@ -129,6 +133,8 @@ class rssnet(object):
                 # test and val loss
                 with t.no_grad():
                     pre = self.net(self.data_train['val_tensor'][0])
+                    if self.data_p['pre_full'] == True:
+                        pre = pre[self.mask==0]
                     target = self.data_train['val_tensor'][1].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
