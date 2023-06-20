@@ -35,8 +35,8 @@ class Composition(nn.Module):
     def forward(self, x):
         # Too ugly here
         for i,net in enumerate(self.net_list):
-            if self.net_list_para[i]['net_name'] in ['DMF','TF'] and len(self.net_list_para[i]['net_name'])>1:
-                x = net(x).reshape(-1,1)
+            if self.net_list_para[i]['net_name'] in ['DMF','TF'] and len(self.net_list_para)>1:
+                x = net(x).reshape(-1,self.net_list_para[i+1]['dim_in'])
             else:
                 x = net(x)
         if self.net_list_para[0]['net_name'] in ['DMF','TF']:
