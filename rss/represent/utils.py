@@ -1,6 +1,10 @@
 import torch.nn.functional as F
 import torch as t
 from torch import nn
+from einops import rearrange
+
+abc_str = 'abcdefghijklmnopqrstuvwxyz'
+
 
 def get_act(act):
     if act == 'relu':
@@ -96,5 +100,15 @@ def to_device(obj,device):
         obj = obj.cuda(device)
     return obj
 
+def reshape2(data):
+    # 
+    xshape = data.shape
+    einstr = add_space(abc_str[:len(xshape)])+' -> ('+add_space(abc_str[:len(xshape)])+') ()'
+    return rearrange(data,einstr)
 
-
+def add_space(oristr):
+    addstr = ''
+    for i in range(len(oristr)):
+        addstr += oristr[i]
+        addstr += ' '
+    return addstr

@@ -8,6 +8,7 @@ bin-release/
 .settings/
 .ipynb_checkpoints
 data/
+**/__pycache__
 
 # Executables
 *.swf

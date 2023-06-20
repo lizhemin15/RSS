@@ -5,11 +5,11 @@ from einops import rearrange
 from rss.represent.utils import to_device
 abc_str = 'abcdefghijklmnopqrstuvwxyz'
 
-
+#TODO all the data are 1 dimension output, which is not suitable for general
 
 def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
                    data=None,mask=None,xrange=1,noisy_data=None,
-                   ymode='completion',return_data_type='loader',gpu_id=0):
+                   ymode='completion',return_data_type='loader',gpu_id=0,out_dim_one=True):
     # Given x_mode
     # Return a pytorch dataloader generator or generator list
     # Principle: process data on numpy untill the last step
@@ -73,15 +73,17 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         # print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
         
         if ymode == 'completion':
-            data_train_loader = (xin,data.reshape(-1,1))
-            # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
-            data_test_loader = (xin,data.reshape(-1,1))
+            if out_dim_one:
+                data_train_loader = (xin,data.reshape(-1,1))
+                # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
+                data_test_loader = (xin,data.reshape(-1,1))
         elif ymode == 'denoising':
             noisy_data = reshape2(noisy_data)
             noisy_data = t.tensor(noisy_data).to(t.float32)
-            data_train_loader = (xin,noisy_data.reshape(-1,1))
-            # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
-            data_test_loader = (xin,data.reshape(-1,1))
+            if out_dim_one:
+                data_train_loader = (xin,noisy_data.reshape(-1,1))
+                # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
+                data_test_loader = (xin,data.reshape(-1,1))
         else:
             raise('Wrong ymode = ',ymode)
         return [data_train_loader,data_test_loader]

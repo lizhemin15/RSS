@@ -34,8 +34,8 @@ class TensorFactorization(nn.Module):
         return Gnew
     
 def TF(parameter):
-    de_para_dict = {'dim_ori':[100,100],'dim_cor':[100,100],'mode':'tucker'}
+    de_para_dict = {'sizes':[100,100],'dim_cor':[100,100],'mode':'tucker'}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
-    return TensorFactorization(parameter['dim_ori'],parameter['dim_cor'],parameter['mode'])
+    return TensorFactorization(parameter['sizes'],parameter['dim_cor'],parameter['mode'])

@@ -77,7 +77,7 @@ class rssnet(object):
                         'mask_type':'random','random_rate':0.0,'mask_path':None,'mask_shape':'same','seeds':88,'down_sample_rate':2,
                         'noise_mode':None,'noise_parameter':0.0,
                         'x_mode':'inr','batch_size':128,'shuffle_if':False,'xrange':1,'ymode':'completion','return_data_type':'tensor',
-                        'pre_full':False}
+                        'pre_full':False,'out_dim_one':True}
         for key in de_para_dict.keys():
             param_now = self.data_p.get(key,de_para_dict.get(key))
             self.data_p[key] = param_now
@@ -93,7 +93,7 @@ class rssnet(object):
                                                  shuffle_if=self.data_p['shuffle_if'],
                                                 data=self.data,mask=self.mask,xrange=self.data_p['xrange'],noisy_data=self.data_noise,
                                                 ymode=self.data_p['ymode'],return_data_type=self.data_p['return_data_type'],
-                                                gpu_id=self.net_p['gpu_id'])
+                                                gpu_id=self.net_p['gpu_id'],out_dim_one=self.data_p['out_dim_one'])
         
         
 
