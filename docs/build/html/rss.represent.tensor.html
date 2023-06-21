@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rss.represent.tensor package &mdash; rss v 1.0.0 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            rss
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">rss.represent.tensor package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-rss.represent.tensor.dmf">rss.represent.tensor.dmf module</a></li>
+<li><a class="reference internal" href="#module-rss.represent.tensor.tf">rss.represent.tensor.tf module</a></li>
+<li><a class="reference internal" href="#module-rss.represent.tensor">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">rss</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">rss.represent.tensor package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/rss.represent.tensor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="rss-represent-tensor-package">
+<h1>rss.represent.tensor package<a class="headerlink" href="#rss-represent-tensor-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-rss.represent.tensor.dmf">
+<span id="rss-represent-tensor-dmf-module"></span><h2>rss.represent.tensor.dmf module<a class="headerlink" href="#module-rss.represent.tensor.dmf" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="rss.represent.tensor.dmf.DMF">
+<code class="sig-prename descclassname">rss.represent.tensor.dmf.</code><code class="sig-name descname">DMF</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.dmf.DMF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="rss.represent.tensor.dmf.DMF_net">
+<em class="property">class </em><code class="sig-prename descclassname">rss.represent.tensor.dmf.</code><code class="sig-name descname">DMF_net</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">params</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.dmf.DMF_net" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<dl class="py method">
+<dt id="rss.represent.tensor.dmf.DMF_net.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.dmf.DMF_net.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-rss.represent.tensor.tf">
+<span id="rss-represent-tensor-tf-module"></span><h2>rss.represent.tensor.tf module<a class="headerlink" href="#module-rss.represent.tensor.tf" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="rss.represent.tensor.tf.TF">
+<code class="sig-prename descclassname">rss.represent.tensor.tf.</code><code class="sig-name descname">TF</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.tf.TF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="rss.represent.tensor.tf.TensorFactorization">
+<em class="property">class </em><code class="sig-prename descclassname">rss.represent.tensor.tf.</code><code class="sig-name descname">TensorFactorization</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dim_ori</span></em>, <em class="sig-param"><span class="n">dim_cor</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'tucker'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.tf.TensorFactorization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<dl class="py method">
+<dt id="rss.represent.tensor.tf.TensorFactorization.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.tf.TensorFactorization.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rss.represent.tensor.tf.TensorFactorization.tucker_product">
+<code class="sig-name descname">tucker_product</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">G</span></em>, <em class="sig-param"><span class="n">pre</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.tf.TensorFactorization.tucker_product" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-rss.represent.tensor">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-rss.represent.tensor" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="rss.represent.tensor.DMF">
+<code class="sig-prename descclassname">rss.represent.tensor.</code><code class="sig-name descname">DMF</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.DMF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="rss.represent.tensor.TF">
+<code class="sig-prename descclassname">rss.represent.tensor.</code><code class="sig-name descname">TF</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.tensor.TF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, zhemin li.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

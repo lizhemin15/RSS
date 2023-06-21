@@ -169,6 +169,8 @@ class rssnet(object):
             import seaborn as sns
             sns.set()
             plt.imshow(show_img)
+        else:
+            raise('Wrong show_type in show_p:',self.show_p['show_type'])
         plt.axis('off')
         plt.show()
 

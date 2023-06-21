@@ -78,6 +78,46 @@
 </div>
 <div class="section" id="module-rss.represent.representer">
 <span id="rss-represent-representer-module"></span><h2>rss.represent.representer module<a class="headerlink" href="#module-rss.represent.representer" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="rss.represent.representer.Composition">
+<em class="property">class </em><code class="sig-prename descclassname">rss.represent.representer.</code><code class="sig-name descname">Composition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.representer.Composition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<dl class="py method">
+<dt id="rss.represent.representer.Composition.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.representer.Composition.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="rss.represent.representer.Contenate">
+<em class="property">class </em><code class="sig-prename descclassname">rss.represent.representer.</code><code class="sig-name descname">Contenate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.representer.Contenate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.nn.modules.module.Module</span></code></p>
+<dl class="py method">
+<dt id="rss.represent.representer.Contenate.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.representer.Contenate.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt id="rss.represent.representer.get_nn">
 <code class="sig-prename descclassname">rss.represent.representer.</code><code class="sig-name descname">get_nn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.representer.get_nn" title="Permalink to this definition">¶</a></dt>
@@ -86,6 +126,21 @@
 </div>
 <div class="section" id="module-rss.represent">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-rss.represent" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="rss.represent.get_nn">
+<code class="sig-prename descclassname">rss.represent.</code><code class="sig-name descname">get_nn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.get_nn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="rss.represent.get_opt">
+<code class="sig-prename descclassname">rss.represent.</code><code class="sig-name descname">get_opt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">opt_type</span><span class="o">=</span><span class="default_value">'Adam'</span></em>, <em class="sig-param"><span class="n">parameters</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">lr</span><span class="o">=</span><span class="default_value">0.001</span></em>, <em class="sig-param"><span class="n">weight_decay</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.get_opt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="rss.represent.reshape2">
+<code class="sig-prename descclassname">rss.represent.</code><code class="sig-name descname">reshape2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.represent.reshape2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 </div>
 

@@ -83,7 +83,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rss.tasks.html">rss.tasks package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="rss.tasks.html#module-rss.tasks">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rss.tasks.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rss.toolbox.html">rss.toolbox package</a><ul>
@@ -96,11 +96,6 @@
 <div class="section" id="module-rss">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-rss" title="Permalink to this headline">¶</a></h2>
 <p>rss</p>
-<dl class="py function">
-<dt id="rss.go">
-<code class="sig-prename descclassname">rss.</code><code class="sig-name descname">go</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rss.go" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py class">
 <dt id="rss.rssnet">
 <em class="property">class </em><code class="sig-prename descclassname">rss.</code><code class="sig-name descname">rssnet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameters</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet" title="Permalink to this definition">¶</a></dt>
@@ -116,22 +111,21 @@
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="rss.rssnet.init_noise">
-<code class="sig-name descname">init_noise</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.init_noise" title="Permalink to this definition">¶</a></dt>
+<dt id="rss.rssnet.init_opt">
+<code class="sig-name descname">init_opt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.init_opt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt id="rss.rssnet.init_parameter">
-<code class="sig-name descname">init_parameter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameters</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.init_parameter" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">init_parameter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameters</span></em>, <em class="sig-param"><span class="n">parameter_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.init_parameter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize a parameter.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>key (str): The key of the parameter to initialize. Options are:</dt><dd><ul class="simple">
 <li><p>net_p: The parameter used for the network.</p></li>
-<li><p>noise_p: The parameter used for the noise.</p></li>
 <li><p>reg_p: The parameter used for the regularization.</p></li>
 <li><p>data_p: The parameter used for the data.</p></li>
-<li><p>task_p: The parameter used for the task.</p></li>
+<li><p>opt_p: The parameter used for the optimizer.</p></li>
 <li><p>train_p: The parameter used for the training.</p></li>
 <li><p>show_p: The parameter used for showing information.</p></li>
 <li><p>save_p: The parameter used for saving.</p></li>
@@ -152,8 +146,13 @@
 <dd></dd></dl>
 
 <dl class="py method">
-<dt id="rss.rssnet.init_task">
-<code class="sig-name descname">init_task</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.init_task" title="Permalink to this definition">¶</a></dt>
+<dt id="rss.rssnet.init_train">
+<code class="sig-name descname">init_train</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.init_train" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="rss.rssnet.log">
+<code class="sig-name descname">log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">content</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.log" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -169,6 +168,11 @@
 <dl class="py method">
 <dt id="rss.rssnet.train">
 <code class="sig-name descname">train</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.train" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="rss.rssnet.update_parameter">
+<code class="sig-name descname">update_parameter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parameter_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rss.rssnet.update_parameter" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

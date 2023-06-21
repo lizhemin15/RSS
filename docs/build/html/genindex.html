@@ -66,7 +66,9 @@
 <h1 id="index">Index</h1>
 
 <div class="genindex-jumpbox">
- <a href="#C"><strong>C</strong></a>
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
@@ -76,21 +78,50 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  
 </div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rss.toolbox.html#rss.toolbox.add_noise">add_noise() (in module rss.toolbox)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="rss.represent.inr.html#rss.represent.inr.mlp.cal_gain">cal_gain() (in module rss.represent.inr.mlp)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="rss.represent.inr.html#rss.represent.inr.mlp.cast_tuple">cast_tuple() (in module rss.represent.inr.mlp)</a>
 
       <ul>
         <li><a href="rss.represent.inr.html#rss.represent.inr.siren.cast_tuple">(in module rss.represent.inr.siren)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rss.represent.html#rss.represent.representer.Composition">Composition (class in rss.represent.representer)</a>
+</li>
+      <li><a href="rss.represent.html#rss.represent.representer.Contenate">Contenate (class in rss.represent.representer)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rss.represent.tensor.html#rss.represent.tensor.DMF">DMF() (in module rss.represent.tensor)</a>
+
+      <ul>
+        <li><a href="rss.represent.tensor.html#rss.represent.tensor.dmf.DMF">(in module rss.represent.tensor.dmf)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rss.represent.tensor.html#rss.represent.tensor.dmf.DMF_net">DMF_net (class in rss.represent.tensor.dmf)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -124,6 +155,14 @@
 </li>
         <li><a href="rss.represent.inr.html#rss.represent.inr.siren.SirenWrapper.forward">(rss.represent.inr.siren.SirenWrapper method)</a>
 </li>
+        <li><a href="rss.represent.html#rss.represent.representer.Composition.forward">(rss.represent.representer.Composition method)</a>
+</li>
+        <li><a href="rss.represent.html#rss.represent.representer.Contenate.forward">(rss.represent.representer.Contenate method)</a>
+</li>
+        <li><a href="rss.represent.tensor.html#rss.represent.tensor.dmf.DMF_net.forward">(rss.represent.tensor.dmf.DMF_net method)</a>
+</li>
+        <li><a href="rss.represent.tensor.html#rss.represent.tensor.tf.TensorFactorization.forward">(rss.represent.tensor.tf.TensorFactorization method)</a>
+</li>
       </ul></li>
   </ul></td>
 </tr></table>
@@ -133,11 +172,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="rss.represent.inr.html#rss.represent.inr.mlp.Layer.get_act">get_act() (rss.represent.inr.mlp.Layer method)</a>
 </li>
+      <li><a href="rss.toolbox.html#rss.toolbox.get_dataloader">get_dataloader() (in module rss.toolbox)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="rss.represent.html#rss.represent.representer.get_nn">get_nn() (in module rss.represent.representer)</a>
+      <li><a href="rss.represent.html#rss.represent.get_nn">get_nn() (in module rss.represent)</a>
+
+      <ul>
+        <li><a href="rss.represent.html#rss.represent.representer.get_nn">(in module rss.represent.representer)</a>
 </li>
-      <li><a href="rss.html#rss.go">go() (in module rss)</a>
+      </ul></li>
+      <li><a href="rss.represent.html#rss.represent.get_opt">get_opt() (in module rss.represent)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -157,13 +202,13 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="rss.html#rss.rssnet.init_noise">init_noise() (rss.rssnet method)</a>
+      <li><a href="rss.html#rss.rssnet.init_opt">init_opt() (rss.rssnet method)</a>
 </li>
       <li><a href="rss.html#rss.rssnet.init_parameter">init_parameter() (rss.rssnet method)</a>
 </li>
       <li><a href="rss.html#rss.rssnet.init_reg">init_reg() (rss.rssnet method)</a>
 </li>
-      <li><a href="rss.html#rss.rssnet.init_task">init_task() (rss.rssnet method)</a>
+      <li><a href="rss.html#rss.rssnet.init_train">init_train() (rss.rssnet method)</a>
 </li>
       <li><a href="rss.represent.inr.html#rss.represent.inr.mlp.INR">INR (class in rss.represent.inr.mlp)</a>
 </li>
@@ -175,9 +220,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="rss.represent.inr.html#rss.represent.inr.mlp.Layer">Layer (class in rss.represent.inr.mlp)</a>
 </li>
+      <li><a href="rss.toolbox.html#rss.toolbox.load_data">load_data() (in module rss.toolbox)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="rss.toolbox.html#rss.toolbox.load_json">load_json() (in module rss.toolbox)</a>
+</li>
+      <li><a href="rss.toolbox.html#rss.toolbox.load_mask">load_mask() (in module rss.toolbox)</a>
+</li>
+      <li><a href="rss.html#rss.rssnet.log">log() (rss.rssnet method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -209,7 +260,11 @@
 </li>
         <li><a href="rss.represent.html#module-rss.represent.representer">rss.represent.representer</a>
 </li>
-        <li><a href="rss.tasks.html#module-rss.tasks">rss.tasks</a>
+        <li><a href="rss.represent.tensor.html#module-rss.represent.tensor">rss.represent.tensor</a>
+</li>
+        <li><a href="rss.represent.tensor.html#module-rss.represent.tensor.dmf">rss.represent.tensor.dmf</a>
+</li>
+        <li><a href="rss.represent.tensor.html#module-rss.represent.tensor.tf">rss.represent.tensor.tf</a>
 </li>
         <li><a href="rss.toolbox.html#module-rss.toolbox">rss.toolbox</a>
 </li>
@@ -220,6 +275,8 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rss.represent.html#rss.represent.reshape2">reshape2() (in module rss.represent)</a>
+</li>
       <li>
     rss
 
@@ -248,8 +305,6 @@
         <li><a href="rss.represent.inr.html#module-rss.represent.inr.mlp">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     rss.represent.inr.siren
 
@@ -257,6 +312,8 @@
         <li><a href="rss.represent.inr.html#module-rss.represent.inr.siren">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     rss.represent.representer
 
@@ -265,10 +322,24 @@
 </li>
       </ul></li>
       <li>
-    rss.tasks
+    rss.represent.tensor
 
       <ul>
-        <li><a href="rss.tasks.html#module-rss.tasks">module</a>
+        <li><a href="rss.represent.tensor.html#module-rss.represent.tensor">module</a>
+</li>
+      </ul></li>
+      <li>
+    rss.represent.tensor.dmf
+
+      <ul>
+        <li><a href="rss.represent.tensor.html#module-rss.represent.tensor.dmf">module</a>
+</li>
+      </ul></li>
+      <li>
+    rss.represent.tensor.tf
+
+      <ul>
+        <li><a href="rss.represent.tensor.html#module-rss.represent.tensor.tf">module</a>
 </li>
       </ul></li>
       <li>
@@ -314,7 +385,27 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rss.represent.tensor.html#rss.represent.tensor.tf.TensorFactorization">TensorFactorization (class in rss.represent.tensor.tf)</a>
+</li>
+      <li><a href="rss.represent.tensor.html#rss.represent.tensor.TF">TF() (in module rss.represent.tensor)</a>
+
+      <ul>
+        <li><a href="rss.represent.tensor.html#rss.represent.tensor.tf.TF">(in module rss.represent.tensor.tf)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="rss.html#rss.rssnet.train">train() (rss.rssnet method)</a>
+</li>
+      <li><a href="rss.represent.tensor.html#rss.represent.tensor.tf.TensorFactorization.tucker_product">tucker_product() (rss.represent.tensor.tf.TensorFactorization method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="rss.html#rss.rssnet.update_parameter">update_parameter() (rss.rssnet method)</a>
 </li>
   </ul></td>
 </tr></table>
