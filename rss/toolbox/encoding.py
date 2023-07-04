@@ -7,7 +7,7 @@ def trilinear_interp(x, voxel_min_vertex, voxel_max_vertex, voxel_embedds):
     x: B x d
     voxel_min_vertex: B x d
     voxel_max_vertex: B x d
-    voxel_embedds: B x 8 x 2
+    voxel_embedds: B x 2^d x d'
     '''
     # source: https://en.wikipedia.org/wiki/Trilinear_interpolation
     weights = (x - voxel_min_vertex)/(voxel_max_vertex-voxel_min_vertex) # B x d
