@@ -15,16 +15,16 @@ import pickle
 
 import matplotlib.pyplot as plt
 
-from run_nerf_helpers import *
-from optimizer import MultiOptimizer
-from radam import RAdam
-from loss import sigma_sparsity_loss, total_variation_loss
+from rss.tasks.NeRF.run_nerf_helpers import *
+from rss.tasks.NeRF.optimizer import MultiOptimizer
+from rss.tasks.NeRF.radam import RAdam
+from rss.tasks.NeRF.loss import sigma_sparsity_loss, total_variation_loss
 
-from load_llff import load_llff_data
-from load_deepvoxels import load_dv_data
-from load_blender import load_blender_data
-from load_scannet import load_scannet_data
-from load_LINEMOD import load_LINEMOD_data
+from rss.tasks.NeRF.load_llff import load_llff_data
+from rss.tasks.NeRF.load_deepvoxels import load_dv_data
+from rss.tasks.NeRF.load_blender import load_blender_data
+from rss.tasks.NeRF.load_scannet import load_scannet_data
+from rss.tasks.NeRF.load_LINEMOD import load_LINEMOD_data
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from hash_encoding import HashEmbedder, SHEncoder
+from rss.tasks.NeRF.hash_encoding import HashEmbedder, SHEncoder
 
 # Misc
 img2mse = lambda x, y : torch.mean((x - y) ** 2)
