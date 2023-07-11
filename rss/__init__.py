@@ -7,17 +7,18 @@ __author__ = 'Zhemin Li'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2023 Zhemin Li'
 
-
+# TODO 0. 让NeRF在main.ipynb可以调用
 ## Top Level Modules
 from rss import toolbox,represent
 from rss.represent.utils import to_device
+from rss.tasks import nerf
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch as t
 t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 # from rss.represent import get_nn
-__all__ = []
+__all__ = ['nerf']
 
 class rssnet(object):
     def __init__(self,parameters) -> None:
