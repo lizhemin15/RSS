@@ -7,6 +7,7 @@ import pdb
 
 from utils import get_voxel_vertices
 
+# TODO 多种embedding
 class HashEmbedder(nn.Module):
     def __init__(self, bounding_box, n_levels=16, n_features_per_level=2,\
                 log2_hashmap_size=19, base_resolution=16, finest_resolution=512):
