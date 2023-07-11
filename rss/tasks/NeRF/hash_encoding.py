@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import pdb
 
-from utils import get_voxel_vertices
+from rss.tasks.NeRF.utils import get_voxel_vertices
 
 # TODO 2. 多种embedding
 class HashEmbedder(nn.Module):
