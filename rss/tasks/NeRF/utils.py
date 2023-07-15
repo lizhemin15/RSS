@@ -99,7 +99,8 @@ def get_voxel_vertices(xyz, bounding_box, resolution, log2_hashmap_size):
     resolution: number of voxels per axis
     '''
     box_min, box_max = bounding_box
-
+    box_min = box_min.to(xyz.device)
+    box_max = box_max.to(xyz.device)
     keep_mask = xyz==torch.max(torch.min(xyz, box_max), box_min)
     if not torch.all(xyz <= box_max) or not torch.all(xyz >= box_min):
         # print("ALERT: some points are outside bounding box. Clipping them!")
@@ -109,7 +110,7 @@ def get_voxel_vertices(xyz, bounding_box, resolution, log2_hashmap_size):
     
     bottom_left_idx = torch.floor((xyz-box_min)/grid_size).int()
     voxel_min_vertex = bottom_left_idx*grid_size + box_min
-    voxel_max_vertex = voxel_min_vertex + torch.tensor([1.0,1.0,1.0])*grid_size
+    voxel_max_vertex = voxel_min_vertex + torch.tensor([1.0,1.0,1.0]).to(xyz.device)*grid_size
 
     voxel_indices = bottom_left_idx.unsqueeze(1) + BOX_OFFSETS
     hashed_voxel_indices = hash(voxel_indices, log2_hashmap_size)

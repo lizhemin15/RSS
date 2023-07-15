@@ -211,6 +211,7 @@ def create_nerf(args):
     """Instantiate NeRF's MLP model.
     """
     embed_fn, input_ch = get_embedder(args.multires, args, i=args.i_embed)
+    embed_fn = embed_fn.to(device)
     if args.i_embed==1:
         # hashed embedding table
         embedding_params = list(embed_fn.parameters())
@@ -279,6 +280,7 @@ def create_nerf(args):
     else:
         ckpts = [os.path.join(basedir, expname, f) for f in sorted(os.listdir(os.path.join(basedir, expname))) if 'tar' in f]
 
+    print(sorted(os.listdir(os.path.join(basedir, expname))))
     print('Found ckpts', ckpts)
     if len(ckpts) > 0 and not args.no_reload:
         ckpt_path = ckpts[-1]
@@ -340,12 +342,14 @@ def raw2outputs(raw, z_vals, rays_d, raw_noise_std=0, white_bkgd=False, pytest=F
     raw2alpha = lambda raw, dists, act_fn=F.relu: 1.-torch.exp(-act_fn(raw)*dists)
 
     dists = z_vals[...,1:] - z_vals[...,:-1]
-    dists = torch.cat([dists, torch.Tensor([1e10]).expand(dists[...,:1].shape)], -1)  # [N_rays, N_samples]
+    dists = torch.cat([dists, torch.Tensor([1e10]).expand(dists[...,:1].shape).to(device)], -1)  # [N_rays, N_samples]
+
 
     dists = dists * torch.norm(rays_d[...,None,:], dim=-1)
 
     rgb = torch.sigmoid(raw[...,:3])  # [N_rays, N_samples, 3]
     noise = 0.
+    
     if raw_noise_std > 0.:
         noise = torch.randn(raw[...,3].shape) * raw_noise_std
 
@@ -358,7 +362,7 @@ def raw2outputs(raw, z_vals, rays_d, raw_noise_std=0, white_bkgd=False, pytest=F
     # sigma_loss = sigma_sparsity_loss(raw[...,3])
     alpha = raw2alpha(raw[...,3] + noise, dists)  # [N_rays, N_samples]
     # weights = alpha * tf.math.cumprod(1.-alpha + 1e-10, -1, exclusive=True)
-    weights = alpha * torch.cumprod(torch.cat([torch.ones((alpha.shape[0], 1)), 1.-alpha + 1e-10], -1), -1)[:, :-1]
+    weights = alpha * torch.cumprod(torch.cat([torch.ones((alpha.shape[0], 1)).to(device), 1.-alpha + 1e-10], -1), -1)[:, :-1]
     rgb_map = torch.sum(weights[...,None] * rgb, -2)  # [N_rays, 3]
 
     depth_map = torch.sum(weights * z_vals, -1) / torch.sum(weights, -1)
@@ -428,7 +432,7 @@ def render_rays(ray_batch,
     bounds = torch.reshape(ray_batch[...,6:8], [-1,1,2])
     near, far = bounds[...,0], bounds[...,1] # [-1,1]
 
-    t_vals = torch.linspace(0., 1., steps=N_samples)
+    t_vals = torch.linspace(0., 1., steps=N_samples).to(near.device)
     if not lindisp:
         z_vals = near * (1.-t_vals) + far * (t_vals)
     else:
@@ -847,12 +851,12 @@ class args_class():
                             'default': 19,
                             'help': 'log2 of hashmap size'
                         },
-                        'sparse-loss-weight': {
+                        'sparse_loss_weight': {
                             'type': float,
                             'default': 1e-10,
                             'help': 'learning rate'
                         },
-                        'tv-loss-weight': {
+                        'tv_loss_weight': {
                             'type': float,
                             'default': 1e-6,
                             'help': 'learning rate'
@@ -862,7 +866,7 @@ class args_class():
         for key in de_args_dict.keys():
             default_para_dict = de_args_dict.get(key)
             if 'action' in default_para_dict.keys():
-                default_para = True
+                default_para = False
             else:
                 default_para = default_para_dict['type'](default_para_dict['default'])
             param_now = args_dict.get(key,default_para)
