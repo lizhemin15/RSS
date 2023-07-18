@@ -3,7 +3,7 @@ import torch
 
 import configargparse
 parser = configargparse.ArgumentParser()
-parser.add_argument("--expname", type=str,
+parser.add_argument("--expname", type=str,default='chair',
                     help='experiment name')
 args = parser.parse_args()
 
