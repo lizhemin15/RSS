@@ -19,7 +19,7 @@ def get_nn(parameter={}):
     elif net_name == 'TF':
         net = TF(parameter)
     elif net_name == 'Interpolation':
-        net = Interpolation
+        net = Interpolation(parameter)
     else:
         raise('Wrong net_name = ',net_name)
     return net
@@ -42,7 +42,7 @@ class Composition(nn.Module):
                 x = net(x_in)
                 continue
             if self.net_list_para[i]['net_name'] == 'Interpolation':
-                x = net(x=x_in,tau_range='default',tau=x)
+                x = net(x=x_in,tau=x)
             else:
                 x = net(x)
         return x
