@@ -34,15 +34,9 @@ class Composition(nn.Module):
 
     def forward(self, x):
         # Too ugly here
-        for i,net in enumerate(self.net_list):
-            if self.net_list_para[i]['net_name'] in ['DMF','TF'] and len(self.net_list_para)>1:
-                x = net(x).reshape(-1,self.net_list_para[i+1]['dim_in'])
-            else:
-                x = net(x)
-        if self.net_list_para[0]['net_name'] in ['DMF','TF']:
-            return x.reshape((self.net_list_para[0]['sizes'][0],self.net_list_para[0]['sizes'][-1]))
-        else:
-            return x
+        for _,net in enumerate(self.net_list):
+            x = net(x)
+        return x
         
 class Contenate(nn.Module):
     def __init__(self,parameter):
