@@ -31,9 +31,8 @@ class Composition(nn.Module):
         super().__init__()
         self.net_list_para = parameter.get('net_list',[{'net_name':'SIREN'}])
         net_list = []
-        for i,net_para in enumerate(self.net_list_para):
-            if self.net_list_para[i]['net_name'] != 'Interpolation':
-                net_list.append(get_nn(net_para))
+        for _,net_para in enumerate(self.net_list_para):
+            net_list.append(get_nn(net_para))
         self.net_list = nn.ModuleList(net_list)
 
     def forward(self, x_in):
