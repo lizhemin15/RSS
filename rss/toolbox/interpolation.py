@@ -40,10 +40,12 @@ def Interpolation(x,tau_range,tau):
     B,d = x.shape
     F = tau.shape[-1]
     dim_tensor = t.tensor(tau.shape[:-1]).unsqueeze(0)-1 # (1,d)
+    if tau_range == 'default':
+        tau_range = t.tensor([[0,1]]*d).float().T.to(x)
     x_rerange = (x-tau_range[0,:])/(tau_range[1,:]-tau_range[0,:]) # [B,d], rerange x into [0,1] to calculate the index of x
     x_index = t.floor(dim_tensor*x_rerange).long() # [B,d], calculate the index of x in tau, first floor then clip, only need to calculate the lower index
     for j in range(d):
-        x_index[:,j] = t.minimum(x_index[:,j], torch.tensor(tau.shape[j]-2)) # clip the last vox
+        x_index[:,j] = t.minimum(x_index[:,j], t.tensor(tau.shape[j]-2)) # clip the last vox
     weights = dim_tensor*x_rerange-x_index # [B,d]
     tau_vox = t.rand((2**d,B,F)).to(tau) # [2**d,B,F]
     for i in range(2**d):

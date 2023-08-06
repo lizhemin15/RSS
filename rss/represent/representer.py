@@ -2,6 +2,7 @@ from rss.represent.inr import MLP,SIREN
 import torch.nn as nn
 from rss.represent.tensor import DMF,TF
 from rss.represent.utils import reshape2
+from rss.toolbox import Interpolation
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
@@ -17,6 +18,8 @@ def get_nn(parameter={}):
         net = DMF(parameter)
     elif net_name == 'TF':
         net = TF(parameter)
+    elif net_name == 'Interpolation':
+        net = Interpolation
     else:
         raise('Wrong net_name = ',net_name)
     return net
@@ -32,10 +35,15 @@ class Composition(nn.Module):
             net_list.append(get_nn(net_para))
         self.net_list = nn.ModuleList(net_list)
 
-    def forward(self, x):
-        # Too ugly here
-        for _,net in enumerate(self.net_list):
-            x = net(x)
+    def forward(self, x_in):
+        for i,net in enumerate(self.net_list):
+            if i == 0:
+                x = net(x_in)
+                continue
+            if self.net_list_para[i]['net_name'] == 'Interpolation':
+                x = net(x=x_in,tau_range='default',tau=x)
+            else:
+                x = net(x)
         return x
         
 class Contenate(nn.Module):
