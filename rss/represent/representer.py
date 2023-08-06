@@ -2,7 +2,7 @@ from rss.represent.inr import MLP,SIREN
 import torch.nn as nn
 from rss.represent.tensor import DMF,TF
 from rss.represent.utils import reshape2
-from rss.toolbox import Interpolation
+from rss.represent.interpolation import Interpolation
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
