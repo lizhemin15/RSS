@@ -12,9 +12,9 @@ def bina_index(i,d,weights):
     add_index: [B,d], 0 or 1, 0 means lower voxel, 1 means higher voxel
     weight: [B,1], weight of the voxel
     """
-    add_index = t.zeros((1,d))
+    add_index = t.zeros((1,d)).to(weights)
     index_i = i
-    weight = t.ones((weights.shape[0],1))
+    weight = t.ones((weights.shape[0],1)).to(weights)
     for j in range(d):
         add_index[:,j] = index_i%2 # lower (0) or higher(1) voxel at j-th dimension
         index_i = index_i//2
@@ -45,9 +45,13 @@ class Interpolation_cls(t.nn.Module):
         B,d = x.shape
         F = tau.shape[-1]
         dim_tensor = t.tensor(tau.shape[:-1]).unsqueeze(0)-1 # (1,d)
+        dim_tensor = dim_tensor.float().to(x)
         if self.tau_range == 'default':
-            tau_range = t.tensor([[0,1]]*d).float().T.to(x)
+            tau_range = t.tensor([[-1,1]]*d).float().T.to(x)
+        else:
+            tau_range = t.tensor([[-self.tau_range,self.tau_range]]*d).float().T.to(x)
         x_rerange = (x-tau_range[0,:])/(tau_range[1,:]-tau_range[0,:]) # [B,d], rerange x into [0,1] to calculate the index of x
+        x_rerange = x_rerange.to(x)
         x_index = t.floor(dim_tensor*x_rerange).long() # [B,d], calculate the index of x in tau, first floor then clip, only need to calculate the lower index
         for j in range(d):
             x_index[:,j] = t.minimum(x_index[:,j], t.tensor(tau.shape[j]-2)) # clip the last vox
@@ -65,4 +69,4 @@ def Interpolation(parameter):
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
-    return Interpolation_cls(parameter)
+    return Interpolation_cls(parameter['tau_range'])
