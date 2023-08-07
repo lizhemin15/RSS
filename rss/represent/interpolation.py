@@ -27,9 +27,10 @@ def bina_index(i,d,weights):
 
 
 class Interpolation_cls(t.nn.Module):
-    def __init__(self,tau_range='default'):
+    def __init__(self,tau_range='default',return_type="feature"):
         super().__init__()
         self.tau_range = tau_range
+        self.return_type = return_type
     
     def forward(self,x,tau):
         """
@@ -62,11 +63,16 @@ class Interpolation_cls(t.nn.Module):
             new_index = x_index+add_index
             tau_vox[i,:,:] = tau[list(new_index.T)]*weight
         y = t.sum(tau_vox,dim=0)
-        return y
+        if self.return_type == "feature":
+            return y
+        elif self.return_type == "combine":
+            return t.cat([x,y],dim=1)
+        else:
+            return x
 
 def Interpolation(parameter):
-    de_para_dict = {'tau_range':'default'}
+    de_para_dict = {'tau_range':'default',"return_type":"feature"}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
-    return Interpolation_cls(parameter['tau_range'])
+    return Interpolation_cls(parameter['tau_range'],parameter['return_type'])

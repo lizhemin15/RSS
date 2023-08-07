@@ -44,7 +44,6 @@ class Composition(nn.Module):
                 x = net(x=x_in,tau=x)
             else:
                 x = net(x)
-        
         return x
         
 class Contenate(nn.Module):
