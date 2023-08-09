@@ -71,7 +71,14 @@ class rssnet(object):
 
 
     def init_reg(self):
-        pass
+        de_para_dict = {'reg_name':None,'gpu_id':0}
+        for key in de_para_dict.keys():
+            param_now = self.reg_p.get(key,de_para_dict.get(key))
+            self.reg_p[key] = param_now
+        # print('net_p : ',self.net_p)
+        if self.reg_p['reg_name'] != None:
+            self.reg = represent.get_reg(self.reg_p)
+            self.reg = to_device(self.reg,self.reg_p['gpu_id'])
 
     def init_data(self):
         de_para_dict = {'data_path':None,'data_type':'syn','data_shape':(10,10),'down_sample':[1,1,1],
@@ -115,7 +122,7 @@ class rssnet(object):
             self.loss_fn = nn.MSELoss()
         # print('train_p : ',self.train_p)
 
-    def train(self):
+    def train(self,x=None):
         # Construct loss function
         if self.data_p['return_data_type'] == 'tensor':
             for ite in range(self.train_p['train_epoch']):
@@ -124,6 +131,8 @@ class rssnet(object):
                     pre = pre[self.mask==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
+                if self.reg_p['reg_name'] != None:
+                    loss += self.reg(x) #TODO add 
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
                 loss.backward()
