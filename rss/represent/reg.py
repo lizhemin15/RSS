@@ -33,13 +33,16 @@ def get_reg(parameter):
     elif reg_name == 'INRR':
         de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
     elif reg_name == 'MultiReg':
-        pass
+        de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
     else:
         pass
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
-    return regularizer(parameter)
+    if reg_name != 'MultiReg':
+        return regularizer(parameter)
+    else:
+        return MultiReg(parameter)
 
 class MultiReg(nn.Module):
     def __init__(self,parameter):

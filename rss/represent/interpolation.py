@@ -70,8 +70,10 @@ class Interpolation_cls(t.nn.Module):
             return y
         elif self.return_type == "combine":
             return t.cat([x,y],dim=1)
-        else:
+        elif self.return_type == 'identity':
             return x
+        else:
+            raise('Wrong reuturn type :',self.return_type,' not in [feature, combine, identity]')
 
 def Interpolation(parameter):
     de_para_dict = {'tau_range':'default',"return_type":"feature"}

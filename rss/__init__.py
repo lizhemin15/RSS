@@ -71,10 +71,11 @@ class rssnet(object):
 
 
     def init_reg(self):
-        de_para_dict = {'reg_name':None,'gpu_id':0}
+        de_para_dict = {'reg_name':None}
         for key in de_para_dict.keys():
             param_now = self.reg_p.get(key,de_para_dict.get(key))
             self.reg_p[key] = param_now
+        self.reg_p['gpu_id'] = self.net_p['gpu_id']
         # print('net_p : ',self.net_p)
         if self.reg_p['reg_name'] != None:
             self.reg = represent.get_reg(self.reg_p)
@@ -111,7 +112,18 @@ class rssnet(object):
             param_now = self.opt_p.get(key,de_para_dict.get(key))
             self.opt_p[key] = param_now
         # print('opt_p : ',self.opt_p)
-        self.net_opt = represent.get_opt(opt_type=self.opt_p['net']['opt_name'],parameters=self.net.parameters(),lr=self.opt_p['net']['lr'],weight_decay=self.opt_p['net']['weight_decay'])
+        self.net_opt = represent.get_opt(opt_type=self.opt_p['net']['opt_name'],
+                                         parameters=self.net.parameters(),lr=self.opt_p['net']['lr'],
+                                         weight_decay=self.opt_p['net']['weight_decay'])
+        if self.reg_p['reg_name'] != None and len(list(self.reg.parameters()))>0:
+            self.train_reg_if = True
+        else:
+            self.train_reg_if = False
+        if self.train_reg_if:
+            self.reg_opt = represent.get_opt(opt_type=self.opt_p['reg']['opt_name'],
+                                            parameters=self.reg.parameters(),lr=self.opt_p['reg']['lr'],
+                                            weight_decay=self.opt_p['reg']['weight_decay'])
+
 
     def init_train(self):
         de_para_dict = {'task_name':self.data_p['ymode'],'train_epoch':10,'loss_fn':'mse'}
@@ -122,7 +134,7 @@ class rssnet(object):
             self.loss_fn = nn.MSELoss()
         # print('train_p : ',self.train_p)
 
-    def train(self,x=None):
+    def train(self,get_x=None):
         # Construct loss function
         if self.data_p['return_data_type'] == 'tensor':
             for ite in range(self.train_p['train_epoch']):
@@ -132,11 +144,15 @@ class rssnet(object):
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
                 if self.reg_p['reg_name'] != None:
-                    loss += self.reg(x) #TODO add 
+                    loss += self.reg(get_x(self.net))
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
+                if self.train_reg_if:
+                    self.reg_opt.zero_grad()
                 loss.backward()
                 self.net_opt.step()
+                if self.train_reg_if:
+                    self.reg_opt.step()
                 # test and val loss
                 with t.no_grad():
                     pre = self.net(self.data_train['obs_tensor'][0][(self.mask==0).reshape(-1)])
@@ -149,7 +165,12 @@ class rssnet(object):
                     target = self.data_train['real_tensor'][1].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
+                    if self.reg_p['reg_name'] != None:
+                        self.log('reg_loss',self.reg(get_x(self.net)).item())
+                        
             print('loss on test set',self.log_dict['test_loss'][-1])
+            if self.reg_p['reg_name'] != None:
+                print('loss of regularizer',self.log_dict['reg_loss'][-1])
             
 
 
