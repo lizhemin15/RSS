@@ -33,7 +33,7 @@ The code-base has additional support for:
 The repo now supports training a NeRF model on a scene from the ScanNet dataset. I personally found setting up the ScanNet dataset to be a bit tricky. Please find some instructions/notes in [ScanNet.md](ScanNet.md).
 
 
-## TODO:
+
 * Voxel pruning during training and/or inference
 * Accelerated ray tracing, early ray termination
 
