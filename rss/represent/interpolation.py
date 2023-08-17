@@ -62,10 +62,10 @@ class Interpolation_cls(t.nn.Module):
             add_index,weight = bina_index(i,d,weights) # [B,d], [B,1]
             new_index = x_index+add_index
             tau_vox[i,:,:] = tau[list(new_index.T)]*weight
-        y = t.sum(tau_vox,dim=0)
-        min_y = t.min(y)
-        max_y = t.max(y)
-        y = (y-min_y)/(max_y-min_y)*2-1
+        y = t.sum(tau_vox,dim=0) # [B,F]
+        # min_y = t.min(y)
+        # max_y = t.max(y)
+        # y = (y-min_y)/(max_y-min_y)*2-1
         if self.return_type == "feature":
             return y
         elif self.return_type == "combine":

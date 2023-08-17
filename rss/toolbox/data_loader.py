@@ -80,6 +80,7 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         elif ymode == 'denoising':
             noisy_data = reshape2(noisy_data)
             noisy_data = t.tensor(noisy_data).to(t.float32)
+            noisy_data = to_device(noisy_data,gpu_id)
             if out_dim_one:
                 data_train_loader = (xin,noisy_data.reshape(-1,1))
                 # data_val_loader = (xin[(mask==0).reshape(-1)],data[mask==0])
