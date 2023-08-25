@@ -98,33 +98,33 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
 
 
 
-    if x_mode in ['inr','inr_feature','inr_combine']:
-        # return a generator
-        # train: used to train, val: the remaind data, test: all data by sequence
-        # print(data.shape,mask.shape)
-        data_train_loader,data_val_loader,data_test_loader = get_data_loader(xin=inrarr,data=data,
-                                                            mask=mask,batch_size=batch_size,shuffle=shuffle_if,
-                                                            noisy_data=noisy_data,ymode=ymode)
-        return {'train_loader':data_train_loader,'val_loader':data_val_loader,'test_loader':data_test_loader}
+    # if x_mode in ['inr','inr_feature','inr_combine']:
+    #     # return a generator
+    #     # train: used to train, val: the remaind data, test: all data by sequence
+    #     # print(data.shape,mask.shape)
+    #     data_train_loader,data_val_loader,data_test_loader = get_data_loader(xin=inrarr,data=data,
+    #                                                         mask=mask,batch_size=batch_size,shuffle=shuffle_if,
+    #                                                         noisy_data=noisy_data,ymode=ymode)
+    #     return {'train_loader':data_train_loader,'val_loader':data_val_loader,'test_loader':data_test_loader}
     
 
-    elif x_mode in ['splitinr','dmf','sparse','tf','dip']:
-        # return a list
-        reshape_cor_list = []
-        for cor in cor_list:
-            reshape_cor_list.append(t.tensor(cor.reshape(-1,1)).to(t.float32))
-        return_list = [reshape_cor_list]
-        if ymode == 'completion':
-            return_list.append(t.tensor(data).to(t.float32))
-        else:
-            return_list.append(t.tensor(noisy_data).to(t.float32))
-        return_list.append(t.tensor(data).to(t.float32))
-        return_list.append(mask)
-        return return_list
+    # elif x_mode in ['splitinr','dmf','sparse','tf','dip']:
+    #     # return a list
+    #     reshape_cor_list = []
+    #     for cor in cor_list:
+    #         reshape_cor_list.append(t.tensor(cor.reshape(-1,1)).to(t.float32))
+    #     return_list = [reshape_cor_list]
+    #     if ymode == 'completion':
+    #         return_list.append(t.tensor(data).to(t.float32))
+    #     else:
+    #         return_list.append(t.tensor(noisy_data).to(t.float32))
+    #     return_list.append(t.tensor(data).to(t.float32))
+    #     return_list.append(mask)
+    #     return return_list
 
-    else:
-        return None
-        # raise('Wrong x_mode= ',str(x_mode))
+    # else:
+    #     return None
+    #     # raise('Wrong x_mode= ',str(x_mode))
 
 def reshape2(data):
     xshape = data.shape

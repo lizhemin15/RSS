@@ -3,6 +3,7 @@ import torch.nn as nn
 from rss.represent.tensor import DMF,TF
 from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
+from rss.represent.unn import UNN
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
@@ -20,6 +21,8 @@ def get_nn(parameter={}):
         net = TF(parameter)
     elif net_name == 'Interpolation':
         net = Interpolation(parameter)
+    elif net_name == 'UNN':
+        net = UNN(parameter)
     else:
         raise('Wrong net_name = ',net_name)
     return net
