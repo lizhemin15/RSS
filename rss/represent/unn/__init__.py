@@ -1,6 +1,6 @@
-from models.resnet import ResNet
-from models.unet import UNet
-from models.skip import skip
+from rss.represent.unn.models.resnet import ResNet
+from rss.represent.unn.models.unet import UNet
+from rss.represent.unn.models.skip import skip
 import torch
 
 
