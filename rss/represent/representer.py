@@ -21,7 +21,7 @@ def get_nn(parameter={}):
         net = TF(parameter)
     elif net_name == 'Interpolation':
         net = Interpolation(parameter)
-    elif net_name == 'UNN':
+    elif net_name in ['UNet','ResNet','skip']:
         net = UNN(parameter)
     else:
         raise('Wrong net_name = ',net_name)

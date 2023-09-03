@@ -122,15 +122,23 @@ class rssnet(object):
 
     def train(self,get_x=None):
         # Construct loss function
-        if self.data_p['return_data_type'] == 'tensor':
+        if self.data_p['return_data_type'] == 'random':
+            unn_index = 0
+        else:
+            unn_index = 1
+        if self.data_p['return_data_type'] in ['tensor','random']:
             for ite in range(self.train_p['train_epoch']):
-                pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
+                if self.net_p['net_name'] in ['UNet','ResNet','skip']:
+                    pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+                    pre = pre.reshape(self.data_p['data_shape'])
+                else:
+                    pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
                 if self.data_p['pre_full'] == True:
                     pre = pre[self.mask==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
                 if self.reg_p['reg_name'] != None:
-                    loss += self.reg(get_x(self.net))
+                    loss += self.reg(get_x(self.net,self.data_train))
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
                 if self.train_reg_if:
@@ -141,18 +149,26 @@ class rssnet(object):
                     self.reg_opt.step()
                 # test and val loss
                 with t.no_grad():
-                    pre = self.net(self.data_train['obs_tensor'][0][(self.mask==0).reshape(-1)])
+                    if self.net_p['net_name'] in ['UNet','ResNet','skip']:
+                        pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+                        pre = pre.reshape(self.data_p['data_shape'])
+                    else:
+                        pre = self.net(self.data_train['obs_tensor'][0][(self.mask==0).reshape(-1)])
                     if self.data_p['pre_full'] == True:
                         pre = pre[self.mask==0]
                     target = self.data_train['obs_tensor'][1][(self.mask==0).reshape(-1)].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
-                    pre = self.net(self.data_train['real_tensor'][0])
+                    if self.net_p['net_name'] in ['UNet','ResNet','skip']:
+                        pre = self.net(self.data_train['real_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+                        pre = pre.reshape(self.data_p['data_shape'])
+                    else:
+                        pre = self.net(self.data_train['real_tensor'][0])
                     target = self.data_train['real_tensor'][1].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
                     if self.reg_p['reg_name'] != None:
-                        self.log('reg_loss',self.reg(get_x(self.net)).item())
+                        self.log('reg_loss',self.reg(get_x(self.net,self.data_train)).item())
                         
             print('loss on test set',self.log_dict['test_loss'][-1])
             if self.reg_p['reg_name'] != None:
@@ -176,7 +192,15 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
         if self.show_p['show_content'] == 'recovered':
-            pre_img = self.net(self.data_train['obs_tensor'][0])
+            if self.net_p['net_name'] in ['UNet','ResNet','skip']:
+                if self.data_p['return_data_type'] == 'random':
+                    unn_index = 0
+                else:
+                    unn_index = 1
+                pre_img = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+                pre_img = pre_img.reshape(self.data_p['data_shape'])
+            else:
+                pre_img = self.net(self.data_train['obs_tensor'][0])
             show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
         elif self.show_p['show_content'] == 'original':
             show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()

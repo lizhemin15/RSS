@@ -8,7 +8,7 @@ def UNN(parameter):
     de_para_dict = {'net_name':'UNet',
                     'input_depth': 2,
                     'pad' : 'reflection',
-                    'num_output_channels' : 3}
+                    'num_output_channels':3}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now

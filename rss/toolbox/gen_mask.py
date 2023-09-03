@@ -61,6 +61,6 @@ def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
                 mask[::down_sample_rate[0],::down_sample_rate[1],::down_sample_rate[2],::down_sample_rate[3]] = 1
             else:
                 raise('Do not support the dim of tensor > 4')
-            return mask
+        return mask
     else:
         raise('Wrong mask type = ',mask_type)

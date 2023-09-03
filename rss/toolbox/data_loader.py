@@ -63,7 +63,7 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
             raise('Wrong ymode = ',ymode)
         return [data_train_loader,data_val_loader,data_test_loader]
 
-    def get_data_tensor(xin,data,mask,batch_size,shuffle,ymode='completion',noisy_data=None):
+    def get_data_tensor(xin,data,ymode='completion',noisy_data=None,random_if=False):
         xin = t.tensor(xin).to(t.float32)
         # mask = t.tensor(mask).to(t.float32)
         data = t.tensor(data).to(t.float32)
@@ -71,7 +71,8 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         # mask = to_device(mask,gpu_id)
         data = to_device(data,gpu_id)
         # print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
-        
+        if random_if:
+            xin = to_device(t.randn(data.shape),gpu_id)
         if ymode == 'completion':
             if out_dim_one:
                 data_train_loader = (xin,data.reshape(-1,1))
@@ -92,9 +93,13 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
 
     if return_data_type == 'tensor':
         data_train_loader,data_test_loader = get_data_tensor(xin=inrarr,data=data,
-                                                            mask=mask,batch_size=batch_size,shuffle=shuffle_if,
                                                             noisy_data=noisy_data,ymode=ymode)
         return {'obs_tensor':data_train_loader,'real_tensor':data_test_loader}
+    elif return_data_type == 'random':
+        data_train_loader,data_test_loader = get_data_tensor(xin=inrarr,data=data,
+                                                            noisy_data=noisy_data,ymode=ymode,random_if=True)
+        return {'obs_tensor':data_train_loader,'real_tensor':data_test_loader}
+
 
 
 
