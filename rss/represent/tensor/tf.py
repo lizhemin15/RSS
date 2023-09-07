@@ -13,6 +13,8 @@ class TensorFactorization(nn.Module):
             for i in range(len(dim_cor)):
                 net_list.append(nn.Linear(in_features=dim_cor[i], out_features=dim_ori[i], bias=False))
             self.net_list = nn.ModuleList(net_list)
+        elif self.mode == 'cp':
+            pass
         elif self.mode == 'tensor':
             stdv = 1 / math.sqrt(dim_ori[0])*1e-3
             self.G = torch.nn.Parameter((torch.randn(dim_ori)-0.5)*2*stdv)
