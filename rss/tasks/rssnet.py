@@ -3,6 +3,7 @@ from rss.represent.utils import to_device
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch as t
+import numpy as np
 t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 
@@ -159,6 +160,7 @@ class rssnet(object):
                     target = self.data_train['obs_tensor'][1][(self.mask==0).reshape(-1)].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
+
                     if self.net_p['net_name'] in ['UNet','ResNet','skip']:
                         pre = self.net(self.data_train['real_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                         pre = pre.reshape(self.data_p['data_shape'])
@@ -169,6 +171,7 @@ class rssnet(object):
                     self.log('test_loss',loss.item())
                     if self.reg_p['reg_name'] != None:
                         self.log('reg_loss',self.reg(get_x(self.net,self.data_train)).item())
+
                         
             print('loss on test set',self.log_dict['test_loss'][-1])
             if self.reg_p['reg_name'] != None:
@@ -202,6 +205,7 @@ class rssnet(object):
             else:
                 pre_img = self.net(self.data_train['obs_tensor'][0])
             show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
+            print('PSNR=',self.cal_psnr(show_img,self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()),'dB')
         elif self.show_p['show_content'] == 'original':
             show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
         if self.show_p['show_type'] == 'gray_img':
@@ -214,9 +218,25 @@ class rssnet(object):
             raise('Wrong show_type in show_p:',self.show_p['show_type'])
         plt.axis('off')
         plt.show()
+        
 
     def save(self):
         de_para_dict = {}
         for key in de_para_dict.keys():
             param_now = self.save_p.get(key,de_para_dict.get(key))
             self.save_p[key] = param_now
+
+
+    def cal_psnr(self,imageA, imageB):
+        def mse(imageA, imageB):
+            err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+            err /= float(imageA.shape[0] * imageA.shape[1])
+            return err
+        
+        def psnr(imageA, imageB):
+            max_pixel = np.max(imageB)
+            mse_value = mse(imageA, imageB)
+            if mse_value == 0:
+                return 100
+            return 20 * np.log10(max_pixel / np.sqrt(mse_value))
+        return psnr(imageA, imageB)

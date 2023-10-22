@@ -50,14 +50,16 @@ class KNN_net(nn.Module):
                 inf_mask = np.isinf(dist)
                 inf_row = np.any(inf_mask, axis=1)
                 dist[inf_row] = inf_mask[inf_row]
-                dist = dist-np.min(dist,axis=1,keepdims=True)+1e-7
-                dist = dist/np.sum(dist,axis=1)
+                #dist = dist-np.min(dist,axis=1,keepdims=True)+1e-7
+                #dist = dist/np.sum(dist,axis=1,keepdims=True)
         elif self.weights == 'uniform':
             pass
         else:
             raise('Wrong weighted method=',self.weights)
-        dist = np.expand_dims(dist, axis=2)
         self.neighbor_dist = torch.tensor(dist)
+        self.neighbor_dist = torch.nn.functional.softmax(self.neighbor_dist)
+        self.neighbor_dist = self.neighbor_dist.unsqueeze(2)
+        
 
 
 
