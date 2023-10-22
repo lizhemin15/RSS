@@ -16,7 +16,7 @@ from rss.tasks import rssnet
 from rss.represent import get_reg,get_nn
 
 
-__all__ = ['nerf','rssnet','get_reg','get_nn']
+__all__ = ['rssnet','get_reg','get_nn']
 
 
         

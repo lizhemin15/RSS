@@ -4,6 +4,7 @@ from rss.represent.tensor import DMF,TF
 from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
 from rss.represent.unn import UNN
+from rss.represent.kernel import KNN
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
@@ -23,6 +24,8 @@ def get_nn(parameter={}):
         net = Interpolation(parameter)
     elif net_name in ['UNet','ResNet','skip']:
         net = UNN(parameter)
+    elif net_name == 'KNN':
+        net = KNN(parameter)
     else:
         raise('Wrong net_name = ',net_name)
     return net

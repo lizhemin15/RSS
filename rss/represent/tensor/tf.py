@@ -18,6 +18,8 @@ class TensorFactorization(nn.Module):
         elif self.mode == 'tensor':
             stdv = 1 / math.sqrt(dim_ori[0])*1e-3
             self.G = torch.nn.Parameter((torch.randn(dim_ori)-0.5)*2*stdv)
+        else:
+            raise('Not suppose mode = ',self.mode)
     
     def forward(self,x):
         # x is a list, every element is a tensor
