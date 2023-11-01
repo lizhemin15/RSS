@@ -219,11 +219,13 @@ class rssnet(object):
         else:
             raise('Wrong show_type in show_p:',self.show_p['show_type'])
         plt.axis('off')
+        if self.save_p['save_if'] == True:
+            plt.savefig(self.save_p['save_path'], bbox_inches='tight', pad_inches=0)
         plt.show()
         
 
     def save(self):
-        de_para_dict = {}
+        de_para_dict = {'save_if':False,'save_path':None}
         for key in de_para_dict.keys():
             param_now = self.save_p.get(key,de_para_dict.get(key))
             self.save_p[key] = param_now
