@@ -211,7 +211,7 @@ class rssnet(object):
         elif self.show_p['show_content'] == 'original':
             show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
         if self.show_p['show_type'] == 'gray_img':
-            plt.imshow(show_img,'gray')
+            plt.imshow(show_img,'gray',vmin=0,vmax=1)
         elif self.show_p['show_type'] == 'red_img':
             import seaborn as sns
             sns.set()
