@@ -129,7 +129,7 @@ class rssnet(object):
         else:
             unn_index = 1
         if self.data_p['return_data_type'] in ['tensor','random']:
-            if hasattr(self, 'log_dict') and ('time' not in self.log_dict):
+            if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
                 start_time = time.time()
             else:
                 start_time = self.log_dict['time'][0]
