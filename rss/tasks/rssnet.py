@@ -130,12 +130,10 @@ class rssnet(object):
             unn_index = 1
         if self.data_p['return_data_type'] in ['tensor','random']:
             if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
-                start_time = time.time()
-            else:
-                start_time = self.log_dict['time'][0]
+                self.start_time = time.time()
             for ite in range(self.train_p['train_epoch']):
                 time_now = time.time()
-                self.log('time',time_now-start_time)
+                self.log('time',time_now-self.start_time)
                 if self.net_p['net_name'] in ['UNet','ResNet','skip']:
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
