@@ -171,8 +171,9 @@ class rssnet(object):
                         pre = pre.reshape(self.data_p['data_shape'])
                     else:
                         pre = self.net(self.data_train['real_tensor'][0])
-                    self.pre = pre
                     target = self.data_train['real_tensor'][1].reshape(pre.shape)
+                    self.pre = pre
+                    self.target = target
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
                     self.log('psnr',self.cal_psnr(pre,target).item())
