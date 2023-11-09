@@ -4,6 +4,7 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch as t
 import numpy as np
+import time
 t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 
@@ -128,7 +129,11 @@ class rssnet(object):
         else:
             unn_index = 1
         if self.data_p['return_data_type'] in ['tensor','random']:
+            if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
+                self.start_time = time.time()
             for ite in range(self.train_p['train_epoch']):
+                time_now = time.time()
+                self.log('time',time_now-self.start_time)
                 if self.net_p['net_name'] in ['UNet','ResNet','skip']:
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
@@ -170,11 +175,13 @@ class rssnet(object):
                     target = self.data_train['real_tensor'][1].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
+                    self.log('psnr',self.cal_psnr(pre,target).item())
                     if self.reg_p['reg_name'] != None:
                         self.log('reg_loss',self.reg(get_x(self.net,self.data_train)).item())
 
                         
             print('loss on test set',self.log_dict['test_loss'][-1])
+            print('PSNR=',self.log_dict['psnr'][-1],'dB')
             if self.reg_p['reg_name'] != None:
                 print('loss of regularizer',self.log_dict['reg_loss'][-1])
             
@@ -206,11 +213,11 @@ class rssnet(object):
             else:
                 pre_img = self.net(self.data_train['obs_tensor'][0])
             show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
-            print('PSNR=',self.cal_psnr(show_img,self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()),'dB')
+            #print('PSNR=',self.cal_psnr(show_img,self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()),'dB')
         elif self.show_p['show_content'] == 'original':
             show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
         if self.show_p['show_type'] == 'gray_img':
-            plt.imshow(show_img,'gray')
+            plt.imshow(show_img,'gray',vmin=0,vmax=1)
         elif self.show_p['show_type'] == 'red_img':
             import seaborn as sns
             sns.set()
@@ -218,26 +225,41 @@ class rssnet(object):
         else:
             raise('Wrong show_type in show_p:',self.show_p['show_type'])
         plt.axis('off')
+        if self.save_p['save_if'] == True:
+            plt.savefig(self.save_p['save_path'], bbox_inches='tight', pad_inches=0)
         plt.show()
         
 
     def save(self):
-        de_para_dict = {}
+        de_para_dict = {'save_if':False,'save_path':None}
         for key in de_para_dict.keys():
             param_now = self.save_p.get(key,de_para_dict.get(key))
             self.save_p[key] = param_now
 
-
     def cal_psnr(self,imageA, imageB):
         def mse(imageA, imageB):
-            err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+            err = t.sum((imageA.float() - imageB.float()) ** 2)
             err /= float(imageA.shape[0] * imageA.shape[1])
             return err
         
         def psnr(imageA, imageB):
-            max_pixel = np.max(imageB)
+            max_pixel = t.max(imageB)
             mse_value = mse(imageA, imageB)
             if mse_value == 0:
                 return 100
-            return 20 * np.log10(max_pixel / np.sqrt(mse_value))
+            return 20 * t.log10(max_pixel / t.sqrt(mse_value))
+        
         return psnr(imageA, imageB)
+    # def cal_psnr(self,imageA, imageB):
+    #     def mse(imageA, imageB):
+    #         err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+    #         err /= float(imageA.shape[0] * imageA.shape[1])
+    #         return err
+        
+    #     def psnr(imageA, imageB):
+    #         max_pixel = np.max(imageB)
+    #         mse_value = mse(imageA, imageB)
+    #         if mse_value == 0:
+    #             return 100
+    #         return 20 * np.log10(max_pixel / np.sqrt(mse_value))
+    #     return psnr(imageA, imageB)

@@ -20,16 +20,17 @@ class KNN_net(nn.Module):
     def forward(self,x):
         G = self.G_net(None) # Torch, shape: parameter['sizes']
         G = tb.reshape2(G) # Torch, shape: (\prod xshape,1)
-        return torch.mean(G[self.neighbor_index]*self.neighbor_dist.to(G.device).to(torch.float32),dim=1).reshape(self.sizes)
+        return torch.sum(G[self.neighbor_index]*self.neighbor_dist.to(G.device).to(torch.float32),dim=1).reshape(self.sizes)
 
     def update_neighbor(self,mode='cor',n_neighbors=1,mask=None,n_components=1,labda=1):
         # get neighbor_index
         # mode = 'cor','patch','PCA'
         # X shape (n_samples,n_features)
+        self.mask = mask
         if mode == 'cor':
             feature = self.G_cor.copy()
         elif mode == 'patch':
-            G = self.G_net(None).detach().cpu().numpy()
+            G = self.forward(None).detach().cpu().numpy()
             if len(G.shape) == 2:
                 feature_patch = patch_feature(G,n_components)
                 feature_patch = rearrange(feature_patch,'a b c -> (a b) (c)')
@@ -37,7 +38,7 @@ class KNN_net(nn.Module):
             else:
                 raise('neighbor mode patch only suppose the 2-dimension shape, not suppose your data shape:',G.shape)
         elif mode == 'PCA':
-            G = self.G_net(None).detach().cpu().numpy()
+            G = self.forward(None).detach().cpu().numpy()
             if len(G.shape) == 2:
                 feature_PCA = PCA_feature(G,n_components)
                 feature_PCA = rearrange(feature_PCA,'a b c -> (a b) (c)')
@@ -51,7 +52,8 @@ class KNN_net(nn.Module):
             trainx = feature
             testx = feature
         else:
-            trainx = feature[(mask==1).reshape(-1,)]
+            trainx = feature.copy()
+            trainx[(mask==0).reshape(-1,)] = 1e6
             testx = feature
         neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors)
         neigh.fit(trainx)
@@ -65,12 +67,15 @@ class KNN_net(nn.Module):
                 dist[inf_row] = inf_mask[inf_row]
                 #dist = dist-np.min(dist,axis=1,keepdims=True)+1e-7
                 #dist = dist/np.sum(dist,axis=1,keepdims=True)
+        elif self.weights == 'softmax':
+            dist = np.exp(-dist)
         elif self.weights == 'uniform':
             dist = np.ones(dist.shape)
         else:
             raise('Wrong weighted method=',self.weights)
+        dist = dist/np.sum(dist,axis=1,keepdims=True)
         self.neighbor_dist = torch.tensor(dist)
-        self.neighbor_dist = torch.nn.functional.softmax(self.neighbor_dist)
+        #self.neighbor_dist = torch.nn.functional.softmax(self.neighbor_dist)
         self.neighbor_dist = self.neighbor_dist.unsqueeze(2)
     
 def my_meshgrid(x,y):
@@ -116,4 +121,6 @@ def KNN(parameter):
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
     return KNN_net(parameter)
+
+
 
