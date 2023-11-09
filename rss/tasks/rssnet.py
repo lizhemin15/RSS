@@ -122,7 +122,7 @@ class rssnet(object):
             self.loss_fn = nn.MSELoss()
         # print('train_p : ',self.train_p)
 
-    def train(self,get_x=None):
+    def train(self,get_x=None,verbose=True):
         # Construct loss function
         if self.data_p['return_data_type'] == 'random':
             unn_index = 0
@@ -180,11 +180,11 @@ class rssnet(object):
                     if self.reg_p['reg_name'] != None:
                         self.log('reg_loss',self.reg(get_x(self.net,self.data_train)).item())
 
-                        
-            print('loss on test set',self.log_dict['test_loss'][-1])
-            print('PSNR=',self.log_dict['psnr'][-1],'dB')
-            if self.reg_p['reg_name'] != None:
-                print('loss of regularizer',self.log_dict['reg_loss'][-1])
+            if verbose == True:    
+                print('loss on test set',self.log_dict['test_loss'][-1])
+                print('PSNR=',self.log_dict['psnr'][-1],'dB')
+                if self.reg_p['reg_name'] != None:
+                    print('loss of regularizer',self.log_dict['reg_loss'][-1])
             
 
 
