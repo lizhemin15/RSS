@@ -3,6 +3,7 @@ from sklearn import neighbors
 import torch.nn as nn
 import torch
 from rss.represent.tensor import TF
+from rss.represent.unn import UNN
 import rss.toolbox as tb
 import numpy as np
 from einops import rearrange
@@ -11,7 +12,12 @@ class KNN_net(nn.Module):
     def __init__(self,parameter):
         super().__init__()
         # decomposition with tucker
-        self.G_net = TF(parameter)
+        if parameter['mode'] in ['tucker','tensor']:
+            self.G_net = TF(parameter)
+        elif parameter['mode'] in ['UNet','ResNet','skip']:
+            self.G_net = UNN({'net_name':parameter['mode']})
+        else:
+            raise('Wrong mode = ',parameter['mode'])
         self.sizes = parameter['sizes']
         self.weights = parameter['weights']
         _, self.G_cor = tb.get_cor(xshape=parameter['sizes'],xrange=1) # Numpy array, (\prod xshape,len(xshape))
