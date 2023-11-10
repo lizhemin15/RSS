@@ -17,6 +17,8 @@ class rssnet(object):
         self.init_data()
         self.init_opt()
         self.init_train()
+        self.init_save()
+        self.init_show()
         self.update_parameter(parameter_list)
         
     def init_parameter(self,parameters,parameter_list):
@@ -121,6 +123,18 @@ class rssnet(object):
         if self.train_p['loss_fn'] == 'mse':
             self.loss_fn = nn.MSELoss()
         # print('train_p : ',self.train_p)
+
+    def init_save(self):
+        de_para_dict = {'save_if':False}
+        for key in de_para_dict.keys():
+            param_now = self.save_p.get(key,de_para_dict.get(key))
+            self.save_p[key] = param_now
+
+    def init_show(self):
+        de_para_dict = {'show_type':'gray_img','show_content':'original'}
+        for key in de_para_dict.keys():
+            param_now = self.show_p.get(key,de_para_dict.get(key))
+            self.show_p[key] = param_now
 
     def train(self,get_x=None,verbose=True):
         # Construct loss function
