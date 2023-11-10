@@ -2,7 +2,7 @@ from sklearn.decomposition import PCA
 from sklearn import neighbors
 import torch.nn as nn
 import torch
-from rss.represent.tensor import TF
+from rss.represent.tensor import DMF,TF
 from rss.represent.unn import UNN
 import rss.toolbox as tb
 import numpy as np
@@ -14,6 +14,12 @@ class KNN_net(nn.Module):
         # decomposition with tucker
         if parameter['mode'] in ['tucker','tensor']:
             self.G_net = TF(parameter)
+        elif parameter['mode'] in ['DMF']:
+            sizes = []
+            sizes.append(parameter['sizes'][0])
+            sizes.extend(parameter['dim_cor'])
+            sizes.append(parameter['sizes'][1])
+            self.G_net = DMF({'sizes':sizes})
         elif parameter['mode'] in ['UNet','ResNet','skip']:
             self.G_net = UNN({'net_name':parameter['mode']})
         else:
