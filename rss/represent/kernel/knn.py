@@ -24,7 +24,7 @@ class KNN_net(nn.Module):
         self.update_neighbor()
 
     def forward(self,x):
-        G = self.G_net(None) # Torch, shape: parameter['sizes']
+        G = self.G_net(x) # Torch, shape: parameter['sizes']
         G = tb.reshape2(G) # Torch, shape: (\prod xshape,1)
         return torch.sum(G[self.neighbor_index]*self.neighbor_dist.to(G.device).to(torch.float32),dim=1).reshape(self.sizes)
 
