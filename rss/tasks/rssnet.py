@@ -9,7 +9,7 @@ t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 
 class rssnet(object):
-    def __init__(self,parameters) -> None:
+    def __init__(self,parameters,verbose=True) -> None:
         parameter_list = ['net_p','reg_p','data_p','opt_p','train_p','show_p','save_p']
         self.init_parameter(parameters,parameter_list)
         self.init_net()
@@ -19,7 +19,7 @@ class rssnet(object):
         self.init_train()
         self.init_save()
         self.init_show()
-        self.update_parameter(parameter_list)
+        self.update_parameter(parameter_list,verbose)
         
     def init_parameter(self,parameters,parameter_list):
         """
@@ -44,11 +44,12 @@ class rssnet(object):
             param_now = parameters.get(key,{})
             setattr(self,key,param_now)
     
-    def update_parameter(self,parameter_list):
+    def update_parameter(self,parameter_list,verbose=True):
         self.parameter_all = {}
         for key in parameter_list:
             self.parameter_all[key] = getattr(self,key)
-            print(key,self.parameter_all[key])
+            if verbose:
+                print(key,self.parameter_all[key])
 
     def init_net(self):
         de_para_dict = {'net_name':'SIREN','gpu_id':0}
