@@ -82,7 +82,7 @@ class KNN_net(nn.Module):
                 #dist = dist-np.min(dist,axis=1,keepdims=True)+1e-7
                 #dist = dist/np.sum(dist,axis=1,keepdims=True)
         elif self.weights == 'softmax':
-            dist = np.exp(-dist*self.weights_alpha)
+            dist = np.exp(-dist**self.weights_alpha)
         elif self.weights == 'uniform':
             dist = np.ones(dist.shape)
         else:
