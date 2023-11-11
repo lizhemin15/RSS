@@ -26,6 +26,7 @@ class KNN_net(nn.Module):
             raise('Wrong mode = ',parameter['mode'])
         self.sizes = parameter['sizes']
         self.weights = parameter['weights']
+        self.weights_alpha = parameter.get('weights_alpha', 1)
         _, self.G_cor = tb.get_cor(xshape=parameter['sizes'],xrange=1) # Numpy array, (\prod xshape,len(xshape))
         self.update_neighbor()
 
@@ -77,10 +78,11 @@ class KNN_net(nn.Module):
                 inf_mask = np.isinf(dist)
                 inf_row = np.any(inf_mask, axis=1)
                 dist[inf_row] = inf_mask[inf_row]
+                dist = dist**self.weights_alpha
                 #dist = dist-np.min(dist,axis=1,keepdims=True)+1e-7
                 #dist = dist/np.sum(dist,axis=1,keepdims=True)
         elif self.weights == 'softmax':
-            dist = np.exp(-dist)
+            dist = np.exp(-dist*self.weights_alpha)
         elif self.weights == 'uniform':
             dist = np.ones(dist.shape)
         else:
