@@ -21,7 +21,7 @@ class KNN_net(nn.Module):
             sizes.append(parameter['sizes'][1])
             self.G_net = DMF({'sizes':sizes})
         elif parameter['mode'] in ['UNet','ResNet','skip']:
-            self.G_net = UNN({'net_name':parameter['mode'],'input_depth': 1,'num_output_channels':1'})
+            self.G_net = UNN({'net_name':parameter['mode'],'input_depth': 1,'num_output_channels':1})
         else:
             raise('Wrong mode = ',parameter['mode'])
         self.sizes = parameter['sizes']
