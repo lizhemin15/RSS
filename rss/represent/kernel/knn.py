@@ -21,18 +21,19 @@ class KNN_net(nn.Module):
             sizes.append(parameter['sizes'][1])
             self.G_net = DMF({'sizes':sizes})
         elif parameter['mode'] in ['UNet','ResNet','skip']:
-            self.G_net = UNN({'net_name':parameter['mode']})
+            self.G_net = UNN({'net_name':parameter['mode'],'input_depth': 1})
         else:
             raise('Wrong mode = ',parameter['mode'])
         self.sizes = parameter['sizes']
         self.weights = parameter['weights']
         self.weights_alpha = parameter.get('weights_alpha', 1)
+        self.mode = parameter['mode']
         _, self.G_cor = tb.get_cor(xshape=parameter['sizes'],xrange=1.01231546) # Numpy array, (\prod xshape,len(xshape))
         _, self.G_cor_test = tb.get_cor(xshape=parameter['sizes'],xrange=1) # Numpy array, (\prod xshape,len(xshape))
         self.update_neighbor()
 
     def forward(self,x):
-        G = self.G_net(x) # Torch, shape: parameter['sizes']
+        self.G = self.G_net(x) # Torch, shape: parameter['sizes']
         G = tb.reshape2(G) # Torch, shape: (\prod xshape,1)
         return torch.sum(G[self.neighbor_index]*self.neighbor_dist.to(G.device).to(torch.float32),dim=1).reshape(self.sizes)
 
@@ -45,7 +46,7 @@ class KNN_net(nn.Module):
             feature = self.G_cor.copy()
             feature_test = self.G_cor_test.copy()
         elif mode == 'patch':
-            G = self.forward(None).detach().cpu().numpy()
+            G = self.G.detach().cpu().numpy()#self.forward(None).detach().cpu().numpy()
             if len(G.shape) == 2:
                 feature_patch = patch_feature(G, n_components)
                 feature_patch = rearrange(feature_patch, 'a b c -> (a b) (c)')
@@ -56,7 +57,7 @@ class KNN_net(nn.Module):
             else:
                 raise('neighbor mode patch only suppose the 2-dimension shape, not suppose your data shape:', G.shape)
         elif mode == 'PCA':
-            G = self.forward(None).detach().cpu().numpy()
+            G = self.G.detach().cpu().numpy()#self.forward(None).detach().cpu().numpy()
             if len(G.shape) == 2:
                 feature_PCA = PCA_feature(G, n_components)
                 feature_PCA = rearrange(feature_PCA, 'a b c -> (a b) (c)')
