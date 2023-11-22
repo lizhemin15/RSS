@@ -27,7 +27,8 @@ class KNN_net(nn.Module):
         self.sizes = parameter['sizes']
         self.weights = parameter['weights']
         self.weights_alpha = parameter.get('weights_alpha', 1)
-        _, self.G_cor = tb.get_cor(xshape=parameter['sizes'],xrange=1) # Numpy array, (\prod xshape,len(xshape))
+        _, self.G_cor = tb.get_cor(xshape=parameter['sizes'],xrange=1.01231546) # Numpy array, (\prod xshape,len(xshape))
+        _, self.G_cor_test = tb.get_cor(xshape=parameter['sizes'],xrange=1) # Numpy array, (\prod xshape,len(xshape))
         self.update_neighbor()
 
     def forward(self,x):
@@ -35,43 +36,52 @@ class KNN_net(nn.Module):
         G = tb.reshape2(G) # Torch, shape: (\prod xshape,1)
         return torch.sum(G[self.neighbor_index]*self.neighbor_dist.to(G.device).to(torch.float32),dim=1).reshape(self.sizes)
 
-    def update_neighbor(self,mode='cor',n_neighbors=1,mask=None,n_components=1,labda=1):
-        # get neighbor_index
-        # mode = 'cor','patch','PCA'
-        # X shape (n_samples,n_features)
+    def update_neighbor(self, mode='cor', n_neighbors=1, mask=None, n_components=1, labda=1):
+        # 更新邻居索引
+        # mode: 'cor', 'patch', 'PCA'
+        # X shape (n_samples, n_features)
         self.mask = mask
         if mode == 'cor':
             feature = self.G_cor.copy()
+            feature_test = self.G_cor_test.copy()
         elif mode == 'patch':
             G = self.forward(None).detach().cpu().numpy()
             if len(G.shape) == 2:
-                feature_patch = patch_feature(G,n_components)
-                feature_patch = rearrange(feature_patch,'a b c -> (a b) (c)')
-                feature = mix_feature(self.G_cor,feature_patch,labda=labda)
+                feature_patch = patch_feature(G, n_components)
+                feature_patch = rearrange(feature_patch, 'a b c -> (a b) (c)')
+                feature = mix_feature(self.G_cor, feature_patch, labda=labda)
+                feature_patch_test = patch_feature(G, n_components)
+                feature_patch_test = rearrange(feature_patch_test, 'a b c -> (a b) (c)')
+                feature_test = mix_feature(self.G_cor_test, feature_patch_test, labda=labda)
             else:
-                raise('neighbor mode patch only suppose the 2-dimension shape, not suppose your data shape:',G.shape)
+                raise('neighbor mode patch only suppose the 2-dimension shape, not suppose your data shape:', G.shape)
         elif mode == 'PCA':
             G = self.forward(None).detach().cpu().numpy()
             if len(G.shape) == 2:
-                feature_PCA = PCA_feature(G,n_components)
-                feature_PCA = rearrange(feature_PCA,'a b c -> (a b) (c)')
-                feature = mix_feature(self.G_cor,feature_PCA,labda=labda)
+                feature_PCA = PCA_feature(G, n_components)
+                feature_PCA = rearrange(feature_PCA, 'a b c -> (a b) (c)')
+                feature = mix_feature(self.G_cor, feature_PCA, labda=labda)
+                feature_PCA_test = PCA_feature(G, n_components)
+                feature_PCA_test = rearrange(feature_PCA_test, 'a b c -> (a b) (c)')
+                feature_test = mix_feature(self.G_cor, feature_PCA_test, labda=labda)
             else:
-                raise('neighbor mode PCA only suppose the 2-dimension shape, not suppose your data shape:',G.shape)
+                raise('neighbor mode PCA only suppose the 2-dimension shape, not suppose your data shape:', G.shape)
         else:
-            raise('Wrong mode = ',mode)
-        
+            raise('Wrong mode = ', mode)
+
         if mask == None:
             trainx = feature
-            testx = feature
+            testx = feature_test
         else:
             trainx = feature.copy()
             trainx[(mask==0).reshape(-1,)] = 1e6
             testx = feature
+
         neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors)
         neigh.fit(trainx)
         dist, self.neighbor_index = neigh.kneighbors(testx)
-        # cal weight
+
+        # 计算权重
         if self.weights == 'distance':
             with np.errstate(divide="ignore"):
                 dist = 1.0 / dist
@@ -79,15 +89,16 @@ class KNN_net(nn.Module):
                 inf_row = np.any(inf_mask, axis=1)
                 dist[inf_row] = inf_mask[inf_row]
                 dist = dist**self.weights_alpha
-                #dist = dist-np.min(dist,axis=1,keepdims=True)+1e-7
-                #dist = dist/np.sum(dist,axis=1,keepdims=True)
+                #dist = dist - np.min(dist, axis=1, keepdims=True) + 1e-7
+                #dist = dist / np.sum(dist, axis=1, keepdims=True)
         elif self.weights == 'softmax':
-            dist = np.exp(-dist/self.weights_alpha**2)
+            dist = np.exp(-dist / self.weights_alpha**2)
         elif self.weights == 'uniform':
             dist = np.ones(dist.shape)
         else:
-            raise('Wrong weighted method=',self.weights)
-        dist = dist/np.sum(dist,axis=1,keepdims=True)
+            raise('Wrong weighted method=', self.weights)
+
+        dist = dist / np.sum(dist, axis=1, keepdims=True)
         self.neighbor_dist = torch.tensor(dist)
         #self.neighbor_dist = torch.nn.functional.softmax(self.neighbor_dist)
         self.neighbor_dist = self.neighbor_dist.unsqueeze(2)
