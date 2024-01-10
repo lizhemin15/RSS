@@ -111,7 +111,7 @@ def mix_feature(x_in,feature,labda=1):
     return np.concatenate((x_in_norm,feature_norm*labda),axis=1)
     
 def TDKNN(parameter):
-    de_para_dict = {'sizes':[100,100],'dim_cor':[100,100],'weights':'distance'}
+    de_para_dict = {'sizes':[100,100],'dim_cor':[100,100],'weights':'distance','mode':'tucker'}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
