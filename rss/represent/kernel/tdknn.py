@@ -59,6 +59,7 @@ class TDKNN_net(nn.Module):
             for i,Mx_i in enumerate(Mx_i_list):
                 #TODO add codes here
                 # Mx_i: Torch, shape: parameter['sizes'][i] \times  parameter['dim_cor'][i]
+                Mx_i = Mx_i.numpy()
                 feature = mix_feature(self.G_cor_list[i], Mx_i, labda=labda)
                 feature_test = mix_feature(self.G_cor_test_list[i], Mx_i, labda=labda)
                 feature_list.append(feature)
@@ -108,7 +109,6 @@ def normalization(x_in):
     return (x_in-min_value)/(max_value-min_value)
 
 def mix_feature(x_in,feature,labda=1):
-    print(x_in.shape,feature.shape)
     x_in_norm = normalization(x_in)/x_in.shape[-1]
     feature_norm = normalization(feature)/feature.shape[-1]
     return np.concatenate((x_in_norm,feature_norm*labda),axis=1)
