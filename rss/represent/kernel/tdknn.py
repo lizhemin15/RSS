@@ -26,7 +26,9 @@ class TDKNN_net(nn.Module):
         for i in range(len(self.G_net.net_list)):
             M_i = self.G_net.net_list[i].weight # Torch, shape:  parameter['sizes'][i] \times parameter['dim_cor'][i] 
             Mn_i = M_i[self.neighbor_index_list[i],:] # Torch, shape: parameter['sizes'][i] \times n_neighbors \times parameter['dim_cor'][i]
+            print('Mn_i shape:',Mn_i.shape)
             Mx_i = torch.sum(Mn_i*self.neighbor_dist_list[i].to(x.device).to(torch.float32),dim=1).narrow(1, 0, 1) # Weighted : Torch, shape: parameter['sizes'][i] \times parameter['dim_cor'][i] 
+            print('Mx_i shape:',Mx_i.shape)
             Mx_i_list.append(Mx_i)
         self.Mx_i_list = Mx_i_list
         return self.G_net.tucker_product(self.G_net.G,Mx_i_list) # Torch, shape: parameter['sizes']
@@ -56,9 +58,9 @@ class TDKNN_net(nn.Module):
             feature_test_list = []
             for i,Mx_i in enumerate(Mx_i_list):
                 #TODO add codes here
-                # Mx_i: Torch, shape: parameter['dim_cor'][i] \times parameter['sizes'][i]
+                # Mx_i: Torch, shape: parameter['sizes'][i] \times  parameter['dim_cor'][i]
                 feature = mix_feature(self.G_cor_list[i], Mx_i, labda=labda)
-                feature_test = mix_feature(self.G_cor_list[i], Mx_i, labda=labda)
+                feature_test = mix_feature(self.G_cor_test_list[i], Mx_i, labda=labda)
                 feature_list.append(feature)
                 feature_test_list.append(feature_test)
         else:
