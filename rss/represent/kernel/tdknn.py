@@ -103,8 +103,8 @@ class TDKNN_net(nn.Module):
 
 
 def normalization(x_in):
-    min_value = np.min(x_in.reshape(-1, 1, x_in.shape[-1]).numpy(), axis=0)
-    max_value = np.max(x_in.reshape(-1, 1, x_in.shape[-1]).numpy(), axis=0)
+    min_value = np.min(x_in.reshape(-1, 1, x_in.shape[-1]), axis=0)
+    max_value = np.max(x_in.reshape(-1, 1, x_in.shape[-1]), axis=0)
     return (x_in-min_value)/(max_value-min_value)
 
 def mix_feature(x_in,feature,labda=1):
