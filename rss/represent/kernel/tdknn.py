@@ -54,7 +54,7 @@ class TDKNN_net(nn.Module):
             Mx_i_list = self.Mx_i_list # self.forward(None).detach().cpu().numpy()
             feature_list = []
             feature_test_list = []
-            for Mx_i in Mx_i_list:
+            for i,Mx_i in enumerate(Mx_i_list):
                 #TODO add codes here
                 # Mx_i: Torch, shape: parameter['dim_cor'][i] \times parameter['sizes'][i]
                 feature = mix_feature(self.G_cor_list[i], Mx_i, labda=labda)
