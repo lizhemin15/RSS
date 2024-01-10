@@ -27,7 +27,7 @@ class TDKNN_net(nn.Module):
             M_i = self.G_net.net_list[i].weight # Torch, shape:  parameter['sizes'][i] \times parameter['dim_cor'][i] 
             Mn_i = M_i[self.neighbor_index_list[i],:] # Torch, shape: parameter['sizes'][i] \times n_neighbors \times parameter['dim_cor'][i]
             print('Mn_i shape:',Mn_i.shape)
-            Mx_i = torch.sum(Mn_i*self.neighbor_dist_list[i].to(x.device).to(torch.float32),dim=1).narrow(1, 0, 1) # Weighted : Torch, shape: parameter['sizes'][i] \times parameter['dim_cor'][i] 
+            Mx_i = torch.sum(Mn_i*self.neighbor_dist_list[i].to(x.device).to(torch.float32),dim=1) # Weighted : Torch, shape: parameter['sizes'][i] \times parameter['dim_cor'][i] 
             print('Mx_i shape:',Mx_i.shape)
             Mx_i_list.append(Mx_i)
         self.Mx_i_list = Mx_i_list
