@@ -108,6 +108,7 @@ def normalization(x_in):
     return (x_in-min_value)/(max_value-min_value)
 
 def mix_feature(x_in,feature,labda=1):
+    print(x_in.shape,feature.shape)
     x_in_norm = normalization(x_in)/x_in.shape[-1]
     feature_norm = normalization(feature)/feature.shape[-1]
     return np.concatenate((x_in_norm,feature_norm*labda),axis=1)
