@@ -164,7 +164,7 @@ class regularizer(nn.Module):
         self.ite_num += 1
         if self.ite_num%1000 == 0:
             self.M_old = M.detach().clone()
-        if self.ite_num<100:
+        if self.ite_num<1000:
             return 0
         else:
             return t.mean(M*(M-self.M_old))
