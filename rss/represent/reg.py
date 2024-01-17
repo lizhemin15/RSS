@@ -71,10 +71,11 @@ class regularizer(nn.Module):
             self.n = self.reg_parameter['n']
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
-            
         elif self.reg_name == 'INRR':
             net = get_nn(self.reg_parameter['inr_parameter'])
             self.net = nn.Sequential(net,nn.Softmax())
+        elif self.reg_name == 'RUBI':
+            self.ite_num = 0
 
     
 
@@ -87,6 +88,10 @@ class regularizer(nn.Module):
             return self.air(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'INRR':
             return self.inrr(x)*self.reg_parameter["coef"]
+        elif self.reg_name == 'RUBI':
+            return self.rubi(x)*self.reg_parameter["coef"]
+        else:
+            raise('Not support regularizer named ',self.reg_name)
 
 
     def tv(self,M):
@@ -154,3 +159,12 @@ class regularizer(nn.Module):
         A_1 = A_0 * (t.mm(Ones,Ones.T)-I_n) # A_1 将中间的元素都归零，作为邻接矩阵
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
         return L
+    
+    def rubi(self,M):
+        self.ite_num += 1
+        if self.ite_num%100 == 0:
+            self.M_old = M.detach()
+        if self.ite_num<100:
+            return 0
+        else:
+            return t.sum(M*(M-self.M_old))
