@@ -163,7 +163,7 @@ class regularizer(nn.Module):
     def rubi(self,M):
         self.ite_num += 1
         if self.ite_num%100 == 0:
-            self.M_old = M.detach()
+            self.M_old = M.detach().copy()
         if self.ite_num<100:
             return 0
         else:
