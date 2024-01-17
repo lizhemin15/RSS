@@ -35,7 +35,7 @@ def get_reg(parameter):
     elif reg_name == 'MultiReg':
         de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
     else:
-        pass
+        de_para_dict = {}
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
