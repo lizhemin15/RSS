@@ -159,7 +159,8 @@ class rssnet(object):
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
                 if self.reg_p['reg_name'] != None:
-                    loss += self.reg(pre)
+                    reg_loss = self.reg(pre)
+                    loss += reg_loss
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
                 if self.train_reg_if:
@@ -194,7 +195,7 @@ class rssnet(object):
                     self.log('psnr',self.cal_psnr(pre,target).item())
                     self.log('nmae',self.cal_nmae(pre,target).item())
                     if self.reg_p['reg_name'] != None:
-                        self.log('reg_loss',self.reg(get_x(self.net,self.data_train)).item())
+                        self.log('reg_loss',reg_loss.item())
 
             if verbose == True:    
                 print('loss on test set',self.log_dict['test_loss'][-1])
