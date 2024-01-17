@@ -162,9 +162,9 @@ class regularizer(nn.Module):
     
     def rubi(self,M):
         self.ite_num += 1
-        if self.ite_num%1000 == 0:
+        if self.ite_num%100 == 0:
             self.M_old = M.detach().clone()
-        if self.ite_num<1000:
+        if self.ite_num<100:
             return 0
         else:
-            return t.mean(M*(M-self.M_old))
+            return t.mean((M-self.M_old)**2)
