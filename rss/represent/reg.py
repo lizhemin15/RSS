@@ -167,4 +167,4 @@ class regularizer(nn.Module):
         if self.ite_num<100:
             return 0
         else:
-            return t.sum(M*(M-self.M_old))
+            return t.mean(M*(M-self.M_old))
