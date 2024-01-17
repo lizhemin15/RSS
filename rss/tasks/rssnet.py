@@ -275,7 +275,7 @@ class rssnet(object):
         if unseen_num<1e-3:
             return 0
         else:
-            return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre)))/unseen_num/(max_pixel-min_pixel)
+            return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
         pass
     # def cal_psnr(self,imageA, imageB):
     #     def mse(imageA, imageB):
