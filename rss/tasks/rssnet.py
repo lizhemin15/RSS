@@ -195,7 +195,10 @@ class rssnet(object):
                     self.log('psnr',self.cal_psnr(pre,target).item())
                     self.log('nmae',self.cal_nmae(pre,target).item())
                     if self.reg_p['reg_name'] != None:
-                        self.log('reg_loss',reg_loss.item())
+                        if isinstance(reg_loss, int):
+                            self.log('reg_loss',reg_loss)
+                        else:
+                            self.log('reg_loss',reg_loss.item())
 
             if verbose == True:    
                 print('loss on test set',self.log_dict['test_loss'][-1])
