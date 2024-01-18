@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 import math
-from rss.represent import get_nn
+from rss.represent.inr import SIREN
 
 class TensorFactorization(nn.Module):
     def __init__(self, dim_ori, dim_cor,mode='tucker'):
@@ -24,7 +24,7 @@ class TensorFactorization(nn.Module):
             net_list = []
             self.input_list = []
             for i in range(len(dim_cor)):
-                net_list.append(get_nn({'net_name':'SIREN','dim_in':1,'dim_hidden':dim_ori[i],'dim_out':1,'num_layers':2,'w0':1,'w0_initial':30.,'use_bias':True}))
+                net_list.append(SIREN({'dim_in':1,'dim_hidden':100,'dim_out':dim_ori[i],'num_layers':2,'w0':1,'w0_initial':30.,'use_bias':True}))
                 self.input_list.append(torch.linspace(-1,1,dim_cor[i]).reshape(-1,1))
             self.net_list = nn.ModuleList(net_list)
 
