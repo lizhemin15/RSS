@@ -34,6 +34,8 @@ def get_reg(parameter):
         de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
     elif reg_name == 'MultiReg':
         de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
+    elif reg_name == 'RUBI':
+        de_para_dict = {'coef': 1, "mode":None}
     else:
         de_para_dict = {"mode":None}
     for key in de_para_dict.keys():
