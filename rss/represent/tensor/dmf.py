@@ -28,7 +28,7 @@ class DMF_net(nn.Module):
             self.input_list.append(torch.linspace(-1,1,hidden_sizes[-1]).reshape(-1,1))
             self.net_list = nn.ModuleList(net_list)
         else:
-            return('Do not support mode named ',self.mode)
+            raise('Do not support mode named ',self.mode)
 
     def forward(self,*args):
         if self.mode == 'vanilla':
@@ -52,7 +52,7 @@ class DMF_net(nn.Module):
             self.pre = pre
             return self.pre[0]@self.pre[1].T
         else:
-            return('Do not support mode named ',self.mode)
+            raise('Do not support mode named ',self.mode)
 
 
 
