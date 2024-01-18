@@ -163,12 +163,11 @@ class regularizer(nn.Module):
         return L
     
     def rubi(self,M):
-        self.ite_num += 1
-        if self.ite_num%100 == 0:
+        if self.ite_num == 0:
             self.M_old = M.detach().clone()
-        if self.ite_num<100:
-            return 0
         else:
-            result = t.mean((M-self.M_old)**2)
-            print(result)
-            return result
+            self.M_old = M.detach().clone()*0.01+0.99*self.M_old
+        self.ite_num += 1
+        result = t.mean((M-self.M_old)**2)
+        print(result)
+        return result
