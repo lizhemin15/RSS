@@ -47,7 +47,7 @@ class DMF_net(nn.Module):
             pre = []
             for i in range(len(self.net_list)):
                 net_now = self.net_list[i]
-                input_now = self.input_list[i].to(self.G.device)
+                input_now = self.input_list[i].to(net_now)
                 pre.append(net_now(input_now))
             self.pre = pre
             return self.pre[0]@self.pre[1].T
