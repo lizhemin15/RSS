@@ -24,7 +24,7 @@ class TensorFactorization(nn.Module):
             net_list = []
             self.input_list = []
             for i in range(len(dim_cor)):
-                net_list.append(SIREN({'dim_in':1,'dim_hidden':256,'dim_out':dim_ori[i],'num_layers':2,'w0':1,'w0_initial':100.,'use_bias':True}))
+                net_list.append(SIREN({'dim_in':1,'dim_hidden':256,'dim_out':dim_ori[i],'num_layers':2,'w0':1,'w0_initial':30.,'use_bias':True}))
                 self.input_list.append(torch.linspace(-1,1,dim_cor[i]).reshape(-1,1))
             self.net_list = nn.ModuleList(net_list)
 
