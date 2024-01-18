@@ -168,7 +168,7 @@ class regularizer(nn.Module):
         else:
             self.M_old = M.detach().clone()*0.001+0.999*self.M_old
         self.ite_num += 1
-        result = t.mean((M-self.M_old)**2)
+        result = t.mean(M*(M-self.M_old))
         if self.ite_num%100==0:
             print(result)
         return result
