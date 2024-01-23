@@ -20,7 +20,6 @@ class rssnet(object):
         self.init_save()
         self.init_show()
         self.update_parameter(parameter_list,verbose)
-        print('test')
         
     def init_parameter(self,parameters,parameter_list):
         """
