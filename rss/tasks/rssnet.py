@@ -193,7 +193,7 @@ class rssnet(object):
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
                     self.log('psnr',self.cal_psnr(pre,target).item())
-                    self.log('nmae',self.cal_nmae(pre,target).item())
+                    self.log('nmae',self.cal_nmae(pre,target))
                     if self.reg_p['reg_name'] != None:
                         self.log('reg_loss',reg_loss)
 
