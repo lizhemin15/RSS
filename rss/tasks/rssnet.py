@@ -154,14 +154,19 @@ class rssnet(object):
                     pre = pre.reshape(self.data_p['data_shape'])
                 else:
                     pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
-                if self.data_p['pre_full'] == True:
-                    pre = pre[self.mask==1]
-                target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
-                loss = self.loss_fn(pre,target)
+                
+                loss = 0
+
                 if self.reg_p['reg_name'] != None:
                     if get_x == None:
                         reg_loss = self.reg(pre.reshape(self.data_p['data_shape']))
                     loss += reg_loss
+                    
+                if self.data_p['pre_full'] == True:
+                    pre = pre[self.mask==1]
+                target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
+                loss += self.loss_fn(pre,target)
+
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
                 if self.train_reg_if:
