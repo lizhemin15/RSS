@@ -158,6 +158,7 @@ class rssnet(object):
                     pre = pre[self.mask==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 loss = self.loss_fn(pre,target)
+                print('???')
                 if self.reg_p['reg_name'] != None:
                     reg_loss = self.reg(pre)
                     print(pre.shape)
