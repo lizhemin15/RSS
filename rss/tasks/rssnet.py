@@ -160,6 +160,7 @@ class rssnet(object):
                 loss = self.loss_fn(pre,target)
                 if self.reg_p['reg_name'] != None:
                     reg_loss = self.reg(pre)
+                    print(pre.shape)
                     loss += reg_loss
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
