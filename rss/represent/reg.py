@@ -38,6 +38,11 @@ def get_reg(parameter):
         de_para_dict = {'coef': 1, "mode":None}
     else:
         de_para_dict = {"mode":None}
+    if reg_name != "MultiReg":
+        de_para_dict["x_trans"] = "ori"
+        de_para_dict["factor"] = 1
+        de_para_dict["patch_size"] = 16
+        de_para_dict["stride"] = 16
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
@@ -67,6 +72,11 @@ class regularizer(nn.Module):
         super().__init__()
         self.reg_parameter = parameter
         self.reg_name = parameter['reg_name']
+        self.x_trans = parameter["x_trans"]
+        if self.x_trans != 'ori':
+            self.factor = parameter["factor"]
+            self.patch_size = parameter["patch_size"]
+            self.stride = parameter["stride"]
         # init opt parameters
         self.mode = self.reg_parameter['mode']
         if self.reg_name == 'AIR':
@@ -82,6 +92,8 @@ class regularizer(nn.Module):
     
 
     def forward(self,x):
+        if self.x_trans == 'ori':
+            pass
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':

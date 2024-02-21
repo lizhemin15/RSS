@@ -137,7 +137,7 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
 
-    def train(self,get_x=None,verbose=True):
+    def train(self,verbose=True):
         # Construct loss function
         if self.data_p['return_data_type'] == 'random':
             unn_index = 0
@@ -158,10 +158,10 @@ class rssnet(object):
                 loss = 0
 
                 if self.reg_p['reg_name'] != None:
-                    if get_x == None:
-                        reg_loss = self.reg(pre.reshape(self.data_p['data_shape']))
+                    reg_tensor = pre.reshape(self.data_p['data_shape'])
+                    reg_loss = self.reg(reg_tensor)
                     loss += reg_loss
-                    
+
                 if self.data_p['pre_full'] == True:
                     pre = pre[self.mask==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
