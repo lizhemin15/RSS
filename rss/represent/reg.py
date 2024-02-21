@@ -3,6 +3,7 @@ import torch as t
 import numpy as np
 from einops import rearrange
 from rss.represent import get_nn
+from rss import toolbox
 
 def to_device(obj,device):
     if t.cuda.is_available() and device != 'cpu':
@@ -92,8 +93,13 @@ class regularizer(nn.Module):
     
 
     def forward(self,x):
-        if self.x_trans == 'ori':
-            pass
+        if self.x_trans == 'patch':
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+        elif self.x_trans == 'down_sample':
+            x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
+        elif 'patch' in self.x_trans and 'down_sample' in self.x_trans:
+            x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
