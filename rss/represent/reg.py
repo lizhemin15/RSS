@@ -167,8 +167,8 @@ class regularizer(nn.Module):
         coor = t.linspace(-1,1,n).reshape(-1,1)
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)@self.net(coor).T
-        self.L = self.A2lap(self.A_0)
-        return t.trace(img.T@self.L@img)/(img.shape[0]*img.shape[1])
+        self.lap = self.A2lap(self.A_0)
+        return t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
 
     def A2lap(self,A_0):
         n = A_0.shape[0]
