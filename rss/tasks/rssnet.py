@@ -137,7 +137,7 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
 
-    def train(self,get_x=None,verbose=True):
+    def train(self,verbose=True):
         # Construct loss function
         if self.data_p['return_data_type'] == 'random':
             unn_index = 0
@@ -154,12 +154,19 @@ class rssnet(object):
                     pre = pre.reshape(self.data_p['data_shape'])
                 else:
                     pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
+                
+                loss = 0
+
+                if self.reg_p['reg_name'] != None:
+                    reg_tensor = pre.reshape(self.data_p['data_shape'])
+                    reg_loss = self.reg(reg_tensor)
+                    loss += reg_loss
+
                 if self.data_p['pre_full'] == True:
                     pre = pre[self.mask==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
-                loss = self.loss_fn(pre,target)
-                if self.reg_p['reg_name'] != None:
-                    loss += self.reg(get_x(self.net,self.data_train))
+                loss += self.loss_fn(pre,target)
+
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
                 if self.train_reg_if:
@@ -192,12 +199,14 @@ class rssnet(object):
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
                     self.log('psnr',self.cal_psnr(pre,target).item())
+                    self.log('nmae',self.cal_nmae(pre,target))
                     if self.reg_p['reg_name'] != None:
-                        self.log('reg_loss',self.reg(get_x(self.net,self.data_train)).item())
+                        self.log('reg_loss',reg_loss)
 
             if verbose == True:    
                 print('loss on test set',self.log_dict['test_loss'][-1])
                 print('PSNR=',self.log_dict['psnr'][-1],'dB')
+                print('NMAE=',self.log_dict['nmae'][-1])
                 if self.reg_p['reg_name'] != None:
                     print('loss of regularizer',self.log_dict['reg_loss'][-1])
             
@@ -253,20 +262,29 @@ class rssnet(object):
             param_now = self.save_p.get(key,de_para_dict.get(key))
             self.save_p[key] = param_now
 
-    def cal_psnr(self,imageA, imageB):
-        def mse(imageA, imageB):
-            err = t.sum((imageA.float() - imageB.float()) ** 2)
-            err /= float(imageA.shape[0] * imageA.shape[1])
+    def cal_psnr(self, pre, target):
+        def mse(pre, target):
+            err = t.sum((pre.float() - target.float()) ** 2)
+            err /= float(pre.shape[0] * pre.shape[1])
             return err
         
-        def psnr(imageA, imageB):
-            max_pixel = t.max(imageB)
-            mse_value = mse(imageA, imageB)
+        def psnr(pre, target):
+            max_pixel = t.max(target)
+            mse_value = mse(pre, target)
             if mse_value == 0:
                 return 100
             return 20 * t.log10(max_pixel / t.sqrt(mse_value))
         
-        return psnr(imageA, imageB)
+        return psnr(pre, target)
+    
+    def cal_nmae(self,pre, target):
+        max_pixel,min_pixel = t.max(target),t.min(target)
+        unseen_num = t.sum(1-self.mask)
+        if unseen_num<1e-3:
+            return 0
+        else:
+            return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
+        pass
     # def cal_psnr(self,imageA, imageB):
     #     def mse(imageA, imageB):
     #         err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)

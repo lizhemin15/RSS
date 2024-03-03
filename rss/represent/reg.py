@@ -3,6 +3,7 @@ import torch as t
 import numpy as np
 from einops import rearrange
 from rss.represent import get_nn
+from rss import toolbox
 
 def to_device(obj,device):
     if t.cuda.is_available() and device != 'cpu':
@@ -34,8 +35,15 @@ def get_reg(parameter):
         de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
     elif reg_name == 'MultiReg':
         de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
+    elif reg_name == 'RUBI':
+        de_para_dict = {'coef': 1, "mode":None}
     else:
-        pass
+        de_para_dict = {"mode":None}
+    if reg_name != "MultiReg":
+        de_para_dict["x_trans"] = "ori"
+        de_para_dict["factor"] = 1
+        de_para_dict["patch_size"] = 16
+        de_para_dict["stride"] = 16
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
@@ -65,20 +73,33 @@ class regularizer(nn.Module):
         super().__init__()
         self.reg_parameter = parameter
         self.reg_name = parameter['reg_name']
+        self.x_trans = parameter["x_trans"]
+        if self.x_trans != 'ori':
+            self.factor = parameter["factor"]
+            self.patch_size = parameter["patch_size"]
+            self.stride = parameter["stride"]
         # init opt parameters
         self.mode = self.reg_parameter['mode']
         if self.reg_name == 'AIR':
             self.n = self.reg_parameter['n']
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
-            
         elif self.reg_name == 'INRR':
             net = get_nn(self.reg_parameter['inr_parameter'])
             self.net = nn.Sequential(net,nn.Softmax())
+        elif self.reg_name == 'RUBI':
+            self.ite_num = 0
 
     
 
     def forward(self,x):
+        if self.x_trans == 'patch':
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+        elif self.x_trans == 'down_sample':
+            x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
+        elif 'patch' in self.x_trans and 'down_sample' in self.x_trans:
+            x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
@@ -87,6 +108,10 @@ class regularizer(nn.Module):
             return self.air(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'INRR':
             return self.inrr(x)*self.reg_parameter["coef"]
+        elif self.reg_name == 'RUBI':
+            return self.rubi(x)*self.reg_parameter["coef"]
+        else:
+            raise('Not support regularizer named ',self.reg_name)
 
 
     def tv(self,M):
@@ -142,8 +167,8 @@ class regularizer(nn.Module):
         coor = t.linspace(-1,1,n).reshape(-1,1)
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)@self.net(coor).T
-        self.L = self.A2lap(self.A_0)
-        return t.trace(img.T@self.L@img)/(img.shape[0]*img.shape[1])
+        self.lap = self.A2lap(self.A_0)
+        return t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
 
     def A2lap(self,A_0):
         n = A_0.shape[0]
@@ -154,3 +179,14 @@ class regularizer(nn.Module):
         A_1 = A_0 * (t.mm(Ones,Ones.T)-I_n) # A_1 将中间的元素都归零，作为邻接矩阵
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
         return L
+    
+    def rubi(self,M):
+        if self.ite_num == 0:
+            self.M_old = M.detach().clone()
+        else:
+            self.M_old = M.detach().clone()*0.0001+0.9999*self.M_old
+        self.ite_num += 1
+        result = t.mean(M*(M-self.M_old))
+        if self.ite_num%100==0:
+            print(result)
+        return result
