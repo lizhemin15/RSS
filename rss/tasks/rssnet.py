@@ -214,7 +214,7 @@ class rssnet(object):
 
 
     def show(self):
-        de_para_dict = {'show_type':'gray_img','show_content':'recovered'}
+        de_para_dict = {'show_type':'gray_img','show_content':'recovered','show_axis':False}
         for key in de_para_dict.keys():
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
@@ -240,7 +240,8 @@ class rssnet(object):
             plt.imshow(show_img)
         else:
             raise('Wrong show_type in show_p:',self.show_p['show_type'])
-        plt.axis('off')
+        if self.show_p['show_axis'] == False:
+            plt.axis('off')
         if self.save_p['save_if'] == True:
             plt.savefig(self.save_p['save_path'], bbox_inches='tight', pad_inches=0)
         plt.show()
