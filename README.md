@@ -18,7 +18,7 @@ save_parameters
 
 
 
-## Idea use way:  
+## Idea use way:   
 ```python
 import rss
 # parameters_dict = {}
