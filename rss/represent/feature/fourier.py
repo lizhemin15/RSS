@@ -54,7 +54,8 @@ class Fourier_Feature(nn.Module):
         # Check if the features should be learnable
         if 'learnable' in kwargs and kwargs['learnable']:
             self.B = nn.Parameter(self.B)
-        if 'gpu_id' in kwargs and isinstance(kwargs['gpu_id'], int):
+        elif 'gpu_id' in kwargs and isinstance(kwargs['gpu_id'], int):
+            # When kwargs['learnable'] == True, The Parameter will move to cuda with model
             self.B = self.B.cuda(kwargs['gpu_id'])            
 
     def forward(self, x):
@@ -69,7 +70,7 @@ class Fourier_Feature(nn.Module):
     
 
 def FeatureMap(parameter):
-    de_para_dict = {'dim_in':2,'dim_out':100, 'map_type':'fourier', 'feature_type':'gaussian', 'std':1, 'mean':0, 'gpu_id':None}
+    de_para_dict = {'dim_in':2,'dim_out':100, 'map_type':'fourier', 'feature_type':'gaussian', 'std':1, 'mean':0, 'gpu_id':None, 'learnable':False}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
