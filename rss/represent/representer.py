@@ -44,6 +44,7 @@ class Composition(nn.Module):
         net_list = []
         for _,net_para in enumerate(self.net_list_para):
             net_para['gpu_id'] = None if 'gpu_id' not in parameter.keys() else parameter['gpu_id']
+            print(net_para)
             net_list.append(get_nn(net_para))
         self.net_list = nn.ModuleList(net_list)
 
