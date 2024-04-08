@@ -5,6 +5,7 @@ from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
 from rss.represent.unn import UNN
 from rss.represent.kernel import KNN,TDKNN
+from rss.represent.feature import FeatureMap
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
@@ -28,6 +29,8 @@ def get_nn(parameter={}):
         net = KNN(parameter)
     elif net_name == 'TDKNN':
         net = TDKNN(parameter)
+    elif net_name == 'FourierFeature':
+        net = FeatureMap(parameter)
     else:
         raise('Wrong net_name = ',net_name)
     return net
