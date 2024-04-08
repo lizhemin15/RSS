@@ -61,7 +61,7 @@ def get_opt(opt_type='Adam', parameters=None, lr=1e-3, weight_decay=0):
 
     if opt_type == 'Lion':
         from lion_pytorch import Lion
-        optimizer_dict.append('Lion': Lion)
+        optimizer_dict['Lion'] = Lion
 
     if opt_type in optimizer_dict:
         optimizer_class = optimizer_dict[opt_type]
