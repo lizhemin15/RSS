@@ -74,4 +74,4 @@ def FeatureMap(parameter):
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
     if parameter['map_type'] == 'fourier':
-        return Fourier_Feature(**de_para_dict)
+        return Fourier_Feature(**parameter)
