@@ -54,6 +54,7 @@ class Fourier_Feature(nn.Module):
         # Check if the features should be learnable
         if 'learnable' in kwargs and kwargs['learnable']:
             self.B = nn.Parameter(self.B)
+        print(kwargs)
         if 'gpu_id' in kwargs and isinstance(kwargs['gpu_id'], int):
             self.B = self.B(kwargs['gpu_id'])            
 
