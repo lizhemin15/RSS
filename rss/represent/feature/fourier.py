@@ -55,7 +55,7 @@ class Fourier_Feature(nn.Module):
         if 'learnable' in kwargs and kwargs['learnable']:
             self.B = nn.Parameter(self.B)
         if 'gpu_id' in kwargs and isinstance(kwargs['gpu_id'], int):
-            self.B = self.B(kwargs['gpu_id'])            
+            self.B = self.B.cuda(kwargs['gpu_id'])            
 
     def forward(self, x):
         # Perform the forward pass by multiplying input with Fourier features
