@@ -108,6 +108,36 @@ class INR(nn.Module):
 
 
 
+
+
+class GaussianSplatting(nn.Module):
+    def __init__(self, dim_in, dim_hidden, dim_out, activation='gabor', coef_cos=1, coef_exp=1):
+        super().__init__()
+        # Hidden layer parameters initialization
+        self.mean = nn.Parameter(torch.zeros(dim_hidden, dim_in, 1))  # mean is now a parameter
+
+        self.W1 = nn.Parameter(torch.randn(dim_hidden, dim_in))  # W1 is now a parameter
+        self.b1 = nn.Parameter(torch.randn(1, dim_in, dim_hidden))    # b1 is now a parameter
+        
+        # Output layer parameters initialization
+        self.W2 = nn.Parameter(torch.randn(dim_out, dim_hidden))  # W2 is now a parameter
+        self.act = get_act(activation, coef_cos=coef_cos, coef_exp=coef_exp)
+
+    def forward(self, x):
+        # Hidden layer forward pass
+        # Input shape: (batch_size, input_dim)
+        # W1 shape: (input_dim, hidden_dim), b1 shape: (1, dim_in, hidden_dim)
+        hidden = F.linear(x+self.b1, self.W1, None)
+        hidden = self.act(hidden)
+
+        # Output layer forward pass
+        # hidden shape: (batch_size, hidden_dim), W2 shape: (hidden_dim, output_dim)
+        output = torch.matmul(hidden, self.W2)
+
+        return output
+
+
+
 def MLP(parameter):
     de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'activation':'tanh'}
     for key in de_para_dict.keys():
@@ -117,4 +147,6 @@ def MLP(parameter):
     return INR(dim_in=parameter['dim_in'], dim_hidden=parameter['dim_hidden'], dim_out=parameter['dim_out'], 
                num_layers=parameter['num_layers'], activation = parameter['activation'])
 
+def Splatting(parameter):
+    pass
 

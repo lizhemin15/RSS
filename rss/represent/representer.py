@@ -6,6 +6,7 @@ from rss.represent.interpolation import Interpolation
 from rss.represent.unn import UNN
 from rss.represent.kernel import KNN,TDKNN
 from rss.represent.feature import FeatureMap
+from rss.represent.kan import get_kan
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
@@ -31,6 +32,8 @@ def get_nn(parameter={}):
         net = TDKNN(parameter)
     elif net_name == 'FourierFeature':
         net = FeatureMap(parameter)
+    elif net_name in ['EFF_KAN','KAN']:
+        net = get_kan(parameter)
     else:
         raise('Wrong net_name = ',net_name)
     return net

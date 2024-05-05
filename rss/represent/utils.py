@@ -6,7 +6,7 @@ from einops import rearrange
 abc_str = 'abcdefghijklmnopqrstuvwxyz'
 
 
-def get_act(act):
+def get_act(act,coef_cos=1,coef_exp=1):
     act_dict = {
         'relu': F.relu,
         'sigmoid': F.sigmoid,
@@ -28,7 +28,9 @@ def get_act(act):
         'log_softmax': F.log_softmax,
         'softshrink': F.softshrink,
         'sin': t.sin,
-        'identity': nn.Identity()
+        'identity': nn.Identity(),
+        'exp': t.exp,
+        'gabor': lambda x: t.cos(x*coef_cos) * t.exp(x*coef_exp)
     }
     
     if act in act_dict:

@@ -48,6 +48,10 @@ class Fourier_Feature(nn.Module):
             feature_params.update(kwargs)
             probabilities = feature_params['probabilities']
             self.B = torch.empty(size).bernoulli_(probabilities)
+        elif feature_type == 'sinusoidal':
+            feature_params = {'L': 10000}
+            feature_params.update(kwargs)
+            L = feature_params['L']
         else:
             raise ValueError('Invalid feature_type provided')
 
