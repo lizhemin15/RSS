@@ -232,6 +232,56 @@ class KANLinear(torch.nn.Module):
         )
 
 
+class NaiveFourierKANLayer(torch.nn.Module):
+    def __init__(self, inputdim, outdim, gridsize, addbias=True):
+        super(NaiveFourierKANLayer, self).__init__()
+        self.gridsize = gridsize
+        self.addbias = addbias
+        self.inputdim = inputdim
+        self.outdim = outdim
+        
+        # The normalization has been chosen so that if given inputs where each coordinate is of unit variance,
+        # then each coordinate of the output is of unit variance 
+        # independently of the various sizes
+        self.fouriercoeffs = torch.nn.Parameter(torch.randn(2, outdim, inputdim, gridsize) / 
+                                                (torch.sqrt(inputdim) * torch.sqrt(self.gridsize)))
+        if self.addbias:
+            self.bias = torch.nn.Parameter(torch.zeros(1, outdim))
+
+    # x.shape (..., indim) 
+    # out.shape (..., outdim)
+    def forward(self, x):
+        xshp = x.shape
+        outshape = xshp[:-1] + (self.outdim,)
+        x = torch.reshape(x, (-1, self.inputdim))
+        # Starting at 1 because constant terms are in the bias
+        k = torch.reshape(torch.arange(1, self.gridsize+1, device=x.device), (1, 1, 1, self.gridsize))
+        xrshp = torch.reshape(x, (x.shape[0], 1, x.shape[1], 1)) 
+        # This should be fused to avoid materializing memory
+        c = torch.cos(k * xrshp)
+        s = torch.sin(k * xrshp)
+        # We compute the interpolation of the various functions defined by their Fourier coefficient for each input coordinate and we sum them 
+        y = torch.sum(c * self.fouriercoeffs[0:1], (-2, -1)) 
+        y += torch.sum(s * self.fouriercoeffs[1:2], (-2, -1))
+        if self.addbias:
+            y += self.bias
+        # End fuse
+        '''
+        # You can use einsum instead to reduce memory usage
+        # It stills not as good as fully fused but it should help
+        # einsum is usually slower though
+        c = torch.reshape(c, (1, x.shape[0], x.shape[1], self.gridsize))
+        s = torch.reshape(s, (1, x.shape[0], x.shape[1], self.gridsize))
+        y2 = torch.einsum("dbik,djik->bj", torch.concat([c, s], axis=0), self.fouriercoeffs)
+        if self.addbias:
+            y2 += self.bias
+        diff = torch.sum((y2 - y)**2)
+        print("diff")
+        print(diff)  # should be ~0
+        '''
+        y = torch.reshape(y, outshape)
+        return y
+
 class KAN(torch.nn.Module):
     def __init__(
         self,
@@ -244,6 +294,7 @@ class KAN(torch.nn.Module):
         base_activation=torch.nn.SiLU,
         grid_eps=0.02,
         grid_range=[-1, 1],
+        spine_type="spline"
     ):
         super(KAN, self).__init__()
         self.grid_size = grid_size
@@ -251,20 +302,23 @@ class KAN(torch.nn.Module):
 
         self.layers = torch.nn.ModuleList()
         for in_features, out_features in zip(layers_hidden, layers_hidden[1:]):
-            self.layers.append(
-                KANLinear(
-                    in_features,
-                    out_features,
-                    grid_size=grid_size,
-                    spline_order=spline_order,
-                    scale_noise=scale_noise,
-                    scale_base=scale_base,
-                    scale_spline=scale_spline,
-                    base_activation=base_activation,
-                    grid_eps=grid_eps,
-                    grid_range=grid_range,
-                )
-            )
+            if spine_type == "spline":
+                self.layers.append(
+                    KANLinear(
+                        in_features,
+                        out_features,
+                        grid_size=grid_size,
+                        spline_order=spline_order,
+                        scale_noise=scale_noise,
+                        scale_base=scale_base,
+                        scale_spline=scale_spline,
+                        base_activation=base_activation,
+                        grid_eps=grid_eps,
+                        grid_range=grid_range,
+                    ))
+            elif spine_type == "fourier":
+                self.layers.append(NaiveFourierKANLayer(inputdim=in_features, outdim=out_features, gridsize=grid_size, addbias=True))
+            
 
     def forward(self, x: torch.Tensor, update_grid=False):
         for layer in self.layers:
