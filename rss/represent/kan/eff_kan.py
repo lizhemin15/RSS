@@ -294,7 +294,7 @@ class KAN(torch.nn.Module):
         base_activation=torch.nn.SiLU,
         grid_eps=0.02,
         grid_range=[-1, 1],
-        spine_type="spline"
+        spline_type="spline"
     ):
         super(KAN, self).__init__()
         self.grid_size = grid_size
@@ -302,7 +302,7 @@ class KAN(torch.nn.Module):
 
         self.layers = torch.nn.ModuleList()
         for in_features, out_features in zip(layers_hidden, layers_hidden[1:]):
-            if spine_type == "spline":
+            if spline_type == "spline":
                 self.layers.append(
                     KANLinear(
                         in_features,
@@ -316,7 +316,7 @@ class KAN(torch.nn.Module):
                         grid_eps=grid_eps,
                         grid_range=grid_range,
                     ))
-            elif spine_type == "fourier":
+            elif spline_type == "fourier":
                 self.layers.append(NaiveFourierKANLayer(inputdim=in_features, outdim=out_features, gridsize=grid_size, addbias=True))
             
 
