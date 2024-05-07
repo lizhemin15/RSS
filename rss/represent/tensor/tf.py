@@ -2,6 +2,7 @@ from torch import nn
 import torch
 import math
 from rss.represent.inr import SIREN
+from rss.represent.kan import get_kan
 
 class TensorFactorization(nn.Module):
     def __init__(self, dim_ori, dim_cor,mode='tucker'):
@@ -20,11 +21,14 @@ class TensorFactorization(nn.Module):
         elif self.mode == 'tensor':
             # G is defined
             pass
-        elif self.mode == 'tucker_inr':
+        elif self.mode in ['tucker_inr','tucker_kan']:
             net_list = []
             self.input_list = []
             for i in range(len(dim_cor)):
-                net_list.append(SIREN({'dim_in':1,'dim_hidden':256,'dim_out':dim_ori[i],'num_layers':2,'w0':1,'w0_initial':30.,'use_bias':True}))
+                if self.mode == 'tucker_inr':
+                    net_list.append(SIREN({'dim_in':1,'dim_hidden':256,'dim_out':dim_ori[i],'num_layers':2,'w0':1,'w0_initial':30.,'use_bias':True}))
+                elif self.mode == 'tucker_kan':
+                    net_list.append({'net_name':"EFF_KAN",'dim_in':1,'dim_hidden':10,'dim_out':dim_ori[i],'num_layers':2,'spline_type':'spline','grid_size':30})
                 self.input_list.append(torch.linspace(-1,1,dim_cor[i]).reshape(-1,1))
             self.net_list = nn.ModuleList(net_list)
 
@@ -41,7 +45,7 @@ class TensorFactorization(nn.Module):
             return self.tucker_product(self.G,pre)
         elif self.mode == 'tensor':
             return self.G
-        elif self.mode == 'tucker_inr':
+        elif self.mode in ['tucker_inr','tucker_kan']:
             pre = []
             for i in range(len(self.net_list)):
                 net_now = self.net_list[i]
@@ -49,6 +53,7 @@ class TensorFactorization(nn.Module):
                 pre.append(net_now(input_now))
             self.pre = pre
             return self.tucker_product(self.G,pre)
+
         
     def tucker_product(self,G,pre):
         abc_str = 'abcdefghijklmnopqrstuvwxyz'
