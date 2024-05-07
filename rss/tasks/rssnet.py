@@ -164,8 +164,6 @@ class rssnet(object):
                     # reg_tensor = pre.reshape(self.data_p['data_shape'])
                     reg_loss = self.reg(reg_tensor)
                     loss += reg_loss
-
-                if self.data_p['pre_full'] == True:
                     pre = pre[(self.mask).reshape(pre.shape)==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 loss += self.loss_fn(pre,target)
@@ -183,10 +181,10 @@ class rssnet(object):
                     if self.net_p['net_name'] in ['UNet','ResNet','skip'] or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
                         pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                         pre = pre.reshape(self.data_p['data_shape'])
+                        pre = pre[self.mask==0]
                     else:
                         pre = self.net(self.data_train['obs_tensor'][0][(self.mask==0).reshape(-1)])
-                    if self.data_p['pre_full'] == True:
-                        pre = pre[(self.mask).reshape(pre.shape)==0]
+                        
                     target = self.data_train['obs_tensor'][1][(self.mask==0).reshape(-1)].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
