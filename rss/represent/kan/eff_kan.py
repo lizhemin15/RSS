@@ -244,7 +244,7 @@ class NaiveFourierKANLayer(torch.nn.Module):
         # then each coordinate of the output is of unit variance 
         # independently of the various sizes
         self.fouriercoeffs = torch.nn.Parameter(torch.randn(2, outdim, inputdim, gridsize) / 
-                                                (torch.sqrt(inputdim) * torch.sqrt(self.gridsize)))
+                                                (math.sqrt(inputdim) * math.sqrt(self.gridsize)))
         if self.addbias:
             self.bias = torch.nn.Parameter(torch.zeros(1, outdim))
 
