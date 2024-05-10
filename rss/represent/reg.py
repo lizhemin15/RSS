@@ -33,10 +33,10 @@ def get_reg(parameter):
         de_para_dict = {'n': 100, 'coef': 1, 'mode': 0}
     elif reg_name == 'INRR':
         de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
-    elif reg_name == 'MultiReg':
-        de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
     elif reg_name == 'RUBI':
         de_para_dict = {'coef': 1, "mode":None}
+    elif reg_name == 'MultiReg':
+        de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
     else:
         de_para_dict = {"mode":None}
     if reg_name != "MultiReg":
@@ -105,7 +105,7 @@ class regularizer(nn.Module):
         elif self.reg_name == 'LAP':
             return self.lap(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'AIR':
-            return self.air(x)*self.reg_parameter["coef"]
+            return self.eff_air(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'INRR':
             return self.inrr(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'RUBI':
@@ -158,6 +158,18 @@ class regularizer(nn.Module):
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         W = rearrange(W,opstr)
         return t.trace(t.mm(W.T,t.mm(A_4,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
+
+    def eff_air(self, W):
+        device = W.device
+        A_0 = self.A_0.weight
+        A = (self.softmin(A_0) + self.softmin(A_0).T) / 2
+        n = self.n
+        lap = -A * (t.ones(n, 1, device=device) @ t.ones(1, n, device=device) - t.eye(n, device=device)) + A @ (t.ones(n, 1, device=device) @ t.ones(1, n, device=device))
+        self.lap = lap
+        opstr = get_opstr(mode=self.mode, shape=W.shape)
+        W = rearrange(W, opstr)
+        return t.trace(W.T @ (lap @ W)) / (W.shape[0] * W.shape[1])
+
 
     def inrr(self,W):
         self.device = W.device

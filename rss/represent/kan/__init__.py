@@ -9,6 +9,6 @@ def get_kan(parameter):
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
-    print('KAN : ',parameter)
+    # print('KAN : ',parameter)
     if parameter.get('net_name','SIREN') == "EFF_KAN":
         return EFF_KAN([parameter['dim_in'],*[parameter['dim_hidden']]*parameter['num_layers'],parameter['dim_out']],spline_type=parameter['spline_type'],grid_size=parameter['grid_size'])
