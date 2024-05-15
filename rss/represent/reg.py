@@ -5,6 +5,8 @@ from einops import rearrange
 from rss.represent import get_nn
 from rss import toolbox
 
+
+
 def to_device(obj,device):
     if t.cuda.is_available() and device != 'cpu':
         obj = obj.cuda(device)
@@ -30,16 +32,16 @@ def get_reg(parameter):
     if reg_name in ['TV', 'LAP']:
         de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0}
     elif reg_name == 'AIR':
-        de_para_dict = {'n': 100, 'coef': 1, 'mode': 0}
+        de_para_dict = {'n': 100, 'coef': 1, 'mode': 0, 'sparse_index': []}
     elif reg_name == 'INRR':
-        de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
+        de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}, 'sparse_index': []}
     elif reg_name == 'RUBI':
         de_para_dict = {'coef': 1, "mode":None}
     elif reg_name == 'MultiReg':
         de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
     else:
         de_para_dict = {"mode":None}
-    if reg_name != "MultiReg":
+    if reg_name not in MultiRegDict.keys():
         de_para_dict["x_trans"] = "ori"
         de_para_dict["factor"] = 1
         de_para_dict["patch_size"] = 16
@@ -47,10 +49,11 @@ def get_reg(parameter):
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
-    if reg_name != 'MultiReg':
+    if reg_name not in MultiRegDict.keys():
         return regularizer(parameter)
     else:
-        return MultiReg(parameter)
+        return MultiRegDict[reg_name](parameter)
+        # return MultiReg(parameter)
 
 class MultiReg(nn.Module):
     def __init__(self,parameter):
@@ -66,6 +69,28 @@ class MultiReg(nn.Module):
         for _,reg in enumerate(self.reg_list):
             reg_loss += reg(x)
         return reg_loss
+
+class GroupReg(nn.Module):
+    def __init__(self,parameter):
+        super().__init__()
+        reg_name = parameter.get('each_reg_name','AIR')
+        sparse_index_list = parameter.get('sparse_index_list ',[])
+        reg_list = []
+        for sparse_index in sparse_index_list:
+            new_parameter = parameter.copy()
+            new_parameter['sparse_index'] = sparse_index
+            new_parameter['size'] = len(sparse_index)
+            new_parameter['reg_name'] = reg_name
+            reg_list.append(get_reg(new_parameter))
+        self.reg_list = nn.ModuleList(reg_list)
+
+    def forward(self,x):
+        reg_loss = 0
+        for _,reg in enumerate(self.reg_list):
+            reg_loss += reg(x)
+        return reg_loss
+
+MultiRegDict = {"MultiReg":MultiReg,"GroupReg":GroupReg}
 
 
 class regularizer(nn.Module):
@@ -155,11 +180,8 @@ class regularizer(nn.Module):
         A_3 = A_2 * (t.mm(Ones,Ones.T)-I_n) # A_3 将中间的元素都归零，作为邻接矩阵
         A_4 = -A_3+t.mm(A_3,t.mm(Ones,Ones.T))*I_n # A_4 将邻接矩阵转化为拉普拉斯矩阵
         self.lap = A_4
-        if self.mode == "patch":
-            pass
-        else:
-            opstr = get_opstr(mode=self.mode,shape=W.shape)
-            W = rearrange(W,opstr)
+        opstr = get_opstr(mode=self.mode,shape=W.shape)
+        W = rearrange(W,opstr)
         return t.trace(t.mm(W.T,t.mm(A_4,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
 
 
@@ -172,6 +194,7 @@ class regularizer(nn.Module):
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)@self.net(coor).T
         self.lap = self.A2lap(self.A_0)
+        print('lap shape:',self.lap.shape)
         return t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
 
     def A2lap(self,A_0):
