@@ -91,3 +91,10 @@ def add_space(oristr):
         addstr += oristr[i]
         addstr += ' '
     return addstr
+
+
+def patchify(data, patch_size=32, stride=1):
+    patches = data.unfold(0, patch_size, stride).unfold(1, patch_size, stride)
+    # 将patches展平，并移动维度顺序为 (num_patches, patch_size, patch_size)
+    patches = patches.contiguous().view(-1, patch_size, patch_size)
+    return patches
