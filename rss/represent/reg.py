@@ -41,7 +41,7 @@ def get_reg(parameter):
     elif reg_name == 'MultiReg':
         de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
     elif reg_name == 'GroupReg':
-        de_para_dict = {'group_para':{'n_clusters':10,'metric':'cosine'},'each_reg_name':'AIR','start_epoch':100}
+        de_para_dict = {'group_para':{'n_clusters':10,'metric':'cosine'},'each_reg_name':'AIR','start_epoch':100,'search_epoch':1000}
     else:
         de_para_dict = {"mode":None}
     #if reg_name not in MultiRegDict.keys():
@@ -119,7 +119,7 @@ class GroupReg(nn.Module):
     def forward(self,x):
         reg_loss = 0
         if self.epoch_now >= self.reg_parameter.get('start_epoch',100):
-            if self.epoch_now % self.reg_parameter.get('start_epoch',100) == 0:
+            if self.epoch_now % self.reg_parameter.get('search_epoch',1000) == self.reg_parameter.get('start_epoch',100):
                 self.init_reg(x)
             else:
                 for _,reg in enumerate(self.reg_list):
