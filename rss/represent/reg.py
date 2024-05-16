@@ -149,7 +149,7 @@ class regularizer(nn.Module):
             self.softmin = nn.Softmin(1)
         elif self.reg_name == 'INRR':
             net = get_nn(self.reg_parameter['inr_parameter'])
-            self.net = nn.Sequential(net,nn.Softmax())
+            self.net = nn.Sequential(net,nn.Softmax(dim=-1))
         elif self.reg_name == 'RUBI':
             self.ite_num = 0
 
@@ -215,7 +215,7 @@ class regularizer(nn.Module):
         Ones = to_device(Ones,device)
         I_n = to_device(I_n,device)
         A_0 = self.A_0.weight # A_0 \in \mathbb{R}^{n \times n}
-        A_1 = self.softmin(A_0) # A_1 中的元素的取值 \in (0,1) 和为1
+        A_1 = self.softmin(A_0, dim=-1) # A_1 中的元素的取值 \in (0,1) 和为1
         A_2 = (A_1+A_1.T)/2 # A_2 一定是对称的
         A_3 = A_2 * (t.mm(Ones,Ones.T)-I_n) # A_3 将中间的元素都归零，作为邻接矩阵
         A_4 = -A_3+t.mm(A_3,t.mm(Ones,Ones.T))*I_n # A_4 将邻接矩阵转化为拉普拉斯矩阵
