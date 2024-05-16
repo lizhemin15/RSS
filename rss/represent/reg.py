@@ -87,7 +87,6 @@ class GroupReg(nn.Module):
     def init_reg(self,x):
         device = x.device
         # x: (sample_num,feature_num)
-        x = x.detach().cpu().numpy()
         if self.x_trans == 'patch':
             # for patch-based regularization
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.reg_parameter.get("patch_size",16),
@@ -97,6 +96,7 @@ class GroupReg(nn.Module):
             x = rearrange(x,opstr)
         else:
             raise ValueError("x_trans should be 'patch' or 'ori', but got {}".format(self.x_trans))
+        x = x.detach().cpu().numpy()
         # calculate the group of regularization, with k-means algorithm
         D = pairwise_distances(x, metric=self.group_para.get('metric','cosine'))
         kmeans = KMeans(n_clusters=self.group_para.get('n_clusters',10))
