@@ -119,7 +119,7 @@ class GroupReg(nn.Module):
     def forward(self,x):
         reg_loss = 0
         if self.epoch_now >= self.reg_parameter.get('start_epoch',100):
-            if self.epoch_now % self.reg_parameter.get('search_epoch',1000) == self.reg_parameter.get('start_epoch',100):
+            if (self.epoch_now-self.reg_parameter.get('start_epoch',100)) % self.reg_parameter.get('search_epoch',1000) == 0:
                 self.init_reg(x)
             else:
                 for _,reg in enumerate(self.reg_list):
