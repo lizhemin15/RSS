@@ -108,6 +108,7 @@ def SIREN(parameter):
 
 
 
+
 # modulatory feed forward
 
 class Modulator(nn.Module):
