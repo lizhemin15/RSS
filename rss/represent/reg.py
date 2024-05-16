@@ -82,6 +82,7 @@ class GroupReg(nn.Module):
         self.epoch_now = 0
         self.group_para = parameter.get('group_para',{'n_clusters':10,'metric':'cosine'})
         self.x_trans = parameter.get("x_trans","ori")
+        
 
     def init_reg(self,x):
         device = x.device
@@ -89,7 +90,8 @@ class GroupReg(nn.Module):
         x = x.detach().cpu().numpy()
         if self.x_trans == 'patch':
             # for patch-based regularization
-            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.parameter.get("patch_size",16),
+                                         stride=self.parameter.get("stride",16), return_type = 'vector')
         elif self.x_trans == 'ori':
             opstr = get_opstr(mode=self.reg_parameter.get('mode',0),shape=x.shape)
             x = rearrange(x,opstr)
