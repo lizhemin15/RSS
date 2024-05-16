@@ -84,6 +84,7 @@ class GroupReg(nn.Module):
         self.x_trans = parameter.get("x_trans","ori")
 
     def init_reg(self,x):
+        device = x.device
         # x: (sample_num,feature_num)
         x = x.detach().cpu().numpy()
         if self.x_trans == 'patch':
@@ -109,7 +110,6 @@ class GroupReg(nn.Module):
             new_parameter['sparse_index'] = sparse_index
             new_parameter['size'] = len(sparse_index)
             new_parameter['reg_name'] = reg_name
-            device = x.device
             reg_list.append(to_device(get_reg(new_parameter),device))
         self.reg_list = nn.ModuleList(reg_list)
 
