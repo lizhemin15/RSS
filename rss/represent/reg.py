@@ -44,12 +44,12 @@ def get_reg(parameter):
         de_para_dict = {'group_para':{'n_clusters':10,'metric':'cosine'},'each_reg_name':'AIR','start_epoch':100}
     else:
         de_para_dict = {"mode":None}
-    if reg_name not in MultiRegDict.keys():
-        de_para_dict["x_trans"] = "ori"
-        de_para_dict["factor"] = 1
-        de_para_dict["patch_size"] = 16
-        de_para_dict["stride"] = 16
-        de_para_dict['sparse_index'] = None
+    #if reg_name not in MultiRegDict.keys():
+    de_para_dict["x_trans"] = "ori"
+    de_para_dict["factor"] = 1
+    de_para_dict["patch_size"] = 16
+    de_para_dict["stride"] = 16
+    de_para_dict['sparse_index'] = None
         
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
