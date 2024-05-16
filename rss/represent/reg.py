@@ -111,6 +111,7 @@ class GroupReg(nn.Module):
             new_parameter = self.reg_parameter.copy()
             new_parameter['sparse_index'] = sparse_index
             new_parameter['n'] = len(sparse_index)
+            print(len(sparse_index))
             new_parameter['reg_name'] = reg_name
             reg_list.append(to_device(get_reg(new_parameter),device))
         self.reg_list = nn.ModuleList(reg_list)
