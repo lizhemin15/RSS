@@ -118,7 +118,7 @@ class GroupReg(nn.Module):
 
     def forward(self,x):
         reg_loss = 0
-        if self.epoch_now > self.reg_parameter.get('start_epoch',100):
+        if self.epoch_now >= self.reg_parameter.get('start_epoch',100):
             if self.epoch_now % self.reg_parameter.get('start_epoch',100) == 0:
                 self.init_reg(x)
             else:
