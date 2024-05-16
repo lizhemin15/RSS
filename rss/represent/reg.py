@@ -4,7 +4,8 @@ import numpy as np
 from einops import rearrange
 from rss.represent import get_nn
 from rss import toolbox
-
+from sklearn.metrics import pairwise_distances
+from sklearn.cluster import KMeans
 
 
 def to_device(obj,device):
@@ -32,13 +33,15 @@ def get_reg(parameter):
     if reg_name in ['TV', 'LAP']:
         de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0}
     elif reg_name == 'AIR':
-        de_para_dict = {'n': 100, 'coef': 1, 'mode': 0, 'sparse_index': []}
+        de_para_dict = {'n': 100, 'coef': 1, 'mode': 0}
     elif reg_name == 'INRR':
-        de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}, 'sparse_index': []}
+        de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
     elif reg_name == 'RUBI':
         de_para_dict = {'coef': 1, "mode":None}
     elif reg_name == 'MultiReg':
         de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
+    elif reg_name == 'GroupReg':
+        de_para_dict = {'group_para':{'n_clusters':10,'metric':'cosine'},'each_reg_name':'AIR','start_epoch':100}
     else:
         de_para_dict = {"mode":None}
     if reg_name not in MultiRegDict.keys():
@@ -46,6 +49,8 @@ def get_reg(parameter):
         de_para_dict["factor"] = 1
         de_para_dict["patch_size"] = 16
         de_para_dict["stride"] = 16
+        de_para_dict['sparse_index'] = None
+        
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
@@ -73,11 +78,33 @@ class MultiReg(nn.Module):
 class GroupReg(nn.Module):
     def __init__(self,parameter):
         super().__init__()
-        reg_name = parameter.get('each_reg_name','AIR')
-        sparse_index_list = parameter.get('sparse_index_list ',[])
+        self.reg_parameter = parameter
+        self.epoch_now = 0
+        self.group_para = parameter.get('group_para',{'n_clusters':10,'metric':'cosine'})
+        self.x_trans = parameter.get("x_trans","ori")
+
+    def init_reg(self,x):
+        # x: (sample_num,feature_num)
+        if self.x_trans == 'patch':
+            # for patch-based regularization
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+        elif self.x_trans == 'ori':
+            opstr = get_opstr(mode=self.reg_parameter.get('mode',0),shape=x.shape)
+            x = rearrange(x,opstr)
+        else:
+            raise ValueError("x_trans should be 'patch' or 'ori', but got {}".format(self.x_trans))
+        # calculate the group of regularization, with k-means algorithm
+        D = pairwise_distances(x, metric=self.group_para.get('metric','cosine'))
+        kmeans = KMeans(n_clusters=self.group_para.get('n_clusters',10))
+        kmeans.fit(x, D)
+        labels = kmeans.labels_
+        sparse_index_list = []
+        for i in range(kmeans.n_clusters):
+            sparse_index_list.append(np.where(labels == i)[0])
+        reg_name = self.reg_parameter.get('each_reg_name','AIR')
         reg_list = []
         for sparse_index in sparse_index_list:
-            new_parameter = parameter.copy()
+            new_parameter = self.reg_parameter.copy()
             new_parameter['sparse_index'] = sparse_index
             new_parameter['size'] = len(sparse_index)
             new_parameter['reg_name'] = reg_name
@@ -86,8 +113,15 @@ class GroupReg(nn.Module):
 
     def forward(self,x):
         reg_loss = 0
-        for _,reg in enumerate(self.reg_list):
-            reg_loss += reg(x)
+        if self.epoch_now == self.reg_parameter.get('start_epoch',100):
+            self.init_reg(x)
+        elif self.epoch_now > self.reg_parameter.get('start_epoch',100):
+            for _,reg in enumerate(self.reg_list):
+                reg_loss += reg(x)
+        else:
+            pass
+        
+        self.epoch_now += 1
         return reg_loss
 
 MultiRegDict = {"MultiReg":MultiReg,"GroupReg":GroupReg}
@@ -99,6 +133,7 @@ class regularizer(nn.Module):
         self.reg_parameter = parameter
         self.reg_name = parameter['reg_name']
         self.x_trans = parameter["x_trans"]
+        self.sparse_index = parameter.get('sparse_index',None)
         if self.x_trans != 'ori':
             self.factor = parameter["factor"]
             self.patch_size = parameter["patch_size"]
@@ -125,6 +160,8 @@ class regularizer(nn.Module):
         elif 'patch' in self.x_trans and 'down_sample' in self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+        if self.sparse_index is not None:
+            x = x[self.sparse_index]
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
