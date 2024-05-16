@@ -85,6 +85,7 @@ class GroupReg(nn.Module):
 
     def init_reg(self,x):
         # x: (sample_num,feature_num)
+        x = x.detach().cpu().numpy()
         if self.x_trans == 'patch':
             # for patch-based regularization
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
