@@ -173,7 +173,7 @@ class regularizer(nn.Module):
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
         elif self.reg_name == 'INRR':
-            if self.x_trans == 'patch':
+            if self.x_trans == 'patch' and self.reg_mode =='single':
                 self.reg_parameter['inr_parameter']['dim_in'] = 2
             net = get_nn(self.reg_parameter['inr_parameter'])
             self.net = nn.Sequential(net,nn.Softmax(dim=-1))
