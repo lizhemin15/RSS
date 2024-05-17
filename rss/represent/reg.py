@@ -114,6 +114,7 @@ class GroupReg(nn.Module):
                 new_parameter['n'] = len(sparse_index)
                 # print(len(sparse_index))
                 new_parameter['reg_name'] = reg_name
+                new_parameter['reg_mode'] = self.reg_mode
                 reg_list.append(to_device(get_reg(new_parameter),device))
         elif self.reg_mode == 'single':
             # check the reg_name, must be INRR
@@ -122,6 +123,7 @@ class GroupReg(nn.Module):
             # Then we only need to initialize one INRR and use it in differetn groups with different sparse_index
             new_parameter = self.reg_parameter.copy()
             new_parameter['reg_name'] = reg_name
+            new_parameter['reg_mode'] = self.reg_mode
             new_parameter['n'] = x.shape[0]
             reg_list.append(to_device(get_reg(new_parameter),device))
             self.sparse_index_list = sparse_index_list
@@ -154,6 +156,7 @@ class regularizer(nn.Module):
         super().__init__()
         self.reg_parameter = parameter
         self.reg_name = parameter['reg_name']
+        self.reg_mode = parameter.get('reg_mode','single')
         self.x_trans = parameter["x_trans"]
         self.sparse_index = parameter.get('sparse_index',None)
         self.n = self.reg_parameter.get('n',100)
@@ -187,10 +190,10 @@ class regularizer(nn.Module):
         elif 'patch' in self.x_trans and 'down_sample' in self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
-        if sparse_index is not None:
+        if self.reg_mode == 'single':
+            # single 的情况下，意味着不同的正则计算的时候会共享同一个INRR参数，但是每次会传入 sparse_index 来标识到底去计算哪一部分
             self.sparse_index = sparse_index
-        if self.sparse_index is not None:
-            x = x[self.sparse_index]
+        x = x[self.sparse_index]
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
@@ -253,18 +256,33 @@ class regularizer(nn.Module):
 
 
     def inrr(self,W):
+        # GroupReg 中，multi和single模式下传入的W都是已经取了 sparse_index 的
         self.device = W.device
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         img = rearrange(W,opstr)
         n = img.shape[0]
         if self.x_trans == 'patch':
-            x = t.linspace(-1, 1, self.num_blocks_h)
-            y = t.linspace(-1, 1, self.num_blocks_w)
+            if self.reg_mode == 'single':
+                num_blocks_h,num_blocks_w = self.num_blocks_h,self.num_blocks_w
+            elif self.reg_mode == 'multi':
+                num_blocks_h,num_blocks_w = n,n
+            else:
+                raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
+            x = t.linspace(-1, 1, num_blocks_h)
+            y = t.linspace(-1, 1, num_blocks_w)
             grid_x, grid_y = t.meshgrid(x, y)
             coor = t.stack([grid_x, grid_y], dim=-1).reshape(-1, 2)
         else:
+            if self.reg_mode == 'single':
+                n = self.n
+            elif self.reg_mode =='multi':
+                pass
+            else:
+                raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
             coor = t.linspace(-1,1,n).reshape(-1,1)
-        if self.sparse_index is not None:
+            
+        if self.reg_mode == 'single':
+            # 这是因为当 self.reg_mode 为 single时，共享同一个inr，所以要在同一个坐标下取相应的子坐标。
             coor = coor[self.sparse_index]
 
         coor = to_device(coor,self.device)
