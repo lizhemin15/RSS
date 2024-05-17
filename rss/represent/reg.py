@@ -80,9 +80,9 @@ class GroupReg(nn.Module):
         super().__init__()
         self.reg_parameter = parameter
         self.epoch_now = 0
-        self.group_para = parameter.get('group_para',{'n_clusters':10,'metric':'cosine'})
+        self.group_para = parameter.get('group_para',{'n_clusters':10,'metric':'cosine','reg_mode':'multi'})
         self.x_trans = parameter.get("x_trans","ori")
-        
+        self.reg_mode = self.group_para.get('reg_mode','multi')
 
     def init_reg(self,x):
         device = x.device
@@ -107,13 +107,25 @@ class GroupReg(nn.Module):
             sparse_index_list.append(np.where(labels == i)[0])
         reg_name = self.reg_parameter.get('each_reg_name','AIR')
         reg_list = []
-        for sparse_index in sparse_index_list:
+        if self.reg_mode =='multi':
+            for sparse_index in sparse_index_list:
+                new_parameter = self.reg_parameter.copy()
+                new_parameter['sparse_index'] = sparse_index
+                new_parameter['n'] = len(sparse_index)
+                # print(len(sparse_index))
+                new_parameter['reg_name'] = reg_name
+                reg_list.append(to_device(get_reg(new_parameter),device))
+        elif self.reg_mode == 'single':
+            # check the reg_name, must be INRR
+            if reg_name != 'INRR':
+                raise ValueError("reg_mode is 'single', but each_reg_name should be 'INRR', but got {}".format(reg_name))
+            # Then we only need to initialize one INRR and use it in differetn groups with different sparse_index
             new_parameter = self.reg_parameter.copy()
-            new_parameter['sparse_index'] = sparse_index
-            new_parameter['n'] = len(sparse_index)
-            # print(len(sparse_index))
             new_parameter['reg_name'] = reg_name
             reg_list.append(to_device(get_reg(new_parameter),device))
+            self.sparse_index_list = sparse_index_list
+        else:
+            raise ValueError("reg_mode should be'multi' or'single', but got {}".format(self.reg_mode))
         self.reg_list = nn.ModuleList(reg_list)
 
     def forward(self,x):
@@ -122,8 +134,14 @@ class GroupReg(nn.Module):
             if (self.epoch_now-self.reg_parameter.get('start_epoch',100)) % self.reg_parameter.get('search_epoch',1000) == 0:
                 self.init_reg(x)
             else:
-                for _,reg in enumerate(self.reg_list):
-                    reg_loss += reg(x)
+                if self.reg_mode =='multi':
+                    for _,reg in enumerate(self.reg_list):
+                        reg_loss += reg(x)
+                elif self.reg_mode =='single':
+                    for sparse_index in self.sparse_index_list:
+                        reg_loss += self.reg_list[0](x,sparse_index)
+                else:
+                    raise ValueError("reg_mode should be'multi' or'single', but got {}".format(self.reg_mode))
         self.epoch_now += 1
         return reg_loss
 
@@ -155,7 +173,7 @@ class regularizer(nn.Module):
 
     
 
-    def forward(self,x):
+    def forward(self,x,sparse_index=None):
         if self.x_trans == 'patch':
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
         elif self.x_trans == 'down_sample':
@@ -163,6 +181,8 @@ class regularizer(nn.Module):
         elif 'patch' in self.x_trans and 'down_sample' in self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+        if sparse_index is not None:
+            self.sparse_index = sparse_index
         if self.sparse_index is not None:
             x = x[self.sparse_index]
         if self.reg_name == 'TV':
@@ -223,6 +243,7 @@ class regularizer(nn.Module):
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         W = rearrange(W,opstr)
         return t.trace(t.mm(W.T,t.mm(A_4,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
+
 
 
     def inrr(self,W):
