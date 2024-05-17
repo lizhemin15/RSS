@@ -156,18 +156,22 @@ class regularizer(nn.Module):
         self.reg_name = parameter['reg_name']
         self.x_trans = parameter["x_trans"]
         self.sparse_index = parameter.get('sparse_index',None)
+        self.n = self.reg_parameter.get('n',100)
         if self.x_trans != 'ori':
             self.factor = parameter["factor"]
             self.patch_size = parameter["patch_size"]
             self.stride = parameter["stride"]
+            # 计算图像块数量
+            self.num_blocks_h = (self.n - self.patch_size) // self.stride + 1
+            self.num_blocks_w = (self.n - self.patch_size) // self.stride + 1
         # init opt parameters
         self.mode = self.reg_parameter['mode']
         if self.reg_name == 'AIR':
-            self.n = self.reg_parameter['n']
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
         elif self.reg_name == 'INRR':
-            self.n = self.reg_parameter['n']
+            if self.x_trans == 'patch':
+                self.reg_parameter['inr_parameter']['dim_in'] = 2
             net = get_nn(self.reg_parameter['inr_parameter'])
             self.net = nn.Sequential(net,nn.Softmax(dim=-1))
         elif self.reg_name == 'RUBI':
@@ -253,10 +257,16 @@ class regularizer(nn.Module):
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         img = rearrange(W,opstr)
         n = img.shape[0]
-        if self.sparse_index is None:
-            coor = t.linspace(-1,1,n).reshape(-1,1)
+        if self.x_trans == 'patch':
+            x = t.linspace(-1, 1, self.num_blocks_h)
+            y = t.linspace(-1, 1, self.num_blocks_w)
+            grid_x, grid_y = t.meshgrid(x, y)
+            coor = t.stack([grid_x, grid_y], dim=-1).reshape(-1, 2)
         else:
-            coor = t.linspace(-1,1,self.n)[self.sparse_index].reshape(-1,1)
+            coor = t.linspace(-1,1,n).reshape(-1,1)
+        if self.sparse_index is not None:
+            coor = coor[self.sparse_index]
+
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)@self.net(coor).T
         self.lap = self.A2lap(self.A_0)
