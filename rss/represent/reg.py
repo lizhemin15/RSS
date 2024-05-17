@@ -122,6 +122,7 @@ class GroupReg(nn.Module):
             # Then we only need to initialize one INRR and use it in differetn groups with different sparse_index
             new_parameter = self.reg_parameter.copy()
             new_parameter['reg_name'] = reg_name
+            new_parameter['n'] = x.shape[0]
             reg_list.append(to_device(get_reg(new_parameter),device))
             self.sparse_index_list = sparse_index_list
         else:
@@ -166,6 +167,7 @@ class regularizer(nn.Module):
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
         elif self.reg_name == 'INRR':
+            self.n = self.reg_parameter['n']
             net = get_nn(self.reg_parameter['inr_parameter'])
             self.net = nn.Sequential(net,nn.Softmax(dim=-1))
         elif self.reg_name == 'RUBI':
@@ -251,7 +253,10 @@ class regularizer(nn.Module):
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         img = rearrange(W,opstr)
         n = img.shape[0]
-        coor = t.linspace(-1,1,n).reshape(-1,1)
+        if self.sparse_index is None:
+            coor = t.linspace(-1,1,n).reshape(-1,1)
+        else:
+            coor = t.linspace(-1,1,self.n)[self.sparse_index].reshape(-1,1)
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)@self.net(coor).T
         self.lap = self.A2lap(self.A_0)
