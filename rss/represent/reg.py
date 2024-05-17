@@ -194,7 +194,6 @@ class regularizer(nn.Module):
             # single 的情况下，意味着不同的正则计算的时候会共享同一个INRR参数，但是每次会传入 sparse_index 来标识到底去计算哪一部分
             self.sparse_index = sparse_index
         x = x[self.sparse_index]
-        print(x.shape)
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
@@ -262,26 +261,24 @@ class regularizer(nn.Module):
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         img = rearrange(W,opstr)
         n = img.shape[0]
-        if self.x_trans == 'patch':
-            if self.reg_mode == 'single':
+        if self.reg_mode == 'single':
+            # 共享参数时，需要考虑到inr中的相对位置
+            if self.x_trans == 'patch':
                 num_blocks_h,num_blocks_w = self.num_blocks_h,self.num_blocks_w
-            elif self.reg_mode == 'multi':
-                num_blocks_h,num_blocks_w = n,n
+                x = t.linspace(-1, 1, num_blocks_h)
+                y = t.linspace(-1, 1, num_blocks_w)
+                grid_x, grid_y = t.meshgrid(x, y)
+                coor = t.stack([grid_x, grid_y], dim=-1).reshape(-1, 2)
+            elif self.x_trans == 'ori':
+                coor = t.linspace(-1,1,self.n).reshape(-1,1)
             else:
-                raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
-            x = t.linspace(-1, 1, num_blocks_h)
-            y = t.linspace(-1, 1, num_blocks_w)
-            grid_x, grid_y = t.meshgrid(x, y)
-            coor = t.stack([grid_x, grid_y], dim=-1).reshape(-1, 2)
-        else:
-            if self.reg_mode == 'single':
-                n = self.n
-            elif self.reg_mode =='multi':
-                pass
-            else:
-                raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
+                raise ValueError("x_trans should be 'patch' or 'ori', but got {}".format(self.x_trans))
+        elif self.reg_mode =='multi':
+            # 当不共享参数时，patch或ori均使用单独的根据目前的形状n来计算的坐标，用于捕获连续性
             coor = t.linspace(-1,1,n).reshape(-1,1)
-            
+        else:
+            raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
+           
         if self.reg_mode == 'single':
             # 这是因为当 self.reg_mode 为 single时，共享同一个inr，所以要在同一个坐标下取相应的子坐标。
             coor = coor[self.sparse_index]
