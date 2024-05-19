@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import torch as t
 import numpy as np
 import time
+import pickle as pkl
 t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 
@@ -204,6 +205,10 @@ class rssnet(object):
                     if self.reg_p['reg_name'] != None:
                         self.log('reg_loss',reg_loss)
 
+            # 迭代指定 epoch 后，保存logs
+            if self.save_p['save_if'] == True:
+                # 无论是否调用 self.show 都保存 logs，而图片只有在调用 self.show 时才保存
+                self.save_logs()
             if verbose == True:    
                 print('loss on test set',self.log_dict['test_loss'][-1])
                 print('PSNR=',self.log_dict['psnr'][-1],'dB')
@@ -253,15 +258,17 @@ class rssnet(object):
         if self.show_p['show_axis'] == False:
             plt.axis('off')
         if self.save_p['save_if'] == True:
-            plt.savefig(self.save_p['save_path'], bbox_inches='tight', pad_inches=0)
+            if self.save_p['save_path'].split('.')[-1] in ['png','jpg','jpeg']:
+                save_img_path = self.save_p['save_path']
+            else:
+                save_img_path = self.save_p['save_path']+'.png'
+            plt.savefig(save_img_path, bbox_inches='tight', pad_inches=0)
         plt.show()
         
 
-    def save(self):
-        de_para_dict = {'save_if':False,'save_path':None}
-        for key in de_para_dict.keys():
-            param_now = self.save_p.get(key,de_para_dict.get(key))
-            self.save_p[key] = param_now
+    def save_logs(self):
+        with open(self.save_p['save_path']+".pkl", "wb") as f:
+            pkl.dump(self.log_dict, f)
 
     def cal_psnr(self, pre, target):
         def mse(pre, target):
@@ -285,7 +292,7 @@ class rssnet(object):
             return 0
         else:
             return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
-        pass
+
     # def cal_psnr(self,imageA, imageB):
     #     def mse(imageA, imageB):
     #         err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
