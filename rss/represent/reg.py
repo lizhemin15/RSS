@@ -267,7 +267,7 @@ class regularizer(nn.Module):
                 num_blocks_h,num_blocks_w = self.num_blocks_h,self.num_blocks_w
                 x = t.linspace(-1, 1, num_blocks_h)
                 y = t.linspace(-1, 1, num_blocks_w)
-                grid_x, grid_y = t.meshgrid(x, y)
+                grid_x, grid_y = t.meshgrid(x, y, indexing='ij')
                 coor = t.stack([grid_x, grid_y], dim=-1).reshape(-1, 2)
             elif self.x_trans == 'ori':
                 coor = t.linspace(-1,1,self.n).reshape(-1,1)
