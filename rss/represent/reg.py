@@ -285,7 +285,8 @@ class regularizer(nn.Module):
             coor = coor[self.sparse_index]
 
         coor = to_device(coor,self.device)
-        self.A_0 = self.net(coor)@self.net(coor).T
+        self.A_0 = self.net(coor)
+        self.A_0 = self.A_0@self.A_0.T
         self.lap = self.A2lap(self.A_0)
         # print('lap shape:',self.lap.shape)
         return t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
