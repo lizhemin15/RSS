@@ -259,8 +259,10 @@ class regularizer(nn.Module):
     def inrr(self,W):
         # GroupReg 中，multi和single模式下传入的W都是已经取了 sparse_index 的
         self.device = W.device
+        print(W.shape)
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         img = rearrange(W,opstr)
+        print(img.shape)
         n = img.shape[0]
         if self.reg_mode == 'single':
             # 共享参数时，需要考虑到inr中的相对位置
@@ -288,7 +290,7 @@ class regularizer(nn.Module):
 
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)
-        print(self.A_0.shape)
+        # print(self.A_0.shape)
         self.A_0 = self.A_0@(self.A_0.T)
         self.lap = self.A2lap(self.A_0)
         # print('lap shape:',self.lap.shape)
