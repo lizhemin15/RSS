@@ -206,7 +206,7 @@ class regularizer(nn.Module):
         elif self.reg_name == 'RUBI':
             return self.rubi(x)*self.reg_parameter["coef"]
         else:
-            raise('Not support regularizer named ',self.reg_name)
+            raise('Not support regularizer named ',self.reg_name,'please check the regularizer name in TV, LAP, AIR, INRR, RUBI')
 
 
     def tv(self,M):
