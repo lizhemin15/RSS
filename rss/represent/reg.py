@@ -265,7 +265,10 @@ class regularizer(nn.Module):
         if self.reg_mode == 'single':
             # 共享参数时，需要考虑到inr中的相对位置
             if self.x_trans == 'patch':
-                num_blocks_h,num_blocks_w = self.num_blocks_h,self.num_blocks_w
+                if self.mode == 0:
+                    num_blocks_h,num_blocks_w = self.num_blocks_h,self.num_blocks_w
+                else:
+                    num_blocks_h,num_blocks_w = self.patch_size,self.patch_size
                 x = t.linspace(-1, 1, num_blocks_h)
                 y = t.linspace(-1, 1, num_blocks_w)
                 grid_x, grid_y = t.meshgrid(x, y, indexing='ij')
