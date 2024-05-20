@@ -280,11 +280,9 @@ class regularizer(nn.Module):
         else:
             raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
            
-        if self.reg_mode == 'single':
+        if self.reg_mode == 'single' and self.sparse_index is not None:
             # 这是因为当 self.reg_mode 为 single时，共享同一个inr，所以要在同一个坐标下取相应的子坐标。
-            if self.sparse_index is not None:
-                # 区分开inrr是服务于GroupReg还是直接使用
-                coor = coor[self.sparse_index]
+            coor = coor[self.sparse_index]
 
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)
