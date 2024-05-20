@@ -80,9 +80,9 @@ class GroupReg(nn.Module):
         super().__init__()
         self.reg_parameter = parameter
         self.epoch_now = 0
-        self.group_para = parameter.get('group_para',{'n_clusters':10,'metric':'cosine','reg_mode':'multi'})
+        self.group_para = parameter.get('group_para',{'n_clusters':10,'metric':'cosine','reg_mode':'single'})
         self.x_trans = parameter.get("x_trans","ori")
-        self.reg_mode = self.group_para.get('reg_mode','multi')
+        self.reg_mode = self.group_para.get('reg_mode','single')
 
     def init_reg(self,x):
         device = x.device
@@ -282,7 +282,9 @@ class regularizer(nn.Module):
            
         if self.reg_mode == 'single':
             # 这是因为当 self.reg_mode 为 single时，共享同一个inr，所以要在同一个坐标下取相应的子坐标。
-            coor = coor[self.sparse_index]
+            if self.sparse_index is not None:
+                # 区分开inrr是服务于GroupReg还是直接使用
+                coor = coor[self.sparse_index]
 
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)
