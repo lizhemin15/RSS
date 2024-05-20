@@ -286,6 +286,7 @@ class regularizer(nn.Module):
 
         coor = to_device(coor,self.device)
         self.A_0 = self.net(coor)
+        print(self.A_0.shape)
         self.A_0 = self.A_0@(self.A_0.T)
         self.lap = self.A2lap(self.A_0)
         # print('lap shape:',self.lap.shape)
