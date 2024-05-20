@@ -193,7 +193,8 @@ class regularizer(nn.Module):
         if self.reg_mode == 'single':
             # single 的情况下，意味着不同的正则计算的时候会共享同一个INRR参数，但是每次会传入 sparse_index 来标识到底去计算哪一部分
             self.sparse_index = sparse_index
-        x = x[self.sparse_index]
+        if self.sparse_index is not None:
+            x = x[self.sparse_index]
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
