@@ -23,7 +23,14 @@ def extract_patches(input_tensor, patch_size, stride, return_type='patch', conv_
         padding = kernel_size // 2
         patches = patches.view(-1, 1, patch_size, patch_size)  # 展开为2D卷积输入形状
         patches = F.conv2d(patches, random_kernel, padding=padding)
+        
+        # 调试：打印卷积后的张量形状
+        print("After convolution, patches shape:", patches.shape)
+        
         patches = patches.view(1, 1, ph, pw, patch_size, patch_size)  # 恢复形状
+
+        # 调试：打印恢复形状后的张量形状
+        print("After reshaping, patches shape:", patches.shape)
 
         # 进行平均降采样四倍
         scale = 4
