@@ -15,8 +15,10 @@ def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', dow
 
     if down_sample:
         # 如果为真，则沿着第二个维度和第三个维度的patch进行平均降采样四倍
-        scale = 4
+        scale = 2
         patches = patches.view(ph, pw, patch_size // scale, scale, patch_size // scale, scale).mean(dim=(3, 5)).contiguous().view(-1, patch_size // scale, patch_size // scale)
+
+
 
     if return_type == 'patch':
         return patches
