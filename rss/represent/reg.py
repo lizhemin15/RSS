@@ -203,7 +203,6 @@ class regularizer(nn.Module):
         elif self.reg_name == 'AIR':
             return self.air(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'INRR':
-            print(x.shape)
             return self.inrr(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'RUBI':
             return self.rubi(x)*self.reg_parameter["coef"]
