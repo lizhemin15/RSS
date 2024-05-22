@@ -87,7 +87,7 @@ class GroupReg(nn.Module):
     def init_reg(self,x):
         device = x.device
         # x: (sample_num,feature_num)
-        if self.x_trans == 'patch':
+        if 'patch' in self.x_trans:
             # for patch-based regularization
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.reg_parameter.get("patch_size",16),
                                          stride=self.reg_parameter.get("stride",16), return_type = 'vector')
@@ -173,7 +173,7 @@ class regularizer(nn.Module):
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
         elif self.reg_name == 'INRR':
-            if self.x_trans == 'patch' and self.reg_mode =='single':
+            if 'patch' in self.x_trans and self.reg_mode =='single':
                 self.reg_parameter['inr_parameter']['dim_in'] = 2
             net = get_nn(self.reg_parameter['inr_parameter'])
             self.net = nn.Sequential(net,nn.Softmax(dim=-1))
@@ -183,13 +183,13 @@ class regularizer(nn.Module):
     
 
     def forward(self,x,sparse_index=None):
-        if self.x_trans == 'patch':
-            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
-        elif self.x_trans == 'down_sample':
+        if 'down_sample' == self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
-        elif 'patch' in self.x_trans and 'down_sample' in self.x_trans:
-            x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
+        if 'patch' == self.x_trans:
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+        if 'patch_conv' == self.x_trans:
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'patch', conv_mode = True)
+
         if self.reg_mode == 'single':
             # single 的情况下，意味着不同的正则计算的时候会共享同一个INRR参数，但是每次会传入 sparse_index 来标识到底去计算哪一部分
             self.sparse_index = sparse_index
@@ -264,7 +264,7 @@ class regularizer(nn.Module):
         n = img.shape[0]
         if self.reg_mode == 'single':
             # 共享参数时，需要考虑到inr中的相对位置
-            if self.x_trans == 'patch':
+            if 'patch' in self.x_trans:
                 if self.mode == 0:
                     num_blocks_h,num_blocks_w = self.num_blocks_h,self.num_blocks_w
                 else:

@@ -1,4 +1,4 @@
-def extract_patches(input_tensor, patch_size, stride, return_type = 'patch'):
+def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', conv_mode = False):
     # 获取输入张量的形状
     h, w = input_tensor.shape
 
@@ -10,6 +10,12 @@ def extract_patches(input_tensor, patch_size, stride, return_type = 'patch'):
 
     # 将补丁展开为2D矩阵
     patches = patches.contiguous().view(-1, patch_size, patch_size)
+
+    if conv_mode:
+        # 如果为真，则沿着第二个维度和第三个维度的patch进行平均降采样四倍
+        scale = 4
+        patches = patches.view(ph, pw, patch_size // scale, scale, patch_size // scale, scale).mean(dim=(3, 5)).contiguous().view(-1, patch_size // scale, patch_size // scale)
+
     if return_type == 'patch':
         return patches
     else:
@@ -30,3 +36,5 @@ def downsample_tensor(input_tensor, factor):
 
     return output_tensor
 
+def conv_tensor(input_tensor, kernel, padding = 0, stride = 1):
+    pass
