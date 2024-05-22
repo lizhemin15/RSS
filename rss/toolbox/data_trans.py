@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', conv_mode = False):
+def extract_patches(input_tensor, patch_size, stride, return_type='patch', conv_mode=False):
     # 获取输入张量的形状
     h, w = input_tensor.shape
 
@@ -17,7 +17,7 @@ def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', con
     if conv_mode:
         # 生成随机卷积核，确保输入输出通道数相同
         kernel_size = 4
-        random_kernel = torch.randn(1, 1, kernel_size, kernel_size)
+        random_kernel = torch.randn(1, 1, kernel_size, kernel_size).to(input_tensor.device)  # 确保卷积核在同一设备上
         
         # 在下采样前进行卷积操作，填充使输出形状与输入形状一致
         padding = kernel_size // 2
@@ -32,7 +32,7 @@ def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', con
     if return_type == 'patch':
         return patches
     else:
-        return patches.view(patches.shape[0],patches.shape[1]*patches.shape[2])
+        return patches.view(patches.shape[0], patches.shape[1] * patches.shape[2])
 
 def downsample_tensor(input_tensor, factor):
     # 获取输入张量的大小
