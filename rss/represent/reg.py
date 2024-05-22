@@ -187,8 +187,8 @@ class regularizer(nn.Module):
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
         if 'patch' == self.x_trans:
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
-        if 'patch_conv' == self.x_trans:
-            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'patch', conv_mode = True)
+        if 'patch_down' == self.x_trans:
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'patch', down_sample = True)
 
         if self.reg_mode == 'single':
             # single 的情况下，意味着不同的正则计算的时候会共享同一个INRR参数，但是每次会传入 sparse_index 来标识到底去计算哪一部分

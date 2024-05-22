@@ -1,7 +1,6 @@
-import torch
-import torch.nn.functional as F
 
-def extract_patches(input_tensor, patch_size, stride, return_type='patch', conv_mode=False):
+
+def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', down_sample = False):
     # 获取输入张量的形状
     h, w = input_tensor.shape
 
@@ -14,32 +13,15 @@ def extract_patches(input_tensor, patch_size, stride, return_type='patch', conv_
     # 将补丁展开为2D矩阵
     patches = patches.contiguous().view(-1, patch_size, patch_size)
 
-    if conv_mode:
-        # 生成随机卷积核，确保输入输出通道数相同
-        kernel_size = 4
-        random_kernel = torch.randn(1, 1, kernel_size, kernel_size).to(input_tensor.device)  # 确保卷积核在同一设备上
-        
-        # 在下采样前进行卷积操作，填充使输出形状与输入形状一致
-        padding = kernel_size // 2
-        patches = patches.view(-1, 1, patch_size, patch_size)  # 展开为2D卷积输入形状
-        patches = F.conv2d(patches, random_kernel, padding=padding)
-        
-        # 调试：打印卷积后的张量形状
-        print("After convolution, patches shape:", patches.shape)
-        
-        patches = patches.view(1, 1, ph, pw, patch_size, patch_size)  # 恢复形状
-
-        # 调试：打印恢复形状后的张量形状
-        print("After reshaping, patches shape:", patches.shape)
-
-        # 进行平均降采样四倍
+    if down_sample:
+        # 如果为真，则沿着第二个维度和第三个维度的patch进行平均降采样四倍
         scale = 4
         patches = patches.view(ph, pw, patch_size // scale, scale, patch_size // scale, scale).mean(dim=(3, 5)).contiguous().view(-1, patch_size // scale, patch_size // scale)
 
     if return_type == 'patch':
         return patches
     else:
-        return patches.view(patches.shape[0], patches.shape[1] * patches.shape[2])
+        return patches.view(patches.shape[0],patches.shape[1]*patches.shape[2])
 
 def downsample_tensor(input_tensor, factor):
     # 获取输入张量的大小
@@ -55,6 +37,3 @@ def downsample_tensor(input_tensor, factor):
     output_tensor = input_tensor.mean(dim=(1, 3))
 
     return output_tensor
-
-def conv_tensor(input_tensor, kernel, padding = 0, stride = 1):
-    pass
