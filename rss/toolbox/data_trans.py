@@ -16,8 +16,9 @@ def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', con
 
     if conv_mode:
         # 生成随机卷积核，确保输入输出通道数相同
-        random_kernel = torch.randn(1, 1, kernel_size, kernel_size)
         kernel_size = 4
+        random_kernel = torch.randn(1, 1, kernel_size, kernel_size)
+        
         # 在下采样前进行卷积操作，填充使输出形状与输入形状一致
         padding = kernel_size // 2
         patches = patches.view(-1, 1, patch_size, patch_size)  # 展开为2D卷积输入形状
