@@ -195,6 +195,7 @@ class regularizer(nn.Module):
             self.sparse_index = sparse_index
         if self.sparse_index is not None:
             x = x[self.sparse_index]
+        
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
@@ -202,6 +203,7 @@ class regularizer(nn.Module):
         elif self.reg_name == 'AIR':
             return self.air(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'INRR':
+            print(x.shape)
             return self.inrr(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'RUBI':
             return self.rubi(x)*self.reg_parameter["coef"]
