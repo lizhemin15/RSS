@@ -1,3 +1,6 @@
+import torch
+import torch.nn.functional as F
+
 def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', conv_mode = False):
     # 获取输入张量的形状
     h, w = input_tensor.shape
@@ -12,7 +15,16 @@ def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', con
     patches = patches.contiguous().view(-1, patch_size, patch_size)
 
     if conv_mode:
-        # 如果为真，则沿着第二个维度和第三个维度的patch进行平均降采样四倍
+        # 生成随机卷积核，确保输入输出通道数相同
+        random_kernel = torch.randn(1, 1, kernel_size, kernel_size)
+        kernel_size = 4
+        # 在下采样前进行卷积操作，填充使输出形状与输入形状一致
+        padding = kernel_size // 2
+        patches = patches.view(-1, 1, patch_size, patch_size)  # 展开为2D卷积输入形状
+        patches = F.conv2d(patches, random_kernel, padding=padding)
+        patches = patches.view(1, 1, ph, pw, patch_size, patch_size)  # 恢复形状
+
+        # 进行平均降采样四倍
         scale = 4
         patches = patches.view(ph, pw, patch_size // scale, scale, patch_size // scale, scale).mean(dim=(3, 5)).contiguous().view(-1, patch_size // scale, patch_size // scale)
 
