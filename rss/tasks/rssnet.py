@@ -194,6 +194,8 @@ class rssnet(object):
                     target = self.data_train['real_tensor'][1]
                     if self.data_p['ymode'] == 'completion':
                         target = target[(self.mask==0).reshape(-1)].reshape(pre.shape)
+                    else:
+                        target = target.reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
 
