@@ -191,7 +191,9 @@ class rssnet(object):
                             # 只有补全才截取，否则不截取
                             pre = pre[(self.mask==0).reshape(-1)]
                     # 验证损失，应当在real上
-                    target = self.data_train['real_tensor'][1][(self.mask==0).reshape(-1)].reshape(pre.shape)
+                    target = self.data_train['real_tensor'][1]
+                    if self.data_p['ymode'] == 'completion':
+                        target = target[(self.mask==0).reshape(-1)].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
 
