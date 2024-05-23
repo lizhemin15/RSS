@@ -182,11 +182,16 @@ class rssnet(object):
                     if self.net_p['net_name'] in ['UNet','ResNet','skip'] or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
                         pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                         pre = pre.reshape(self.data_p['data_shape'])
-                        pre = pre[self.mask==0]
+                        if self.data_p['y_mode'] == 'completion':
+                            # 只有补全才截取，否则不截取
+                            pre = pre[self.mask==0]
                     else:
-                        pre = self.net(self.data_train['obs_tensor'][0][(self.mask==0).reshape(-1)])
-                        
-                    target = self.data_train['obs_tensor'][1][(self.mask==0).reshape(-1)].reshape(pre.shape)
+                        pre = self.net(self.data_train['obs_tensor'][0])
+                        if self.data_p['y_mode'] == 'completion':
+                            # 只有补全才截取，否则不截取
+                            pre = pre[(self.mask==0).reshape(-1)]
+                    # 验证损失，应当在real上
+                    target = self.data_train['real_tensor'][1][(self.mask==0).reshape(-1)].reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
 
@@ -195,6 +200,7 @@ class rssnet(object):
                         pre = pre.reshape(self.data_p['data_shape'])
                     else:
                         pre = self.net(self.data_train['real_tensor'][0])
+                    # 注意这里取的是real，在缺失的情况下是和之前算loss的是一样的，但是在噪声情况下，real取的是真值，而算loss的情况下用的是观测值。
                     target = self.data_train['real_tensor'][1].reshape(pre.shape)
                     self.pre = pre
                     self.target = target
