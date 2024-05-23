@@ -239,7 +239,7 @@ class rssnet(object):
 
 
     def show(self):
-        de_para_dict = {'show_type':'gray_img','show_content':'recovered','show_axis':False}
+        de_para_dict = {'show_type':'gray_img','show_content':'original','show_axis':False}
         for key in de_para_dict.keys():
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
@@ -257,6 +257,11 @@ class rssnet(object):
             #print('PSNR=',self.cal_psnr(show_img,self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()),'dB')
         elif self.show_p['show_content'] == 'original':
             show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
+            if self.data_p['ymode'] == 'completion':
+                show_img = show_img*self.mask.reshape(self.data_p['data_shape']).detach().cpu().numpy()
+
+        else:
+            raise('Wrong show_content in show_p:',self.show_p['show_content'])
         if self.show_p['show_type'] == 'gray_img':
             plt.imshow(show_img,'gray',vmin=0,vmax=1)
         elif self.show_p['show_type'] == 'red_img':
