@@ -10,7 +10,7 @@ def add_noise(pic,mode='gaussian',parameter=0.1,seeds=88):
             img_np: image, np.array with values from 0 to 1
             sigma: std of the noise
         """
-        img_noisy_np = np.clip(img_np + np.random.normal(scale=sigma, size=img_np.shape), 0, 1).astype(np.float32)
+        img_noisy_np = np.clip(img_np + np.random.normal(scale=sigma/255, size=img_np.shape), 0, 1).astype(np.float32)
         return img_noisy_np
 
     def get_salt_noisy_image(img_np, SNR):
