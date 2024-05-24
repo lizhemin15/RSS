@@ -304,7 +304,8 @@ class rssnet(object):
             else:
                 save_img_path = self.save_p['save_path']+'.png'
             plt.savefig(save_img_path, bbox_inches='tight', pad_inches=0)
-        print('noise_mean',t.abs(self.noise.mean()).item())
+        if self.noise_p['noise_term'] == True:
+            print('noise_mean',t.abs(self.noise.mean()).item())
         plt.show()
         
 
