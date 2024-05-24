@@ -186,7 +186,6 @@ class rssnet(object):
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 if self.noise_p['noise_term'] == True:
                     loss += self.loss_fn(pre+self.noise.reshape(pre.shape),target)
-                    print('noise_mean',t.abs(self.noise.mean()).item())
                 else:
                     loss += self.loss_fn(pre,target)
 
@@ -305,6 +304,7 @@ class rssnet(object):
             else:
                 save_img_path = self.save_p['save_path']+'.png'
             plt.savefig(save_img_path, bbox_inches='tight', pad_inches=0)
+        print('noise_mean',t.abs(self.noise.mean()).item())
         plt.show()
         
 
