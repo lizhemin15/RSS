@@ -106,7 +106,7 @@ class rssnet(object):
             self.noise_p[key] = param_now
         if self.noise_p['noise_term'] == True:
             self.noise = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32), requires_grad=True)
-            self.noise = to_device(self.noise,self.net_p['gpu_id'])
+            self.noise.data = to_device(self.noise.data,self.net_p['gpu_id'])
         
 
     def init_opt(self):
