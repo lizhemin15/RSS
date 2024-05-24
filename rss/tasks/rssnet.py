@@ -130,7 +130,7 @@ class rssnet(object):
                                             weight_decay=self.opt_p['reg']['weight_decay'])
         if self.noise_p['noise_term'] == True:
             self.noise_opt = represent.get_opt(opt_type=self.opt_p['noise']['opt_name'],
-                                            parameters=self.noise,lr=self.opt_p['noise']['lr'],
+                                            parameters=[self.noise],lr=self.opt_p['noise']['lr'],
                                             weight_decay=self.opt_p['noise']['weight_decay'])
 
     def init_train(self):
