@@ -11,11 +11,12 @@ t.backends.cudnn.benchmark = True
 
 class rssnet(object):
     def __init__(self,parameters,verbose=True) -> None:
-        parameter_list = ['net_p','reg_p','data_p','opt_p','train_p','show_p','save_p']
+        parameter_list = ['net_p','reg_p','data_p', 'noise_p', 'opt_p','train_p','show_p','save_p']
         self.init_parameter(parameters,parameter_list)
         self.init_net()
         self.init_reg()
         self.init_data()
+        self.init_noise()
         self.init_opt()
         self.init_train()
         self.init_save()
@@ -31,6 +32,7 @@ class rssnet(object):
                 - net_p: The parameter used for the network.
                 - reg_p: The parameter used for the regularization.
                 - data_p: The parameter used for the data.
+                - noise_p: The parameter used for the represent noise.
                 - opt_p: The parameter used for the optimizer.
                 - train_p: The parameter used for the training.
                 - show_p: The parameter used for showing information.
@@ -60,6 +62,7 @@ class rssnet(object):
         # print('net_p : ',self.net_p)
         self.net = represent.get_nn(self.net_p)
         self.net = to_device(self.net,self.net_p['gpu_id'])
+
 
 
     def init_reg(self):
@@ -95,11 +98,21 @@ class rssnet(object):
                                                 data=self.data,mask=self.mask,xrange=self.data_p['xrange'],noisy_data=self.data_noise,
                                                 ymode=self.data_p['ymode'],return_data_type=self.data_p['return_data_type'],
                                                 gpu_id=self.net_p['gpu_id'],out_dim_one=self.data_p['out_dim_one'])
-        
+
+    def init_noise(self):
+        de_para_dict = {'noise_term':False}
+        for key in de_para_dict.keys():
+            param_now = self.noise_p.get(key,de_para_dict.get(key))
+            self.noise_p[key] = param_now
+        if self.noise_p['noise_term'] == True:
+            self.noise = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32), requires_grad=True)
+            self.noise = to_device(self.noise,self.net_p['gpu_id'])
         
 
     def init_opt(self):
-        de_para_dict = {'net':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},'reg':{'opt_name':'Adam','lr':1e-4,'weight_decay':0}}
+        de_para_dict = {'net':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},
+                        'reg':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},
+                        'noise':{'opt_name':'Adam','lr':1e-4,'weight_decay':0}}
         for key in de_para_dict.keys():
             param_now = self.opt_p.get(key,de_para_dict.get(key))
             self.opt_p[key] = param_now
@@ -115,7 +128,10 @@ class rssnet(object):
             self.reg_opt = represent.get_opt(opt_type=self.opt_p['reg']['opt_name'],
                                             parameters=self.reg.parameters(),lr=self.opt_p['reg']['lr'],
                                             weight_decay=self.opt_p['reg']['weight_decay'])
-
+        if self.noise_p['noise_term'] == True:
+            self.noise_opt = represent.get_opt(opt_type=self.opt_p['noise']['opt_name'],
+                                            parameters=self.noise,lr=self.opt_p['noise']['lr'],
+                                            weight_decay=self.opt_p['noise']['weight_decay'])
 
     def init_train(self):
         de_para_dict = {'task_name':self.data_p['ymode'],'train_epoch':10,'loss_fn':'mse'}
@@ -124,6 +140,7 @@ class rssnet(object):
             self.train_p[key] = param_now
         if self.train_p['loss_fn'] == 'mse':
             self.loss_fn = nn.MSELoss()
+
         # print('train_p : ',self.train_p)
 
     def init_save(self):
@@ -167,16 +184,25 @@ class rssnet(object):
                     loss += reg_loss
                     pre = pre[(self.mask).reshape(pre.shape)==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
-                loss += self.loss_fn(pre,target)
+                if self.noise_p['noise_term'] == True:
+                    loss += self.loss_fn(pre+self.noise.reshape(pre.shape),target)
+                else:
+                    loss += self.loss_fn(pre,target)
 
                 self.log('fid_loss',loss.item())
                 self.net_opt.zero_grad()
                 if self.train_reg_if:
                     self.reg_opt.zero_grad()
+                if self.noise_p['noise_term'] == True:
+                    self.noise_opt.zero_grad()
                 loss.backward()
                 self.net_opt.step()
                 if self.train_reg_if:
                     self.reg_opt.step()
+                if self.noise_p['noise_term'] == True:
+                    self.noise_opt.step()
+                
+
                 # test and val loss
                 with t.no_grad():
                     if self.net_p['net_name'] in ['UNet','ResNet','skip'] or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
