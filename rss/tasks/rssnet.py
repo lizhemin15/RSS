@@ -100,7 +100,7 @@ class rssnet(object):
                                                 gpu_id=self.net_p['gpu_id'],out_dim_one=self.data_p['out_dim_one'])
 
     def init_noise(self):
-        de_para_dict = {'noise_term':False}
+        de_para_dict = {'noise_term':False,'sparse_coef':1}
         for key in de_para_dict.keys():
             param_now = self.noise_p.get(key,de_para_dict.get(key))
             self.noise_p[key] = param_now
@@ -186,7 +186,7 @@ class rssnet(object):
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 if self.noise_p['noise_term'] == True:
                     loss += self.loss_fn(pre+self.noise.reshape(pre.shape),target)
-                    loss += t.mean(t.abs(self.noise))
+                    loss += self.noise_p['sparse_coef']*t.mean(t.abs(self.noise))
                 else:
                     loss += self.loss_fn(pre,target)
 
