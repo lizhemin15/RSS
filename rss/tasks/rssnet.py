@@ -92,7 +92,8 @@ class rssnet(object):
                                       data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
                                       down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
         self.mask = to_device(t.tensor(self.mask).to(t.float32),self.net_p['gpu_id'])
-        self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],seeds=self.data_p['seeds'])
+        self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],
+                                            seeds=self.data_p['seeds'])
         self.data_train = toolbox.get_dataloader(x_mode=self.data_p['x_mode'],batch_size=self.data_p['batch_size'],
                                                  shuffle_if=self.data_p['shuffle_if'],
                                                 data=self.data,mask=self.mask,xrange=self.data_p['xrange'],noisy_data=self.data_noise,
@@ -100,13 +101,22 @@ class rssnet(object):
                                                 gpu_id=self.net_p['gpu_id'],out_dim_one=self.data_p['out_dim_one'])
 
     def init_noise(self):
-        de_para_dict = {'noise_term':False,'sparse_coef':1}
+        de_para_dict = {'noise_term':False,'sparse_coef':1, 'parameter_type': 'matrix'}
         for key in de_para_dict.keys():
             param_now = self.noise_p.get(key,de_para_dict.get(key))
             self.noise_p[key] = param_now
         if self.noise_p['noise_term'] == True:
-            self.noise = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
-            self.noise.data = to_device(self.noise.data,self.net_p['gpu_id'])
+            if self.noise_p['parameter_type'] =='matrix':
+                self.noise = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
+                self.noise.data = to_device(self.noise.data,self.net_p['gpu_id'])
+            elif self.noise_p['parameter_type'] == 'implicit':
+                self.noise1 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
+                self.noise1.data = to_device(self.noise1.data,self.net_p['gpu_id'])
+                self.noise2 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
+                self.noise2.data = to_device(self.noise2.data,self.net_p['gpu_id'])
+            else:
+                raise ValueError('parameter_type should be matrix or implicit')
+
         
 
     def init_opt(self):
@@ -129,9 +139,16 @@ class rssnet(object):
                                             parameters=self.reg.parameters(),lr=self.opt_p['reg']['lr'],
                                             weight_decay=self.opt_p['reg']['weight_decay'])
         if self.noise_p['noise_term'] == True:
-            self.noise_opt = represent.get_opt(opt_type=self.opt_p['noise']['opt_name'],
-                                            parameters=[self.noise],lr=self.opt_p['noise']['lr'],
-                                            weight_decay=self.opt_p['noise']['weight_decay'])
+            if self.noise_p['parameter_type'] =='matrix':
+                self.noise_opt = represent.get_opt(opt_type=self.opt_p['noise']['opt_name'],
+                                                parameters=[self.noise],lr=self.opt_p['noise']['lr'],
+                                                weight_decay=self.opt_p['noise']['weight_decay'])
+            elif self.noise_p['parameter_type'] == 'implicit':
+                self.noise_opt = represent.get_opt(opt_type=self.opt_p['noise']['opt_name'],
+                                                parameters=[self.noise1,self.noise2],lr=self.opt_p['noise']['lr'],
+                                                weight_decay=self.opt_p['noise']['weight_decay'])
+            else:
+                raise ValueError('parameter_type should be matrix or implicit')
 
     def init_train(self):
         de_para_dict = {'task_name':self.data_p['ymode'],'train_epoch':10,'loss_fn':'mse'}
@@ -185,6 +202,8 @@ class rssnet(object):
                     pre = pre[(self.mask).reshape(pre.shape)==1]
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 if self.noise_p['noise_term'] == True:
+                    if self.noise_p['parameter_type'] =='implicit':
+                        self.noise = self.noise1**2 - self.noise2**2
                     loss += self.loss_fn(pre+self.noise.reshape(pre.shape),target)
                     loss += self.noise_p['sparse_coef']*t.mean(t.abs(self.noise))
                 else:
