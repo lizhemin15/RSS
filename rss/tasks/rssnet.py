@@ -205,7 +205,7 @@ class rssnet(object):
                 if self.noise_p['noise_term'] == True:
                     if self.noise_p['parameter_type'] =='implicit':
                         self.noise = self.noise1**2 - self.noise2**2
-                    loss += self.loss_fn(pre+self.noise.reshape(pre.shape),target)
+                    loss += self.loss_fn(pre+self.noise[(self.mask==1).reshape(-1)].reshape(pre.shape),target)
                     if self.noise_p['parameter_type'] =='matrix':
                         loss += self.noise_p['sparse_coef']*t.mean(t.abs(self.noise))
                 else:
