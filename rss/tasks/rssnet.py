@@ -114,6 +114,7 @@ class rssnet(object):
                 self.noise1.data = to_device(self.noise1.data,self.net_p['gpu_id'])
                 self.noise2 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
                 self.noise2.data = to_device(self.noise2.data,self.net_p['gpu_id'])
+                self.noise = self.noise1**2 - self.noise2**2
             else:
                 raise ValueError('parameter_type should be matrix or implicit')
 
