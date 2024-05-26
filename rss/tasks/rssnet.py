@@ -101,18 +101,18 @@ class rssnet(object):
                                                 gpu_id=self.net_p['gpu_id'],out_dim_one=self.data_p['out_dim_one'])
 
     def init_noise(self):
-        de_para_dict = {'noise_term':False,'sparse_coef':1, 'parameter_type': 'matrix'}
+        de_para_dict = {'noise_term':False,'sparse_coef':1, 'parameter_type': 'matrix', 'init_std': 1e-3}
         for key in de_para_dict.keys():
             param_now = self.noise_p.get(key,de_para_dict.get(key))
             self.noise_p[key] = param_now
         if self.noise_p['noise_term'] == True:
             if self.noise_p['parameter_type'] =='matrix':
-                self.noise = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
+                self.noise = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std'], requires_grad=True)
                 self.noise.data = to_device(self.noise.data,self.net_p['gpu_id'])
             elif self.noise_p['parameter_type'] == 'implicit':
-                self.noise1 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
+                self.noise1 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std'], requires_grad=True)
                 self.noise1.data = to_device(self.noise1.data,self.net_p['gpu_id'])
-                self.noise2 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*1e-3, requires_grad=True)
+                self.noise2 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std'], requires_grad=True)
                 self.noise2.data = to_device(self.noise2.data,self.net_p['gpu_id'])
                 self.noise = self.noise1**2 - self.noise2**2
             else:
