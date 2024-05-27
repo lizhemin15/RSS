@@ -99,7 +99,7 @@ class GroupReg(nn.Module):
             raise ValueError("x_trans should be 'patch' or 'ori', but got {}".format(self.x_trans))
         x = x.detach().cpu().numpy()
         # calculate the group of regularization, with k-means algorithm
-        if self.group_para['group_mode'] == 'kmeans':
+        if self.group_para.get('group_mode', 'kmeans') == 'kmeans':
             # calculate the group of regularization, with k-means algorithm
             D = pairwise_distances(x, metric=self.group_para.get('metric', 'cosine'))
             kmeans = KMeans(n_clusters=self.group_para.get('n_clusters', 10))
@@ -108,7 +108,7 @@ class GroupReg(nn.Module):
             sparse_index_list = []
             for i in range(kmeans.n_clusters):
                 sparse_index_list.append(np.where(labels == i)[0])
-        elif self.group_para['group_mode'] == 'knn':
+        elif self.group_para.get('group_mode', 'kmeans') == 'knn':
             # calculate the group of regularization, with K-Neighbors algorithm
             n_neighbors = self.group_para.get('n_clusters', 10)  # 使用n_clusters作为近邻数
             knn = NearestNeighbors(n_neighbors=n_neighbors, metric=self.group_para.get('metric', 'cosine'))
