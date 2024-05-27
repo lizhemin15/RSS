@@ -80,7 +80,8 @@ class GroupReg(nn.Module):
         super().__init__()
         self.reg_parameter = parameter
         self.epoch_now = 0
-        self.group_para = parameter.get('group_para',{'n_clusters':10,'metric':'cosine','reg_mode':'single'})
+        self.group_para = parameter.get('group_para',{'group_mode':'kmeans','n_clusters':10,
+                                                      'metric':'cosine','reg_mode':'single'})
         self.x_trans = parameter.get("x_trans","ori")
         self.reg_mode = self.group_para.get('reg_mode','single')
 
@@ -98,13 +99,26 @@ class GroupReg(nn.Module):
             raise ValueError("x_trans should be 'patch' or 'ori', but got {}".format(self.x_trans))
         x = x.detach().cpu().numpy()
         # calculate the group of regularization, with k-means algorithm
-        D = pairwise_distances(x, metric=self.group_para.get('metric','cosine'))
-        kmeans = KMeans(n_clusters=self.group_para.get('n_clusters',10))
-        kmeans.fit(x, D)
-        labels = kmeans.labels_
-        sparse_index_list = []
-        for i in range(kmeans.n_clusters):
-            sparse_index_list.append(np.where(labels == i)[0])
+        if self.group_para['group_mode'] == 'kmeans':
+            # calculate the group of regularization, with k-means algorithm
+            D = pairwise_distances(x, metric=self.group_para.get('metric', 'cosine'))
+            kmeans = KMeans(n_clusters=self.group_para.get('n_clusters', 10))
+            kmeans.fit(x, D)
+            labels = kmeans.labels_
+            sparse_index_list = []
+            for i in range(kmeans.n_clusters):
+                sparse_index_list.append(np.where(labels == i)[0])
+        elif self.group_para['group_mode'] == 'knn':
+            # calculate the group of regularization, with K-Neighbors algorithm
+            n_neighbors = self.group_para.get('n_clusters', 10)  # 使用n_clusters作为近邻数
+            knn = NearestNeighbors(n_neighbors=n_neighbors, metric=self.group_para.get('metric', 'cosine'))
+            knn.fit(x)
+            distances, indices = knn.kneighbors(x)
+            sparse_index_list = []
+            for idx in indices:
+                sparse_index_list.append(idx)
+        else:
+            raise ValueError("group_mode should be 'kmeans' or 'knn', but got {}".format(self.group_para['group_mode']))
         reg_name = self.reg_parameter.get('each_reg_name','AIR')
         reg_list = []
         if self.reg_mode =='multi':
