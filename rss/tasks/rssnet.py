@@ -195,6 +195,7 @@ class rssnet(object):
                     if self.data_p['ymode'] == 'completion':
                         # 只有补全才截取，否则不截取
                         pre = pre[self.mask==1]
+                    print(pre.shape)
                 elif self.reg_p['reg_name'] != None:
                     pre = self.net(self.data_train['obs_tensor'][0])
                     reg_tensor = pre.reshape(self.data_p['data_shape'])
