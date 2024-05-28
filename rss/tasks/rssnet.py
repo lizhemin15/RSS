@@ -380,7 +380,7 @@ class rssnet(object):
         else:
             return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
 
-    def gen_gif(self, fps=10):
+    def gen_gif(self, fps=10, save_type = 'gif'):
         # 获取文件夹中的所有文件
         files = os.listdir(self.save_p['save_path'])
 
@@ -391,7 +391,7 @@ class rssnet(object):
         images = [imageio.imread(os.path.join(self.save_p['save_path'], file)) for file in png_files]
         
         # 生成GIF
-        imageio.mimsave(self.save_p['save_path'], images, fps=fps)
+        imageio.mimsave(self.save_p['save_path']+'result.'+save_type, images, fps=fps)
 
 
     # def cal_psnr(self,imageA, imageB):
