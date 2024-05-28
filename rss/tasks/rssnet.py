@@ -238,7 +238,7 @@ class rssnet(object):
                         pre = self.net(self.data_train['obs_tensor'][0])
                         if self.data_p['ymode'] == 'completion':
                             # 只有补全才截取，否则不截取
-                            pre = pre[(self.mask==0).reshape(-1)]
+                            pre = pre[(self.mask==0).reshape(pre.shape)]
                     # 验证损失，应当在real上
                     target = self.data_train['real_tensor'][1]
                     if self.data_p['ymode'] == 'completion':
