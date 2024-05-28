@@ -6,6 +6,8 @@ import torch as t
 import numpy as np
 import time
 import pickle as pkl
+import os
+import imageio
 t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 
@@ -343,6 +345,8 @@ class rssnet(object):
                     epoch = 0
                     psnr = 0
                 save_img_path = self.save_p['save_path']+'epoch_'+str(epoch)+'.png'
+                if not os.path.exists(self.save_p['save_path']):
+                    os.makedirs(self.save_p['save_path'])
             plt.savefig(save_img_path, bbox_inches='tight', pad_inches=0)
         if self.noise_p['noise_term'] == True:
             print('noise_mean',t.abs(self.noise.mean()).item())
@@ -376,9 +380,18 @@ class rssnet(object):
         else:
             return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
 
-    def gen_gif(self):
+    def gen_gif(self, fps=10):
+        # 获取文件夹中的所有文件
+        files = os.listdir(self.save_path)
 
-        pass
+        # 过滤出.png文件并排序
+        png_files = sorted([f for f in files if f.endswith('.png')], key=lambda x: int(x.split('_')[1].split('.')[0]))
+        
+        # 生成完整的文件路径
+        images = [imageio.imread(os.path.join(self.save_path, file)) for file in png_files]
+        
+        # 生成GIF
+        imageio.mimsave(self.save_path, images, fps=fps)
 
 
     # def cal_psnr(self,imageA, imageB):
