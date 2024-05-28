@@ -8,6 +8,7 @@ def get_description():
         long_description = file.read()
     return long_description
 
+
 def parse_requirements(filename):
     """ load requirements from a pip requirements file """
     lineiter = (line.strip() for line in open(filename))
