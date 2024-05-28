@@ -163,7 +163,7 @@ class rssnet(object):
         # print('train_p : ',self.train_p)
 
     def init_save(self):
-        de_para_dict = {'save_if':False}
+        de_para_dict = {'save_if':False,'save_path':''}
         for key in de_para_dict.keys():
             param_now = self.save_p.get(key,de_para_dict.get(key))
             self.save_p[key] = param_now
@@ -335,7 +335,14 @@ class rssnet(object):
             if self.save_p['save_path'].split('.')[-1] in ['png','jpg','jpeg']:
                 save_img_path = self.save_p['save_path']
             else:
-                save_img_path = self.save_p['save_path']+'.png'
+                try:
+                    epoch = len(self.log_dict['psnr'])
+                    psnr = self.log_dict['psnr'][-1]
+                    psnr = round(psnr,2)
+                except:
+                    epoch = 0
+                    psnr = 0
+                save_img_path = self.save_p['save_path']+'_epoch_'+str(epoch)+'.png'
             plt.savefig(save_img_path, bbox_inches='tight', pad_inches=0)
         if self.noise_p['noise_term'] == True:
             print('noise_mean',t.abs(self.noise.mean()).item())
