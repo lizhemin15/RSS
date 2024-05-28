@@ -72,7 +72,7 @@ def get_dataloader(x_mode='inr',batch_size=128,shuffle_if=False,
         data = to_device(data,gpu_id)
         # print(xin.shape,(mask==1).reshape(-1).shape,data.shape)
         if random_if:
-            xin = to_device(t.rand(data.shape),gpu_id)
+            xin = to_device(t.rand(data.shape)*1e-3,gpu_id)
         if ymode == 'completion':
             if out_dim_one:
                 data_train_loader = (xin,data.reshape(-1,1))
