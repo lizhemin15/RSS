@@ -192,6 +192,9 @@ class rssnet(object):
                 if (self.net_p['net_name'] in ['UNet','ResNet','skip']) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
+                    if self.data_p['ymode'] == 'completion':
+                        # 只有补全才截取，否则不截取
+                        pre = pre[self.mask==1]
                 elif self.reg_p['reg_name'] != None:
                     pre = self.net(self.data_train['obs_tensor'][0])
                     reg_tensor = pre.reshape(self.data_p['data_shape'])
