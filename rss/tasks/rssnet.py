@@ -326,6 +326,7 @@ class rssnet(object):
             try:
                 epoch = len(self.log_dict['psnr'])
                 psnr = self.log_dict['psnr'][-1]
+                psnr = round(psnr,2)
             except:
                 epoch = 0
                 psnr = 0
