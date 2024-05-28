@@ -382,16 +382,16 @@ class rssnet(object):
 
     def gen_gif(self, fps=10):
         # 获取文件夹中的所有文件
-        files = os.listdir(self.save_path)
+        files = os.listdir(self.save_p['save_path'])
 
         # 过滤出.png文件并排序
         png_files = sorted([f for f in files if f.endswith('.png')], key=lambda x: int(x.split('_')[1].split('.')[0]))
         
         # 生成完整的文件路径
-        images = [imageio.imread(os.path.join(self.save_path, file)) for file in png_files]
+        images = [imageio.imread(os.path.join(self.save_p['save_path'], file)) for file in png_files]
         
         # 生成GIF
-        imageio.mimsave(self.save_path, images, fps=fps)
+        imageio.mimsave(self.save_p['save_path'], images, fps=fps)
 
 
     # def cal_psnr(self,imageA, imageB):
