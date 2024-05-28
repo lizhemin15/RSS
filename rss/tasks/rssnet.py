@@ -326,7 +326,7 @@ class rssnet(object):
             try：
                 epoch = len(self.log_dict['psnr'])
                 psnr = self.log_dict['psnr'][-1]
-            expect:
+            except (KeyError, IndexError):
                 epoch = 0
                 psnr = 0
             plt.text(20, 40, 'Epoch='+str(epoch)+'\nPSNR='+str(psnr)+'dB', color='white', fontsize=12, backgroundcolor='black')
