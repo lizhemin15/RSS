@@ -323,7 +323,7 @@ class rssnet(object):
         if self.show_p['show_axis'] == False:
             plt.axis('off')
         if self.show_p['show_info_on_img']:
-            try：
+            try:
                 epoch = len(self.log_dict['psnr'])
                 psnr = self.log_dict['psnr'][-1]
             except (KeyError, IndexError):
