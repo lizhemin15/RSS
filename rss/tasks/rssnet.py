@@ -322,7 +322,7 @@ class rssnet(object):
         elif self.show_p['show_type'] == 'red_img':
             import seaborn as sns
             sns.set()
-            plt.imshow(show_img)
+            plt.imshow(show_img,vmin=0,vmax=1)
         else:
             raise('Wrong show_type in show_p:',self.show_p['show_type'])
         if self.show_p['show_axis'] == False:
