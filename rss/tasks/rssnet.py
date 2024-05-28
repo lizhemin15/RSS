@@ -343,6 +343,7 @@ class rssnet(object):
                     epoch = 0
                     psnr = 0
                 save_img_path = self.save_p['save_path']+'_epoch_'+str(epoch)+'.png'
+                print(save_img_path)
             plt.savefig(save_img_path, bbox_inches='tight', pad_inches=0)
         if self.noise_p['noise_term'] == True:
             print('noise_mean',t.abs(self.noise.mean()).item())
