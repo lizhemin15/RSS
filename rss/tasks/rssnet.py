@@ -173,6 +173,7 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
 
+
     def train(self,verbose=True):
         # Construct loss function
         if self.data_p['return_data_type'] == 'random':

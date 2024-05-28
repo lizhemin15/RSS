@@ -14,7 +14,7 @@ def get_task(parameters):
 
 
     Returns:
-        task (class): The task class.
+        task (class): The task class..
     Raises:
         ValueError: If the input task name is not one of the options.
     """
