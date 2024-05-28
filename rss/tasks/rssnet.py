@@ -342,8 +342,7 @@ class rssnet(object):
                 except:
                     epoch = 0
                     psnr = 0
-                save_img_path = self.save_p['save_path']+'_epoch_'+str(epoch)+'.png'
-                print(save_img_path)
+                save_img_path = self.save_p['save_path']+'epoch_'+str(epoch)+'.png'
             plt.savefig(save_img_path, bbox_inches='tight', pad_inches=0)
         if self.noise_p['noise_term'] == True:
             print('noise_mean',t.abs(self.noise.mean()).item())
@@ -376,6 +375,11 @@ class rssnet(object):
             return 0
         else:
             return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
+
+    def gen_gif(self):
+
+        pass
+
 
     # def cal_psnr(self,imageA, imageB):
     #     def mse(imageA, imageB):
