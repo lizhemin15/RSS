@@ -159,6 +159,7 @@ class rssnet(object):
         if self.train_p['loss_fn'] == 'mse':
             self.loss_fn = nn.MSELoss()
 
+
         # print('train_p : ',self.train_p)
 
     def init_save(self):
@@ -322,7 +323,13 @@ class rssnet(object):
         if self.show_p['show_axis'] == False:
             plt.axis('off')
         if self.show_p['show_info_on_img']:
-            plt.text(20, 40, 'Epoch=\nPSNR=', color='white', fontsize=12, backgroundcolor='black')
+            try：
+                epoch = len(self.log_dict['psnr'])
+                psnr = self.log_dict['psnr'][-1]
+            expect:
+                epoch = 0
+                psnr = 0
+            plt.text(20, 40, 'Epoch='+str(epoch)+'\nPSNR='+str(psnr)+'dB', color='white', fontsize=12, backgroundcolor='black')
         if self.save_p['save_if'] == True:
             if self.save_p['save_path'].split('.')[-1] in ['png','jpg','jpeg']:
                 save_img_path = self.save_p['save_path']
