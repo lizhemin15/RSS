@@ -356,6 +356,9 @@ class rssnet(object):
         
 
     def save_logs(self):
+        # 检测文件夹是否存在，不存在则创建
+        if not os.path.exists(self.save_p['save_path']):
+            os.makedirs(self.save_p['save_path'])
         with open(self.save_p['save_path']+"logs.pkl", "wb") as f:
             pkl.dump(self.log_dict, f)
             print('save logs to',self.save_p['save_path']+"logs.pkl")
