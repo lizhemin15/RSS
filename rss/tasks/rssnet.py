@@ -186,10 +186,11 @@ class rssnet(object):
         if self.data_p['return_data_type'] in ['tensor','random']:
             if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
                 self.start_time = time.time()
+            full_nets_list = ['UNet','ResNet','skip','DMF','TF']
             for ite in range(self.train_p['train_epoch']):
                 time_now = time.time()
                 self.log('time',time_now-self.start_time)
-                if (self.net_p['net_name'] in ['UNet','ResNet','skip']) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
+                if (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list):
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
                     pre = pre[self.mask==1]
@@ -207,6 +208,7 @@ class rssnet(object):
                     reg_loss = self.reg(reg_tensor)
                     loss += reg_loss
                     pre = pre[(self.mask).reshape(pre.shape)==1]
+                
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 if self.noise_p['noise_term'] == True:
                     if self.noise_p['parameter_type'] =='implicit':
