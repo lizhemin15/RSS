@@ -356,7 +356,7 @@ class rssnet(object):
         
 
     def save_logs(self):
-        with open(self.save_p['save_path']+".pkl", "wb") as f:
+        with open(self.save_p['save_path']+"logs.pkl", "wb") as f:
             pkl.dump(self.log_dict, f)
 
     def cal_psnr(self, pre, target):
