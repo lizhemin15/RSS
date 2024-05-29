@@ -190,8 +190,8 @@ class rssnet(object):
             for ite in range(self.train_p['train_epoch']):
                 time_now = time.time()
                 self.log('time',time_now-self.start_time)
-                print(self.net_p['net_name']=='composition' and self.net_p['net_list'][0] in full_nets_list)
-                if (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0] in full_nets_list):
+                
+                if (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list):
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
                     pre = pre[self.mask==1]
