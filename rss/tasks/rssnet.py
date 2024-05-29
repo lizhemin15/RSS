@@ -194,6 +194,7 @@ class rssnet(object):
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
                     pre = pre[self.mask==1]
+                    print(pre.shape)
 
                 elif self.reg_p['reg_name'] != None:
                     pre = self.net(self.data_train['obs_tensor'][0])
