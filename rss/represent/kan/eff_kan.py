@@ -329,14 +329,15 @@ class KAN(torch.nn.Module):
         base_activation=torch.nn.SiLU,
         grid_eps=0.02,
         grid_range=[-1, 1],
-        spline_type="spline"
+        spline_type="spline",
+        layer_norm = False
     ):
         super(KAN, self).__init__()
         self.grid_size = grid_size
         self.spline_order = spline_order
-
+        self.layer_norm = layer_norm
         self.layers = torch.nn.ModuleList()
-        for in_features, out_features in zip(layers_hidden, layers_hidden[1:]):
+        for layer_i, (in_features, out_features) in enumerate(zip(layers_hidden, layers_hidden[1:])):
             if spline_type == "spline":
                 self.layers.append(
                     KANLinear(
@@ -357,7 +358,8 @@ class KAN(torch.nn.Module):
                 self.layers.append(ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size))
             else:
                 raise ValueError("Spline type not recognized")
-            
+            if self.layer_norm and layer_i < len(layers_hidden) - 2:
+                self.layers.append(nn.LayerNorm(out_features))
 
     def forward(self, x: torch.Tensor, update_grid=False):
         for layer in self.layers:
