@@ -62,5 +62,14 @@ def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
             else:
                 raise('Do not support the dim of tensor > 4')
         return mask
+    elif mask_type == 'extend':
+        mask = np.zeros((data_shape[0],data_shape[1]))
+        mask[data_shape[0]//4:data_shape[0]*3//4,data_shape[0]//4:data_shape[0]*3//4] = 1
+        if len(data_shape) == 3:
+            mask = np.expand_dims(mask,axis=2)
+        elif len(data_shape) == 4:
+            mask = np.expand_dims(mask,axis=2)
+            mask = np.expand_dims(mask,axis=3)
+        return np.zeros(data_shape)+mask
     else:
         raise('Wrong mask type = ',mask_type)
