@@ -32,7 +32,7 @@ def get_nn(parameter={}):
         net = TDKNN(parameter)
     elif net_name == 'FourierFeature':
         net = FeatureMap(parameter)
-    elif net_name in ['EFF_KAN','KAN']:
+    elif net_name in ['EFF_KAN','KAN', 'ChebyKAN']:
         net = get_kan(parameter)
     else:
         raise('Wrong net_name = ',net_name)

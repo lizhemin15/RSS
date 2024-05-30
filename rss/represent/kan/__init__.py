@@ -12,3 +12,5 @@ def get_kan(parameter):
     # print('KAN : ',parameter)
     if parameter.get('net_name','SIREN') == "EFF_KAN":
         return EFF_KAN([parameter['dim_in'],*[parameter['dim_hidden']]*parameter['num_layers'],parameter['dim_out']],spline_type=parameter['spline_type'],grid_size=parameter['grid_size'])
+    else:
+        raise NotImplementedError
