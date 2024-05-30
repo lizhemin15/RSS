@@ -64,7 +64,6 @@ def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
         return mask
     elif mask_type == 'extend':
         mask = np.zeros((data_shape[0],data_shape[1]))
-        print('ex')
         mask[data_shape[0]//8:data_shape[0]*7//8,data_shape[0]//8:data_shape[0]*7//8] = 1
         if len(data_shape) == 3:
             mask = np.expand_dims(mask,axis=2)
