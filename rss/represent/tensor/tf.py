@@ -29,7 +29,7 @@ class TensorFactorization(nn.Module):
                     net_list.append(SIREN({'dim_in':1,'dim_hidden':256,'dim_out':dim_cor[i],'num_layers':2,'w0':1,'w0_initial':30.,'use_bias':True}))
                 elif self.mode == 'tucker_kan':
                     net_list.append(get_kan({'net_name':"EFF_KAN",'dim_in':1,'dim_hidden':20,'dim_out':dim_cor[i],'num_layers':3,'spline_type':'spline','grid_size':100}))
-                self.input_list.append(torch.linspace(-1,1,dim_cor[i]).reshape(-1,1))
+                self.input_list.append(torch.linspace(-1,1,dim_ori[i]).reshape(-1,1))
             self.net_list = nn.ModuleList(net_list)
 
         else:
