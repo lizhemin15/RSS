@@ -205,7 +205,7 @@ class rssnet(object):
                 loss = 0
 
                 if self.reg_p['reg_name'] != None:
-                    # reg_tensor = pre.reshape(self.data_p['data_shape'])
+                    reg_tensor = pre.reshape(self.data_p['data_shape'])
                     reg_loss = self.reg(reg_tensor)
                     loss += reg_loss
                     pre = pre[(self.mask).reshape(pre.shape)==1]
