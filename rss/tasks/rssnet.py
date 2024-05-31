@@ -187,11 +187,12 @@ class rssnet(object):
             if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
                 self.start_time = time.time()
             full_nets_list = ['UNet','ResNet','skip','DMF','TF']
+            full_pre_if = (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list)
             for ite in range(self.train_p['train_epoch']):
                 time_now = time.time()
                 self.log('time',time_now-self.start_time)
                 
-                if (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list):
+                if full_pre_if:
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
                     reg_tensor = pre.reshape(self.data_p['data_shape'])
@@ -208,7 +209,7 @@ class rssnet(object):
                 if self.reg_p['reg_name'] != None:
                     reg_loss = self.reg(reg_tensor)
                     loss += reg_loss
-                    if not (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list):
+                    if not full_pre_if:
                         pre = pre[(self.mask).reshape(pre.shape)==1]
                 
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
