@@ -194,6 +194,7 @@ class rssnet(object):
                 if (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list):
                     pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                     pre = pre.reshape(self.data_p['data_shape'])
+                    reg_tensor = pre.reshape(self.data_p['data_shape'])
                     pre = pre[self.mask==1]
 
                 elif self.reg_p['reg_name'] != None:
@@ -205,7 +206,6 @@ class rssnet(object):
                 loss = 0
 
                 if self.reg_p['reg_name'] != None:
-                    reg_tensor = pre.reshape(self.data_p['data_shape'])
                     reg_loss = self.reg(reg_tensor)
                     loss += reg_loss
                     pre = pre[(self.mask).reshape(pre.shape)==1]
