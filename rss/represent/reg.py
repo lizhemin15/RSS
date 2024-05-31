@@ -196,7 +196,7 @@ class regularizer(nn.Module):
         elif self.reg_name == 'DE':
             self.A_0 = parameter['A_0']
             self.temperature = parameter.get('temperature',1)
-            self.sofmax = nn.Softmax(dim=-1)
+            self.softmax = nn.Softmax(dim=-1)
         elif self.reg_name == 'RUBI':
             self.ite_num = 0
 
