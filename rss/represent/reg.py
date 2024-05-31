@@ -266,7 +266,7 @@ class regularizer(nn.Module):
         I_n = to_device(I_n,device)
         if mode == 'learn':
             A_0 = self.A_0.weight # A_0 \in \mathbb{R}^{n \times n}
-            A_1 = self.softmin(A_0, dim=-1) # A_1 中的元素的取值 \in (0,1) 和为1
+            A_1 = self.softmin(A_0) # A_1 中的元素的取值 \in (0,1) 和为1
             A_2 = (A_1+A_1.T)/2 # A_2 一定是对称的
         else:
             A_2 = self.A_0
