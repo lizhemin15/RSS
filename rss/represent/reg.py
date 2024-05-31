@@ -32,6 +32,8 @@ def get_reg(parameter):
     reg_name = parameter.get('reg_name', 'TV')
     if reg_name in ['TV', 'LAP']:
         de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0}
+    elif reg_name == 'DE':
+        de_para_dict = {'coef': 1, "mode":0}
     elif reg_name == 'AIR':
         de_para_dict = {'n': 100, 'coef': 1, 'mode': 0}
     elif reg_name == 'INRR':
@@ -193,6 +195,8 @@ class regularizer(nn.Module):
             self.net = nn.Sequential(net,nn.Softmax(dim=-1))
         elif self.reg_name == 'DE':
             self.A_0 = parameter['A_0']
+            self.temperature = parameter.get('temperature',1)
+            self.sofmax = nn.Softmax(dim=-1)
         elif self.reg_name == 'RUBI':
             self.ite_num = 0
 
@@ -269,7 +273,9 @@ class regularizer(nn.Module):
             A_1 = self.softmin(A_0) # A_1 中的元素的取值 \in (0,1) 和为1
             A_2 = (A_1+A_1.T)/2 # A_2 一定是对称的
         else:
-            A_2 = self.A_0
+            A_0 = self.A_0 # A_0 \in \mathbb{R}^{n \times n}
+            A_1 = self.softmax(A_0/self.temperature)
+            A_2 = (A_1+A_1.T)/2
         A_3 = A_2 * (t.mm(Ones,Ones.T)-I_n) # A_3 将中间的元素都归零，作为邻接矩阵
         A_4 = -A_3+t.mm(A_3,t.mm(Ones,Ones.T))*I_n # A_4 将邻接矩阵转化为拉普拉斯矩阵
         self.lap = A_4
