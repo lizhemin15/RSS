@@ -208,7 +208,7 @@ class rssnet(object):
                 if self.reg_p['reg_name'] != None:
                     reg_loss = self.reg(reg_tensor)
                     loss += reg_loss
-                    pre = pre[(self.mask).reshape(pre.shape)==1]
+                    # pre = pre[(self.mask).reshape(pre.shape)==1]
                 
                 target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
                 if self.noise_p['noise_term'] == True:
