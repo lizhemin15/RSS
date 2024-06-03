@@ -180,6 +180,8 @@ class regularizer(nn.Module):
             self.factor = parameter["factor"]
             self.patch_size = parameter["patch_size"]
             self.stride = parameter["stride"]
+            self.filter_type = parameter.get('filter_type', None)
+            self.sigma = parameter.get('sigma',1)
             # 计算图像块数量
             self.num_blocks_h = (self.n - self.patch_size) // self.stride + 1
             self.num_blocks_w = (self.n - self.patch_size) // self.stride + 1
@@ -206,7 +208,9 @@ class regularizer(nn.Module):
         if 'down_sample' == self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
         if 'patch' == self.x_trans:
-            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'vector')
+            x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size,
+                                         stride=self.stride, return_type = 'vector',
+                                         filter_type=self.filter_type, sigma = self.sigma)
         if 'patch_down' == self.x_trans:
             x = toolbox.extract_patches(input_tensor=x, patch_size=self.patch_size, stride=self.stride, return_type = 'patch', down_sample = True)
 

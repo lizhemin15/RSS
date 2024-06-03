@@ -1,25 +1,42 @@
+import torch as t
+import math
+
+def gaussian_kernel(size, sigma):
+    """生成一个高斯卷积核."""
+    kernel = t.tensor([math.exp(-((x - size//2)**2) / (2*sigma**2)) for x in range(size)])
+    kernel = kernel / kernel.sum()
+    return kernel
+
+def create_2d_gaussian_kernel(kernel_size, sigma):
+    """生成一个2D高斯卷积核."""
+    kernel_1d = gaussian_kernel(kernel_size, sigma)
+    kernel_2d = kernel_1d[:, None] * kernel_1d[None, :]
+    return kernel_2d
 
 
-def extract_patches(input_tensor, patch_size, stride, return_type = 'patch', down_sample = False):
+
+def extract_patches(input_tensor, patch_size, stride, return_type = 'patch',
+                    down_sample = False, filter_type = None, sigma = 1):
     # 获取输入张量的形状
     h, w = input_tensor.shape
-
     # 使用unfold函数分解为补丁
     patches = input_tensor.unfold(0, patch_size, stride).unfold(1, patch_size, stride)
-
     # 获取补丁的形状
     ph, pw = patches.shape[0], patches.shape[1]
-
     # 将补丁展开为2D矩阵
     patches = patches.contiguous().view(-1, patch_size, patch_size)
-
     if down_sample:
         # 如果为真，则沿着第二个维度和第三个维度的patch进行平均降采样四倍
         scale = 2
         patches = patches.view(ph, pw, patch_size // scale, scale, patch_size // scale, scale).mean(dim=(3, 5)).contiguous().view(-1, patch_size // scale, patch_size // scale)
-
-
-
+    if filter_type == None:
+        pass
+    elif filter_type == 'gaussian':
+        # 如果为'gaussian'，则对每个补丁进行高斯滤波
+        filter = create_2d_gaussian_kernel(kernel_size=patches.shape[1], sigma=sigma).unsqueeze(0)
+        patches = filter*patches
+    else:
+        raise ValueError('Invalid filter type = ', filter_type)
     if return_type == 'patch':
         return patches
     else:
