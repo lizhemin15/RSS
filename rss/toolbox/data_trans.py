@@ -1,5 +1,6 @@
 import torch as t
 import math
+from rss.represent.utils import to_device
 
 def gaussian_kernel(size, sigma):
     """生成一个高斯卷积核."""
@@ -34,6 +35,7 @@ def extract_patches(input_tensor, patch_size, stride, return_type = 'patch',
     elif filter_type == 'gaussian':
         # 如果为'gaussian'，则对每个补丁进行高斯滤波
         filter = create_2d_gaussian_kernel(kernel_size=patches.shape[1], sigma=sigma).unsqueeze(0)
+        filter = to_device(filter, patches.device)
         patches = filter*patches
     else:
         raise ValueError('Invalid filter type = ', filter_type)
