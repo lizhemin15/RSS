@@ -30,7 +30,7 @@ def get_opstr(mode=0,shape=(100,100)):
 
 def get_reg(parameter):
     reg_name = parameter.get('reg_name', 'TV')
-    if reg_name in ['TV', 'LAP']:
+    if reg_name in ['TV', 'LAP', 'WTV', 'NLTV']:
         de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0}
     elif reg_name == 'DE':
         de_para_dict = {'coef': 1, "mode":0}
@@ -182,10 +182,10 @@ class regularizer(nn.Module):
             self.stride = parameter["stride"]
             self.filter_type = parameter.get('filter_type', None)
             self.sigma = parameter.get('sigma',1)
-            # 计算图像块数量
+            # 计算图像块数量 
             self.num_blocks_h = (self.n - self.patch_size) // self.stride + 1
             self.num_blocks_w = (self.n - self.patch_size) // self.stride + 1
-        # init opt parameters
+        # init opt parameters 
         self.mode = self.reg_parameter['mode']
         if self.reg_name == 'AIR':
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
@@ -202,9 +202,7 @@ class regularizer(nn.Module):
         elif self.reg_name == 'RUBI':
             self.ite_num = 0
 
-    
-
-    def forward(self,x,sparse_index=None):
+    def forward(self,x,sparse_index=None,fid_loss_now=None):
         if 'down_sample' == self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
         if 'patch' == self.x_trans:
@@ -219,9 +217,12 @@ class regularizer(nn.Module):
             self.sparse_index = sparse_index
         if self.sparse_index is not None:
             x = x[self.sparse_index]
-        
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
+        elif self.reg_name == 'WTV':
+            return self.wtv(x,fid_loss_now=fid_loss_now)*self.reg_parameter["coef"]
+        elif self.reg_name == 'NLTV':
+            return self.nltv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
             return self.lap_reg(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'DE':
@@ -250,6 +251,26 @@ class regularizer(nn.Module):
         Var1 = 2*center-up-down
         Var2 = 2*center-left-right
         return (t.norm(Var1,p=p)+t.norm(Var2,p=p))/M.shape[0]
+
+    def wtv(self, M, fid_loss_now=None):
+        """
+        M: torch tensor type
+        p: p-norm
+        """
+        p = self.reg_parameter['p_norm']
+        weight = t.zeros(M.shape)
+        center = M[1:M.shape[0],1:M.shape[1]]
+        left = M[0:M.shape[0]-1,0:M.shape[1]-1]
+        Var = center-left # shape: (n-1,n-1)
+        weight = (fid_loss_now  / t.abs(Var1)).detach().clone() # shape: (n-1,n-1)
+        return t.norm(weight*Var,p=p)/M.shape[0]
+
+    def nltv(self,M):
+        """
+        M: torch tensor type
+        p: p-norm
+        """
+        pass
 
     def lap_reg(self,M):
         """
