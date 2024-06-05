@@ -258,11 +258,13 @@ class regularizer(nn.Module):
         p: p-norm
         """
         p = self.reg_parameter['p_norm']
-        weight = t.zeros(M.shape)
-        center = M[1:M.shape[0],1:M.shape[1]]
-        left = M[0:M.shape[0]-1,0:M.shape[1]-1]
-        Var = center-left # shape: (n-1,n-1)
-        weight = (1  / (t.abs(Var)+1e-2)).detach().clone() # shape: (n-1,n-1)
+        center = M[1:M.shape[0]-1,1:M.shape[1]-1]
+        up = M[1:M.shape[0]-1,0:M.shape[1]-2]
+        down = M[1:M.shape[0]-1,2:M.shape[1]]
+        left = M[0:M.shape[0]-2,1:M.shape[1]-1]
+        right = M[2:M.shape[0],1:M.shape[1]-1]
+        Var = 4*center-left-right-up-down # shape: (n-2,n-2)
+        weight = (1  / (t.abs(Var)+1e-2)).detach().clone() # shape: (n-2,n-2)
         return t.norm(weight*Var,p=p)/M.shape[0]
 
     def nltv(self,M):
