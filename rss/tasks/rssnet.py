@@ -208,7 +208,7 @@ class rssnet(object):
 
                 if self.reg_p['reg_name'] != None:
                     if self.reg_p['reg_name'] == 'WTV':
-                        fid_loss_now = loss.detach()
+                        fid_loss_now = loss
                     else:
                         fid_loss_now = None
                     reg_loss = self.reg(reg_tensor,fid_loss_now=fid_loss_now)
