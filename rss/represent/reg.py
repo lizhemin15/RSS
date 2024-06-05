@@ -252,7 +252,7 @@ class regularizer(nn.Module):
         Var2 = 2*center-left-right
         return (t.norm(Var1,p=p)+t.norm(Var2,p=p))/M.shape[0]
 
-    def wtv(self, M, fid_loss_now=None):
+    def wtv(self, M):
         """
         M: torch tensor type
         p: p-norm
@@ -263,7 +263,7 @@ class regularizer(nn.Module):
         down = M[1:M.shape[0]-1,2:M.shape[1]]
         left = M[0:M.shape[0]-2,1:M.shape[1]-1]
         right = M[2:M.shape[0],1:M.shape[1]-1]
-        Var = 4*center-left-right-up-down # shape: (n-2,n-2)
+        Var = t.abs(center-up)+t.abs(center-down)+t.abs(center-left)+t.abs(center-right) # shape: (n-2,n-2)
         weight = (1  / (t.abs(Var)+1e-2)).detach().clone() # shape: (n-2,n-2)
         return t.norm(weight*Var,p=p)/M.shape[0]
 
