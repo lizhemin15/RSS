@@ -202,7 +202,7 @@ class regularizer(nn.Module):
         elif self.reg_name == 'RUBI':
             self.ite_num = 0
 
-    def forward(self,x,sparse_index=None,fid_loss_now=None):
+    def forward(self,x,sparse_index=None):
         if 'down_sample' == self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
         if 'patch' == self.x_trans:
@@ -220,7 +220,7 @@ class regularizer(nn.Module):
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'WTV':
-            return self.wtv(x,fid_loss_now=fid_loss_now)*self.reg_parameter["coef"]
+            return self.wtv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'NLTV':
             return self.nltv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'LAP':
