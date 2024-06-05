@@ -262,7 +262,7 @@ class regularizer(nn.Module):
         center = M[1:M.shape[0],1:M.shape[1]]
         left = M[0:M.shape[0]-1,0:M.shape[1]-1]
         Var = center-left # shape: (n-1,n-1)
-        weight = (fid_loss_now  / t.abs(Var1)).detach().clone() # shape: (n-1,n-1)
+        weight = (fid_loss_now  / t.abs(Var)).detach().clone() # shape: (n-1,n-1)
         return t.norm(weight*Var,p=p)/M.shape[0]
 
     def nltv(self,M):
