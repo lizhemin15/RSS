@@ -298,6 +298,7 @@ class regularizer(nn.Module):
             indices = np.argsort(distances, axis=1)[:, :k]  # 形状为 (n*n, k)
             # 将indices整理成(n,n,k)的形状
             self.indices = indices.reshape((n, n, k))
+            return 0
         else:
             k_nearest_values = M[t.tensor(self.indices)]  # 形状为 (n, n, k)
             k_nearest_distances = np.take_along_axis(distances.reshape(n, n, n*n), self.indices, axis=-1)  # 形状为 (n, n, k)
