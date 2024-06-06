@@ -304,12 +304,25 @@ class regularizer(nn.Module):
             n = M.shape[0]
             # 将self.indices转换为int64类型
             indices = t.tensor(self.indices, dtype=t.int64).to(M.device)
+            
+            # 输出调试信息
+            print(f"M.shape: {M.shape}")
+            print(f"indices.shape: {indices.shape}")
+            print(f"Indices range: {indices.min().item()} to {indices.max().item()}")
+            
             # 使用转换后的indices进行gather操作
             k_nearest_values = t.gather(M.unsqueeze(-1).expand(-1, -1, self.k), dim=-1, index=indices)  # 形状为 (n, n, k)
-            print(k_nearest_values.shape)
+            
+            # 输出调试信息
+            print(f"k_nearest_values.shape: {k_nearest_values.shape}")
+            
             k_nearest_distances = np.take_along_axis(self.distances.reshape(n, n, n*n), self.indices, axis=-1)  # 形状为 (n, n, k)
             k_nearest_distances = t.exp(-t.tensor(k_nearest_distances).to(M.device))
-            return t.mean(k_nearest_distances*(M.unsqueeze(-1)-k_nearest_values)**2)
+            
+            # 输出调试信息
+            print(f"k_nearest_distances.shape: {k_nearest_distances.shape}")
+            
+            return t.mean(k_nearest_distances * (M.unsqueeze(-1) - k_nearest_values) ** 2)
 
 
 
