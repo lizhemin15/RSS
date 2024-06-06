@@ -291,7 +291,7 @@ class regularizer(nn.Module):
             # 提取所有 (n, n) 的框并堆叠成新的张量
             patches = extract_patches(M_conv, n, patch_size)  # patches的形状为 ((2*patch_size)**2, n, n)
             # 计算第一个通道（0通道）的向量作为特征
-            features = patches[:, 0].reshape((n*n, -1))  # 特征的形状为 (n*n, (2*patch_size+1)**2)
+            features = patches.reshape((n*n, -1))  # 特征的形状为 (n*n, (2*patch_size+1)**2)
             # 计算所有向量之间的距离
             distances = cdist(features, features, metric='minkowski', p=p)  # 距离矩阵的形状为 (n*n, n*n)
             # 找到k个最近的邻居
