@@ -292,9 +292,9 @@ class regularizer(nn.Module):
             # 计算第一个通道（0通道）的向量作为特征
             features = patches.reshape((n*n, -1))  # 特征的形状为 (n*n, (2*patch_size+1)**2)
             # 计算所有向量之间的距离
-            distances = cdist(features, features, metric='minkowski', p=p)  # 距离矩阵的形状为 (n*n, n*n)
+            self.distances = cdist(features, features, metric='minkowski', p=p)  # 距离矩阵的形状为 (n*n, n*n)
             # 找到k个最近的邻居
-            indices = np.argsort(distances, axis=1)[:, :k]  # 形状为 (n*n, k)
+            indices = np.argsort(self.distances, axis=1)[:, :k]  # 形状为 (n*n, k)
             # 将indices整理成(n,n,k)的形状
             self.indices = indices.reshape((n, n, k))
             return 0
@@ -302,7 +302,7 @@ class regularizer(nn.Module):
             return 0
         else:
             k_nearest_values = M[t.tensor(self.indices)]  # 形状为 (n, n, k)
-            k_nearest_distances = np.take_along_axis(distances.reshape(n, n, n*n), self.indices, axis=-1)  # 形状为 (n, n, k)
+            k_nearest_distances = np.take_along_axis(self.distances.reshape(n, n, n*n), self.indices, axis=-1)  # 形状为 (n, n, k)
             k_nearest_distances = t.from_numpy(k_nearest_distances).to(dtype=M.dtype, device=M.device)
             return t.mean(k_nearest_distances*(M.unsqueeze(-1)-k_nearest_values)**2)
 
