@@ -8,6 +8,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.cluster import KMeans
 import scipy.ndimage
 from rss.represent.utils import gaussian_kernel, pad_with_zeros, extract_patches
+from scipy.spatial.distance import cdist
 
 def to_device(obj,device):
     if t.cuda.is_available() and device != 'cpu':
