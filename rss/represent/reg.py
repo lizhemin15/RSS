@@ -294,9 +294,9 @@ class regularizer(nn.Module):
             # 计算所有向量之间的距离
             self.distances = cdist(features, features, metric='minkowski', p=p)  # 距离矩阵的形状为 (n*n, n*n)
             # 找到k个最近的邻居
-            indices = np.argsort(self.distances, axis=1)[:, :k]  # 形状为 (n*n, k)
+            indices = np.argsort(self.distances, axis=1)[:, :self.k]  # 形状为 (n*n, k)
             # 将indices整理成(n,n,k)的形状
-            self.indices = indices.reshape((n, n, k))
+            self.indices = indices.reshape((n, n, self.k))
             return 0
         if self.epoch_now < self.reg_parameter.get('start_epoch',100):
             return 0
