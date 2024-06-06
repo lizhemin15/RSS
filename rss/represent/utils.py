@@ -2,6 +2,7 @@ import torch.nn.functional as F
 import torch as t
 from torch import nn
 from einops import rearrange
+import numpy as np
 
 abc_str = 'abcdefghijklmnopqrstuvwxyz'
 
@@ -98,3 +99,24 @@ def patchify(data, patch_size=32, stride=1):
     # 将patches展平，并移动维度顺序为 (num_patches, patch_size, patch_size)
     patches = patches.contiguous().view(-1, patch_size, patch_size)
     return patches
+
+
+def gaussian_kernel(k, sigma=1.0):
+    # 创建一个高斯核
+    ax = np.arange(-k, k + 1)
+    xx, yy = np.meshgrid(ax, ax)
+    kernel = np.exp(-0.5 * (np.square(xx) + np.square(yy)) / np.square(sigma))
+    return kernel / np.sum(kernel)
+
+def pad_with_zeros(matrix, pad_width):
+    # 用0填充矩阵
+    return np.pad(matrix, pad_width, mode='constant', constant_values=0)
+
+
+def extract_patches(M_conv, n, k):
+    patches = []
+    for i in range(2 * k):
+        for j in range(2 * k):
+            patch = M_conv[i:i + n, j:j + n]
+            patches.append(patch)
+    return np.stack(patches)

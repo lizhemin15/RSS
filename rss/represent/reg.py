@@ -6,7 +6,8 @@ from rss.represent import get_nn
 from rss import toolbox
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import KMeans
-
+import scipy.ndimage
+from rss.represent.utils import gaussian_kernel, pad_with_zeros, extract_patches
 
 def to_device(obj,device):
     if t.cuda.is_available() and device != 'cpu':
@@ -31,7 +32,7 @@ def get_opstr(mode=0,shape=(100,100)):
 def get_reg(parameter):
     reg_name = parameter.get('reg_name', 'TV')
     if reg_name in ['TV', 'LAP', 'WTV', 'NLTV']:
-        de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0}
+        de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0, 'topk': 10, 'sigma': 1, 'patch_size': 4, 'search_epoch':100}
     elif reg_name == 'DE':
         de_para_dict = {'coef': 1, "mode":0}
     elif reg_name == 'AIR':
@@ -176,6 +177,7 @@ class regularizer(nn.Module):
         self.x_trans = parameter["x_trans"]
         self.sparse_index = parameter.get('sparse_index',None)
         self.n = self.reg_parameter.get('n',100)
+        self.epoch_now = 0
         if self.x_trans != 'ori':
             self.factor = parameter["factor"]
             self.patch_size = parameter["patch_size"]
@@ -203,6 +205,7 @@ class regularizer(nn.Module):
             self.ite_num = 0
 
     def forward(self,x,sparse_index=None):
+        self.epoch_now += 1
         if 'down_sample' == self.x_trans:
             x = toolbox.downsample_tensor(input_tensor=x, factor=self.factor)
         if 'patch' == self.x_trans:
@@ -254,7 +257,7 @@ class regularizer(nn.Module):
 
     def wtv(self, M):
         """
-        M: torch tensor type
+        M: torch tensor type, shaped as (n,n)
         p: p-norm
         """
         p = self.reg_parameter['p_norm']
@@ -267,12 +270,39 @@ class regularizer(nn.Module):
         weight = (1  / (t.abs(Var)+1e-2)).detach().clone() # shape: (n-2,n-2)
         return t.norm(weight*Var,p=p)/M.shape[0]
 
-    def nltv(self,M):
+    def nltv(self, M):
         """
-        M: torch tensor type
+        M: torch tensor type, shaped as (n, n)
         p: p-norm
         """
-        pass
+        if self.epoch_now < self.reg_parameter.get('start_epoch',100):
+            return 0
+        if self.epoch_now % self.reg_parameter.get('search_epoch',100) == 0:
+            p = self.reg_parameter['p_norm']
+            M_np = M.detach().cpu().numpy()  # M_np的形状为 (n, n)
+            n = M_np.shape[0]
+            patch_size = self.reg_parameter.get('patch_size', 4)  # 获取patch_size
+            sigma = self.reg_parameter.get('sigma', 1.0)  # 默认sigma为1.0
+            kernel = gaussian_kernel(patch_size, sigma)  # kernel的形状为 (2*patch_size+1, 2*patch_size+1)
+            M_padded = pad_with_zeros(M_np, patch_size)  # M_padded的形状为 (n+2*patch_size, n+2*patch_size)
+            M_conv = scipy.ndimage.convolve(M_padded, kernel, mode='constant', cval=0.0)  # M_conv的形状为 (n+2*patch_size, n+2*patch_size)
+            # 提取所有 (n, n) 的框并堆叠成新的张量
+            patches = extract_patches(M_conv, n, patch_size)  # patches的形状为 ((2*patch_size)**2, n, n)
+            # 计算第一个通道（0通道）的向量作为特征
+            features = patches[:, 0].reshape((n*n, -1))  # 特征的形状为 (n*n, (2*patch_size+1)**2)
+            # 计算所有向量之间的距离
+            distances = cdist(features, features, metric='minkowski', p=p)  # 距离矩阵的形状为 (n*n, n*n)
+            # 找到k个最近的邻居
+            indices = np.argsort(distances, axis=1)[:, :k]  # 形状为 (n*n, k)
+            # 将indices整理成(n,n,k)的形状
+            self.indices = indices.reshape((n, n, k))
+        else:
+            k_nearest_values = M[t.tensor(self.indices)]  # 形状为 (n, n, k)
+            k_nearest_distances = np.take_along_axis(distances.reshape(n, n, n*n), self.indices, axis=-1)  # 形状为 (n, n, k)
+            k_nearest_distances = t.from_numpy(k_nearest_distances).to(dtype=M.dtype, device=M.device)
+            return t.mean(k_nearest_distances*(M.unsqueeze(-1)-k_nearest_values)**2)
+
+
 
     def lap_reg(self,M):
         """
