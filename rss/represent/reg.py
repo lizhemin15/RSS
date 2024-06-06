@@ -284,6 +284,7 @@ class regularizer(nn.Module):
             n = M_np.shape[0]
             patch_size = self.reg_parameter.get('patch_size', 4)  # 获取patch_size
             sigma = self.reg_parameter.get('sigma', 1.0)  # 默认sigma为1.0
+            k = self.reg_parameter.get('topk', 10)  # 默认topk为10
             kernel = gaussian_kernel(patch_size, sigma)  # kernel的形状为 (2*patch_size+1, 2*patch_size+1)
             M_padded = pad_with_zeros(M_np, patch_size)  # M_padded的形状为 (n+2*patch_size, n+2*patch_size)
             M_conv = scipy.ndimage.convolve(M_padded, kernel, mode='constant', cval=0.0)  # M_conv的形状为 (n+2*patch_size, n+2*patch_size)
