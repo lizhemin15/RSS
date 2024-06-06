@@ -241,6 +241,7 @@ class regularizer(nn.Module):
             raise('Not support regularizer named ',self.reg_name,'please check the regularizer name in TV, LAP, AIR, INRR, RUBI')
 
 
+
     def tv(self,M):
         """
         M: torch tensor type
@@ -276,8 +277,6 @@ class regularizer(nn.Module):
         M: torch tensor type, shaped as (n, n)
         p: p-norm
         """
-        if self.epoch_now < self.reg_parameter.get('start_epoch',100):
-            return 0
         if self.epoch_now % self.reg_parameter.get('search_epoch',100) == 0:
             p = self.reg_parameter['p_norm']
             M_np = M.detach().cpu().numpy()  # M_np的形状为 (n, n)
@@ -298,6 +297,8 @@ class regularizer(nn.Module):
             indices = np.argsort(distances, axis=1)[:, :k]  # 形状为 (n*n, k)
             # 将indices整理成(n,n,k)的形状
             self.indices = indices.reshape((n, n, k))
+            return 0
+        if self.epoch_now < self.reg_parameter.get('start_epoch',100):
             return 0
         else:
             k_nearest_values = M[t.tensor(self.indices)]  # 形状为 (n, n, k)
