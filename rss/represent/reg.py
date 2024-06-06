@@ -283,7 +283,7 @@ class regularizer(nn.Module):
             n = M_np.shape[0]
             patch_size = self.reg_parameter.get('patch_size', 4)  # 获取patch_size
             sigma = self.reg_parameter.get('sigma', 1.0)  # 默认sigma为1.0
-            k = self.reg_parameter.get('topk', 10)  # 默认topk为10
+            self.k = self.reg_parameter.get('topk', 10)  # 默认topk为10
             kernel = gaussian_kernel(patch_size, sigma)  # kernel的形状为 (2*patch_size+1, 2*patch_size+1)
             M_padded = pad_with_zeros(M_np, patch_size)  # M_padded的形状为 (n+2*patch_size, n+2*patch_size)
             M_conv = scipy.ndimage.convolve(M_padded, kernel, mode='constant', cval=0.0)  # M_conv的形状为 (n+2*patch_size, n+2*patch_size)
@@ -302,7 +302,7 @@ class regularizer(nn.Module):
             return 0
         else:
             n = M.shape[0]
-            k_nearest_values = t.gather(M.unsqueeze(-1).expand(-1, -1, k), dim=-1, index=t.tensor(self.indices))  # 形状为 (n, n, k)
+            k_nearest_values = t.gather(M.unsqueeze(-1).expand(-1, -1, self.k), dim=-1, index=t.tensor(self.indices))  # 形状为 (n, n, k)
             print(k_nearest_values.shape)
             k_nearest_distances = np.take_along_axis(self.distances.reshape(n, n, n*n), self.indices, axis=-1)  # 形状为 (n, n, k)
             k_nearest_distances = t.exp(-t.from_numpy(k_nearest_distances).to(dtype=M.dtype, device=M.device))
