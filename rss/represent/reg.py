@@ -407,7 +407,6 @@ class regularizer(nn.Module):
         self.lap = A_4.clone()
         for _ in range(lap_k-1):
             self.lap = self.lap@A_4
-            print('gogogo')
         # print('lap shape:',self.lap.shape)
         return t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
 
