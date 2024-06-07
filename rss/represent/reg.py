@@ -35,11 +35,11 @@ def get_reg(parameter):
     if reg_name in ['TV', 'LAP', 'WTV', 'NLTV']:
         de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0, 'topk': 10, 'sigma': 1, 'patch_size': 4, 'search_epoch':100}
     elif reg_name == 'DE':
-        de_para_dict = {'coef': 1, "mode":0}
+        de_para_dict = {'coef': 1, "mode":0, "lap_k":1}
     elif reg_name == 'AIR':
-        de_para_dict = {'n': 100, 'coef': 1, 'mode': 0}
+        de_para_dict = {'n': 100, 'coef': 1, 'mode': 0, "lap_k":1}
     elif reg_name == 'INRR':
-        de_para_dict = {'coef': 1, 'mode': 0, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
+        de_para_dict = {'coef': 1, 'mode': 0, "lap_k":1, 'inr_parameter': {'dim_in': 1,'dim_out':100}}
     elif reg_name == 'RUBI':
         de_para_dict = {'coef': 1, "mode":None}
     elif reg_name == 'MultiReg':
@@ -342,6 +342,7 @@ class regularizer(nn.Module):
 
 
     def air(self,W,mode='learn'):
+        lap_k = self.reg_parameter.get('lap_k',1)
         device = W.device
         Ones = t.ones(self.n,1)
         I_n = t.from_numpy(np.eye(self.n)).to(t.float32)
@@ -357,16 +358,19 @@ class regularizer(nn.Module):
             A_2 = (A_1+A_1.T)/2
         A_3 = A_2 * (t.mm(Ones,Ones.T)-I_n) # A_3 将中间的元素都归零，作为邻接矩阵
         A_4 = -A_3+t.mm(A_3,t.mm(Ones,Ones.T))*I_n # A_4 将邻接矩阵转化为拉普拉斯矩阵
-        self.lap = A_4
+        self.lap = A_4.clone()
+        for _ in range(lap_k-1):
+            self.lap = self.lap@A_4
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         W = rearrange(W,opstr)
-        return t.trace(t.mm(W.T,t.mm(A_4,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
+        return t.trace(t.mm(W.T,t.mm(self.lap,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
 
 
 
     def inrr(self,W):
         # GroupReg 中，multi和single模式下传入的W都是已经取了 sparse_index 的
         self.device = W.device
+        lap_k = self.reg_parameter.get('lap_k',1)
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         img = rearrange(W,opstr)
         n = img.shape[0]
@@ -399,7 +403,10 @@ class regularizer(nn.Module):
         self.A_0 = self.net(coor)
         # print(self.A_0.shape)
         self.A_0 = self.A_0@(self.A_0.T)
-        self.lap = self.A2lap(self.A_0)
+        A_4 = self.A2lap(self.A_0)
+        self.lap = A_4.clone()
+        for _ in range(lap_k-1):
+            self.lap = self.lap@A_4
         # print('lap shape:',self.lap.shape)
         return t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
 
