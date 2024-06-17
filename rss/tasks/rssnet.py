@@ -277,7 +277,7 @@ class rssnet(object):
             # 迭代指定 epoch 后，保存logs
             if self.save_p['save_if'] == True:
                 # 无论是否调用 self.show 都保存 logs，而图片只有在调用 self.show 时才保存
-                self.save_logs()
+                self.save_logs(verbose=verbose)
             if verbose == True:    
                 print('loss on test set',self.log_dict['test_loss'][-1])
                 print('PSNR=',self.log_dict['psnr'][-1],'dB')
@@ -289,7 +289,7 @@ class rssnet(object):
 
     def log(self,name,content):
         if 'log_dict' not in self.__dict__:
-            self.log_dict = {}
+            self.log_dict = {'parameter_all':self.parameter_all}
         if name not in self.log_dict:
             self.log_dict[name] = [content]
         else:
@@ -360,13 +360,14 @@ class rssnet(object):
         plt.show()
         
 
-    def save_logs(self):
+    def save_logs(self,verbose=True):
         # 检测文件夹是否存在，不存在则创建
         if not os.path.exists(self.save_p['save_path']):
             os.makedirs(self.save_p['save_path'])
         with open(self.save_p['save_path']+"logs.pkl", "wb") as f:
             pkl.dump(self.log_dict, f)
-            print('save logs to',self.save_p['save_path']+"logs.pkl")
+            if verbose == True:
+                print('save logs to',self.save_p['save_path']+"logs.pkl")
 
     def cal_psnr(self, pre, target):
         def mse(pre, target):
