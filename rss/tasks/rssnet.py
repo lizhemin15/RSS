@@ -234,7 +234,6 @@ class rssnet(object):
                     self.reg_opt.step()
                 if self.noise_p['noise_term'] == True:
                     self.noise_opt.step()
-                
 
                 # test and val loss
                 with t.no_grad():
@@ -271,6 +270,8 @@ class rssnet(object):
                     self.log('test_loss',loss.item())
                     self.log('psnr',self.cal_psnr(pre,target).item())
                     self.log('nmae',self.cal_nmae(pre,target))
+                    if (ite+1)%(self.train_p['train_epoch']//10) == 0:
+                        self.log('img')
                     if self.reg_p['reg_name'] != None:
                         self.log('reg_loss',reg_loss)
 
@@ -287,9 +288,21 @@ class rssnet(object):
             
 
 
-    def log(self,name,content):
+    def log(self,name,content=None):
         if 'log_dict' not in self.__dict__:
             self.log_dict = {'parameter_all':self.parameter_all}
+        if name == 'img':
+            if self.net_p['net_name'] in ['UNet','ResNet','skip']:
+                if self.data_p['return_data_type'] == 'random':
+                    unn_index = 0
+                else:
+                    unn_index = 1
+                pre_img = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+                pre_img = pre_img.reshape(self.data_p['data_shape'])
+            else:
+                pre_img = self.net(self.data_train['obs_tensor'][0])
+            show_img = pre_img.reshape(self.data_p['data_shape']).detach().cpu().numpy()
+            content = show_img
         if name not in self.log_dict:
             self.log_dict[name] = [content]
         else:
@@ -395,15 +408,12 @@ class rssnet(object):
     def gen_gif(self, fps=10, save_type = 'gif', start_frame=0, end_frame=None):
         # 获取文件夹中的所有文件
         files = os.listdir(self.save_p['save_path'])
-
         # 过滤出.png文件并排序
         png_files = sorted([f for f in files if f.endswith('.png')], key=lambda x: int(x.split('_')[1].split('.')[0]))
-        
         # 生成完整的文件路径
         images = [imageio.imread(os.path.join(self.save_p['save_path'], file)) for file in png_files]
         if end_frame is None:
             images = images[start_frame:end_frame]
-        
         # 生成GIF
         imageio.mimsave(self.save_p['save_path']+'result.'+save_type, images, fps=fps)
 
