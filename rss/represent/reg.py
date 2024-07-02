@@ -438,6 +438,8 @@ class regularizer(nn.Module):
             quadratic = t.minimum(abs_err, t.tensor(huber_delta))
             linear = abs_err - quadratic
             return (0.5 * quadratic ** 2 + t.tensor(huber_delta) * linear).mean()
+        elif lap_mpde == 'logcosh':
+            return t.log(t.cosh(lap@W)).mean()
         else:
             raise ValueError("lap_mode should be 'vanilla', 'lp', or 'Huber', but got {}".format(lap_mode))
 
