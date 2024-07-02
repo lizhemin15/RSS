@@ -420,6 +420,22 @@ class regularizer(nn.Module):
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
         return L
     
+    def lap_loss(self,W,lap,mode='vanilla',norm_lap_lp=1,huber_delta=0.3):
+        # Given laplacian matrix lap and the regularized matrix W, compute the loss
+        if mode == 'vanilla':
+            return t.trace(W.T@lap@W)/(W.shape[0]*W.shape[1])
+        elif mode == 'lp':
+            return t.norm(lap@W,norm_lap_lp)/(W.shape[0]*W.shape[1])
+        elif mode == 'Huber':
+            err = lap @ W
+            abs_err = t.abs(err)
+            quadratic = t.minimum(abs_err, huber_delta)
+            linear = abs_err - quadratic
+            return (0.5 * quadratic ** 2 + huber_delta * linear).mean()
+        else:
+            raise ValueError("mode should be 'vanilla', 'lp', or 'Huber', but got {}".format(mode))
+
+
     def rubi(self,M):
         if self.ite_num == 0:
             self.M_old = M.detach().clone()
@@ -430,3 +446,4 @@ class regularizer(nn.Module):
         if self.ite_num%100==0:
             print(result)
         return result
+
