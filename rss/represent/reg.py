@@ -435,9 +435,9 @@ class regularizer(nn.Module):
         elif lap_mode == 'Huber':
             err = lap @ W
             abs_err = t.abs(err)
-            quadratic = t.minimum(abs_err, huber_delta)
+            quadratic = t.minimum(abs_err, t.tensor(huber_delta))
             linear = abs_err - quadratic
-            return (0.5 * quadratic ** 2 + huber_delta * linear).mean()
+            return (0.5 * quadratic ** 2 + t.tensor(huber_delta) * linear).mean()
         else:
             raise ValueError("lap_mode should be 'vanilla', 'lp', or 'Huber', but got {}".format(lap_mode))
 
