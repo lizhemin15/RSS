@@ -194,6 +194,7 @@ class regularizer(nn.Module):
             self.lap_mode = self.reg_parameter.get('lap_mode','vanilla')
             self.norm_lap_lp = self.reg_parameter.get('norm_lap_lp',1)
             self.huber_delta = self.reg_parameter.get('huber_delta',0.1)
+            self.quantile_q = self.reg_parameter.get('quantile_q',0.5)
         if self.reg_name == 'AIR':
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
@@ -367,7 +368,7 @@ class regularizer(nn.Module):
             self.lap = self.lap@A_4
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         W = rearrange(W,opstr)
-        return self.lap_loss(W,self.lap,lap_mode=self.lap_mode,norm_lap_lp=self.norm_lap_lp,huber_delta=self.huber_delta)
+        return self.lap_loss(W,self.lap,lap_mode=self.lap_mode,norm_lap_lp=self.norm_lap_lp,huber_delta=self.huber_delta,q=self.quantile_q)
         # t.trace(t.mm(W.T,t.mm(self.lap,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
 
 
@@ -413,7 +414,7 @@ class regularizer(nn.Module):
         for _ in range(lap_k-1):
             self.lap = self.lap@A_4
         # print('lap shape:',self.lap.shape)
-        return self.lap_loss(img,self.lap,lap_mode=self.lap_mode,norm_lap_lp=self.norm_lap_lp,huber_delta=self.huber_delta)
+        return self.lap_loss(img,self.lap,lap_mode=self.lap_mode,norm_lap_lp=self.norm_lap_lp,huber_delta=self.huber_delta,q=self.quantile_q)
         # t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
 
     def A2lap(self,A_0):
@@ -426,7 +427,7 @@ class regularizer(nn.Module):
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
         return L
     
-    def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3):
+    def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3,q=0.5):
         # Given laplacian matrix lap and the regularized matrix W, compute the loss
         if lap_mode == 'vanilla':
             return t.trace(W.T@lap@W)/(W.shape[0]*W.shape[1])
@@ -440,6 +441,9 @@ class regularizer(nn.Module):
             return (0.5 * quadratic ** 2 + t.tensor(huber_delta) * linear).mean()
         elif lap_mode == 'logcosh':
             return t.log(t.cosh(lap@W)).mean()
+        elif lap_mode == 'quantile':
+            err = lap @ W
+            return (q*t.relu(err)+t.relu(-err)*(1-q)).mean()
         else:
             raise ValueError("lap_mode should be 'vanilla', 'lp', or 'Huber', but got {}".format(lap_mode))
 
