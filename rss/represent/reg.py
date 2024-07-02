@@ -190,6 +190,10 @@ class regularizer(nn.Module):
             self.num_blocks_w = (self.n - self.patch_size) // self.stride + 1
         # init opt parameters 
         self.mode = self.reg_parameter['mode']
+        if self.reg_name in ['AIR','INRR']:
+            self.lap_mode = self.reg_parameter.get('lap_mode','vanilla')
+            self.norm_lap_lp = self.reg_parameter.get('norm_lap_lp',1)
+            self.huber_delta = self.reg_parameter.get('huber_delta',0.1)
         if self.reg_name == 'AIR':
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
             self.softmin = nn.Softmin(1)
@@ -363,7 +367,8 @@ class regularizer(nn.Module):
             self.lap = self.lap@A_4
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         W = rearrange(W,opstr)
-        return t.trace(t.mm(W.T,t.mm(self.lap,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
+        return self.lap_loss(W,self.lap,lap_mode=self.lap_mode,norm_lap_lp=self.norm_lap_lp,huber_delta=self.huber_delta)
+        # t.trace(t.mm(W.T,t.mm(self.lap,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
 
 
 
@@ -408,7 +413,8 @@ class regularizer(nn.Module):
         for _ in range(lap_k-1):
             self.lap = self.lap@A_4
         # print('lap shape:',self.lap.shape)
-        return t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
+        return self.lap_loss(img,self.lap,lap_mode=self.lap_mode,norm_lap_lp=self.norm_lap_lp,huber_delta=self.huber_delta)
+        # t.trace(img.T@self.lap@img)/(img.shape[0]*img.shape[1])
 
     def A2lap(self,A_0):
         n = A_0.shape[0]
@@ -420,20 +426,20 @@ class regularizer(nn.Module):
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
         return L
     
-    def lap_loss(self,W,lap,mode='vanilla',norm_lap_lp=1,huber_delta=0.3):
+    def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3):
         # Given laplacian matrix lap and the regularized matrix W, compute the loss
-        if mode == 'vanilla':
+        if lap_mode == 'vanilla':
             return t.trace(W.T@lap@W)/(W.shape[0]*W.shape[1])
-        elif mode == 'lp':
+        elif lap_mode == 'lp':
             return t.norm(lap@W,norm_lap_lp)/(W.shape[0]*W.shape[1])
-        elif mode == 'Huber':
+        elif lap_mode == 'Huber':
             err = lap @ W
             abs_err = t.abs(err)
             quadratic = t.minimum(abs_err, huber_delta)
             linear = abs_err - quadratic
             return (0.5 * quadratic ** 2 + huber_delta * linear).mean()
         else:
-            raise ValueError("mode should be 'vanilla', 'lp', or 'Huber', but got {}".format(mode))
+            raise ValueError("lap_mode should be 'vanilla', 'lp', or 'Huber', but got {}".format(lap_mode))
 
 
     def rubi(self,M):

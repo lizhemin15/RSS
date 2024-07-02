@@ -66,7 +66,6 @@ class rssnet(object):
         self.net = to_device(self.net,self.net_p['gpu_id'])
 
 
-
     def init_reg(self):
         de_para_dict = {'reg_name':None}
         for key in de_para_dict.keys():
