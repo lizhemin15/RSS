@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch as t
+import torch.nn.functional as F
 import numpy as np
 from einops import rearrange
 from rss.represent import get_nn
@@ -168,6 +169,17 @@ class GroupReg(nn.Module):
 
 MultiRegDict = {"MultiReg":MultiReg,"GroupReg":GroupReg}
 
+class HuberLoss(torch.nn.Module):
+    def __init__(self, delta=1.0):
+        super(HuberLoss, self).__init__()
+        self.delta = delta
+
+    def forward(self, error):
+        abs_error = torch.abs(error)
+        quadratic = torch.min(abs_error, self.delta)
+        linear = abs_error - quadratic
+        loss = 0.5 * quadratic**2 + self.delta * linear
+        return torch.mean(loss)
 
 class regularizer(nn.Module):
     def __init__(self,parameter):
@@ -190,10 +202,12 @@ class regularizer(nn.Module):
             self.num_blocks_w = (self.n - self.patch_size) // self.stride + 1
         # init opt parameters 
         self.mode = self.reg_parameter['mode']
-        if self.reg_name in ['AIR','INRR']:
+        if self.reg_name in ['AIR','INRR','TV']:
             self.lap_mode = self.reg_parameter.get('lap_mode','vanilla')
-            self.norm_lap_lp = self.reg_parameter.get('norm_lap_lp',1)
             self.huber_delta = self.reg_parameter.get('huber_delta',0.1)
+            if self.lap_mode == 'Huber':
+                self.huber_loss = HuberLoss(delta=self.huber_delta)
+            self.norm_lap_lp = self.reg_parameter.get('norm_lap_lp',1)
             self.quantile_q = self.reg_parameter.get('quantile_q',0.5)
         if self.reg_name == 'AIR':
             self.A_0 = nn.Linear(self.n,self.n,bias=False)
@@ -260,7 +274,14 @@ class regularizer(nn.Module):
         right = M[2:M.shape[0],1:M.shape[1]-1]
         Var1 = 2*center-up-down
         Var2 = 2*center-left-right
-        return (t.norm(Var1,p=p)+t.norm(Var2,p=p))/M.shape[0]
+        if self.lap_mode == 'vanilla':
+            return (t.norm(Var1,p=p)+t.norm(Var2,p=p))/M.shape[0]
+        elif self.lap_mode == 'Huber':
+            return t.norm(t.clamp(Var1-self.huber_delta,min=0,max=self.huber_delta)+t.clamp(Var2-self.huber_delta,min=0,max=self.huber_delta),p=p)/M.shape[0]
+        elif self.lap_mode == 'quantile':
+            return t.norm(t.clamp(Var1-self.quantile_q*t.abs(Var1),min=0,max=self.quantile_q*t.abs(Var1))+t.clamp(Var2-self.quantile_q*t.abs(Var2),min=0,max=self.quantile_q*t.abs(Var2)),p=p)/M.shape[0]
+        else:
+            raise ValueError("lap_mode should be 'vanilla', 'Huber', or 'quantile', but got {}".format(self.lap_mode))
 
     def wtv(self, M):
         """
@@ -438,6 +459,7 @@ class regularizer(nn.Module):
             abs_err = t.abs(err)
             quadratic = t.minimum(abs_err, t.tensor(huber_delta))
             linear = abs_err - quadratic
+            return self.huber_loss(err)
             return (0.5 * quadratic ** 2 + t.tensor(huber_delta) * linear).mean()
         elif lap_mode == 'logcosh':
             return t.log(t.cosh(lap@W)).mean()
