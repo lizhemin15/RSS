@@ -176,9 +176,9 @@ class HuberLoss(nn.Module):
 
     def forward(self, error):
         abs_error = t.abs(error)
-        quadratic = t.min(abs_error, self.delta)
+        quadratic = t.min(abs_error, t.tensor(self.delta))
         linear = abs_error - quadratic
-        loss = 0.5 * quadratic**2 + self.delta * linear
+        loss = 0.5 * quadratic**2 + t.tensor(self.delta) * linear
         return t.mean(loss)
 
 class regularizer(nn.Module):
