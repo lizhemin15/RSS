@@ -169,17 +169,17 @@ class GroupReg(nn.Module):
 
 MultiRegDict = {"MultiReg":MultiReg,"GroupReg":GroupReg}
 
-class HuberLoss(torch.nn.Module):
+class HuberLoss(nn.Module):
     def __init__(self, delta=1.0):
         super(HuberLoss, self).__init__()
         self.delta = delta
 
     def forward(self, error):
-        abs_error = torch.abs(error)
-        quadratic = torch.min(abs_error, self.delta)
+        abs_error = t.abs(error)
+        quadratic = t.min(abs_error, self.delta)
         linear = abs_error - quadratic
         loss = 0.5 * quadratic**2 + self.delta * linear
-        return torch.mean(loss)
+        return t.mean(loss)
 
 class regularizer(nn.Module):
     def __init__(self,parameter):
