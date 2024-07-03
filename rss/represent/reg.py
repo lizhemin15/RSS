@@ -277,7 +277,7 @@ class regularizer(nn.Module):
         if self.lap_mode == 'vanilla':
             return (t.norm(Var1,p=p)+t.norm(Var2,p=p))/M.shape[0]
         elif self.lap_mode == 'Huber':
-            return t.norm(t.clamp(Var1-self.huber_delta,min=0,max=self.huber_delta)+t.clamp(Var2-self.huber_delta,min=0,max=self.huber_delta),p=p)/M.shape[0]
+            return self.huber_loss(t.abs(Var1))+self.huber_loss(t.abs(Var2))
         elif self.lap_mode == 'quantile':
             return t.norm(t.clamp(Var1-self.quantile_q*t.abs(Var1),min=0,max=self.quantile_q*t.abs(Var1))+t.clamp(Var2-self.quantile_q*t.abs(Var2),min=0,max=self.quantile_q*t.abs(Var2)),p=p)/M.shape[0]
         else:
@@ -456,11 +456,7 @@ class regularizer(nn.Module):
             return t.norm(lap@W,norm_lap_lp)/(W.shape[0]*W.shape[1])
         elif lap_mode == 'Huber':
             err = lap @ W
-            abs_err = t.abs(err)
-            quadratic = t.minimum(abs_err, t.tensor(huber_delta))
-            linear = abs_err - quadratic
             return self.huber_loss(err)
-            return (0.5 * quadratic ** 2 + t.tensor(huber_delta) * linear).mean()
         elif lap_mode == 'logcosh':
             return t.log(t.cosh(lap@W)).mean()
         elif lap_mode == 'quantile':
