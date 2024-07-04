@@ -8,3 +8,4 @@ tensorboard
 tqdm
 opencv-python
 einops
+scikit-learn
