@@ -454,6 +454,7 @@ class regularizer(nn.Module):
         return L
     
     def create_nabla_matrix(self,n, order_k=1):
+        I_n = t.from_numpy(np.eye(n)).to(t.float32)
         # 创建矩阵 J，其 (i, i+1) 处为1，其他地方为0
         J = t.diag(t.ones(n-1), 1)  # 只需要这一行就可以生成 J 矩阵
         J[-1,0] = 1
