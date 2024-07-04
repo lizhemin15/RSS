@@ -449,6 +449,7 @@ class regularizer(nn.Module):
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
         # 创建矩阵 J，其 (i, i+1) 处为1，其他地方为0
         J = t.diag(t.ones(n-1), 1)  # 只需要这一行就可以生成 J 矩阵
+        J[-1,0] = 1
         J = to_device(J, self.device)
         # 最终的 L 矩阵
         L = self.inrr_alpha*L + (1-self.inrr_alpha)*(I_n-(J+J.T)/2)

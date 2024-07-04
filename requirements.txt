@@ -9,3 +9,4 @@ tqdm
 opencv-python
 einops
 scikit-learn
+seaborn
