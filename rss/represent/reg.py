@@ -461,7 +461,7 @@ class regularizer(nn.Module):
         J[-1,0] = 1
         J = to_device(J, self.device)
         nabla_matrix = I_n-(J+J.T)/2
-        final_nabla_matrix = t.ones(n,n)
+        final_nabla_matrix = t.eye(n)
         final_nabla_matrix = to_device(final_nabla_matrix,self.device)
         for k in range(order_k):
             final_nabla_matrix = final_nabla_matrix@nabla_matrix
