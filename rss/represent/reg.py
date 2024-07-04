@@ -218,6 +218,7 @@ class regularizer(nn.Module):
             net = get_nn(self.reg_parameter['inr_parameter'])
             self.net = nn.Sequential(net,nn.Softmax(dim=-1))
             self.inrr_alpha = self.reg_parameter.get('inrr_alpha',1.0)
+            self.nabla_matrix_order_k = self.reg_parameter.get('nabla_matrix_order_k',1)
         elif self.reg_name == 'DE':
             self.A_0 = parameter['A_0']
             self.temperature = parameter.get('temperature',1)
@@ -447,14 +448,22 @@ class regularizer(nn.Module):
         I_n = to_device(I_n,self.device)
         A_1 = A_0 * (t.mm(Ones,Ones.T)-I_n) # A_1 将中间的元素都归零，作为邻接矩阵
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
+        nabla_matrix = self.create_nabla_matrix(n, order_k=self.nabla_matrix_order_k)
+        # 最终的 L 矩阵
+        L = self.inrr_alpha*L + (1-self.inrr_alpha)*nabla_matrix
+        return L
+    
+    def create_nabla_matrix(self,n, order_k=1):
         # 创建矩阵 J，其 (i, i+1) 处为1，其他地方为0
         J = t.diag(t.ones(n-1), 1)  # 只需要这一行就可以生成 J 矩阵
         J[-1,0] = 1
         J = to_device(J, self.device)
-        # 最终的 L 矩阵
-        L = self.inrr_alpha*L + (1-self.inrr_alpha)*(I_n-(J+J.T)/2)
-        return L
-    
+        nabla_matrix = I_n-(J+J.T)/2
+        final_nabla_matrix = t.ones(n,n)
+        for k in range(order_k):
+            final_nabla_matrix = final_nabla_matrix@nabla_matrix
+        return final_nabla_matrix
+
     def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3,q=0.5):
         # Given laplacian matrix lap and the regularized matrix W, compute the loss
         if lap_mode == 'vanilla':
