@@ -451,7 +451,7 @@ class regularizer(nn.Module):
         J = t.diag(t.ones(n-1), 1)  # 只需要这一行就可以生成 J 矩阵
         J = to_device(J, self.device)
         # 最终的 L 矩阵
-        L = self.inrr_alpha*L + (1-self.inrr_alpha)*(2*I_n-J-J.T)
+        L = self.inrr_alpha*L + (1-self.inrr_alpha)*(I_n-(J+J.T)/2)
         return L
     
     def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3,q=0.5):
