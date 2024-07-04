@@ -276,7 +276,7 @@ class regularizer(nn.Module):
         Var1 = 2*center-up-down
         Var2 = 2*center-left-right
         if self.lap_mode == 'vanilla':
-            return (t.norm(Var1,p=p)+t.norm(Var2,p=p))/M.shape[0]
+            return (t.norm(Var1,p=p)+t.norm(Var2,p=p))/M.shape[0]/M.shape[1]
         elif self.lap_mode == 'Huber':
             return self.huber_loss(t.abs(Var1))+self.huber_loss(t.abs(Var2))
         elif self.lap_mode == 'quantile':
