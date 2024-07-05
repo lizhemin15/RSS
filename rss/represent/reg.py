@@ -465,7 +465,7 @@ class regularizer(nn.Module):
         final_nabla_matrix = to_device(final_nabla_matrix,self.device)
         for k in range(order_k):
             final_nabla_matrix = final_nabla_matrix@nabla_matrix
-            final_nabla_matrix = final_nabla_matrix/final_nabla_matrix[0,0]
+            # final_nabla_matrix = final_nabla_matrix/final_nabla_matrix[0,0]
         return final_nabla_matrix
  
     def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3,q=0.5):
