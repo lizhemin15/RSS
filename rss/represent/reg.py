@@ -450,7 +450,11 @@ class regularizer(nn.Module):
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
         nabla_matrix = self.create_nabla_matrix(n, order_k=self.nabla_matrix_order_k)
         # 最终的 L 矩阵
-        L = self.inrr_alpha*L + (1-self.inrr_alpha)*nabla_matrix
+        if sefl.inrr_alpha >= 0:
+            L = self.inrr_alpha*L + (1-self.inrr_alpha)*nabla_matrix
+        else:
+            # 当 inrr_alpha 为负时，使用相乘的形式进行融合
+            L = nabla_matrix@L
         return L
     
     def create_nabla_matrix(self,n, order_k=1):
