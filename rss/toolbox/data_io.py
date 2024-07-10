@@ -51,6 +51,7 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
                 vd_np[:,:,i] = frame
             return vd_np[:,:,::down_sample[2]]
     elif data_type == 'mat':
+        print(mat_get_func(loadmat(data_path)))
         return mat_get_func(loadmat(data_path))
     else:
         raise('Wrong data type = ',data_type)
