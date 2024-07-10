@@ -274,8 +274,8 @@ class rssnet(object):
                     self.log('psnr',self.cal_psnr(pre,target).item())
                     self.log('nmae',self.cal_nmae(pre,target))
                     self.log('rmse',self.cal_rmse(pre,target))
-                    self.log('auc',self.cal_auc(pre,target))
-                    self.log('aupr',self.cal_aupr(pre,target))
+                    # self.log('auc',self.cal_auc(pre,target))
+                    # self.log('aupr',self.cal_aupr(pre,target))
                     if (ite+1)%(self.train_p['train_epoch']//10) == 0:
                         self.log('img')
                     if self.reg_p['reg_name'] != None:
@@ -290,8 +290,8 @@ class rssnet(object):
                 print('PSNR=',self.log_dict['psnr'][-1],'dB')
                 print('NMAE=',self.log_dict['nmae'][-1])
                 print('RMSE=',self.log_dict['rmse'][-1])
-                print('AUC=',self.log_dict['auc'][-1])
-                print('AUPR=',self.log_dict['aupr'][-1])
+                # print('AUC=',self.log_dict['auc'][-1])
+                # print('AUPR=',self.log_dict['aupr'][-1])
                 if self.reg_p['reg_name'] != None:
                     print('loss of regularizer',self.log_dict['reg_loss'][-1])
             
