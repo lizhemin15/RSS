@@ -90,6 +90,8 @@ class rssnet(object):
         self.data = toolbox.load_data(data_path=self.data_p['data_path'],data_type=self.data_p['data_type'],
                                       data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'],
                                       mat_get_func=self.data_p['mat_get_func'])
+        if self.data_p['data_shape'] == None:
+            self.data_p['data_shape'] = self.data.shape
         self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
                                       data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
                                       down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
