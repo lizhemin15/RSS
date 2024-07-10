@@ -425,19 +425,19 @@ class rssnet(object):
             rmse = t.sqrt(mse)
             return rmse
 
-	def cal_auc(self, pre, target):
-	    unseen_num = t.sum(1 - self.mask)
-	    if unseen_num < 1e-3:
-	        return 0
-	    else:
-	        masked_pre = pre * (1 - self.mask).reshape(pre.shape)
-	        masked_target = target * (1 - self.mask).reshape(target.shape)
-	        # 将predictions和targets转换成numpy数组以便使用sklearn的roc_auc_score
-	        masked_pre_np = masked_pre.cpu().detach().numpy()
-	        masked_target_np = masked_target.cpu().detach().numpy()
-	        # 计算AUC
-	        auc = roc_auc_score(masked_target_np, masked_pre_np)
-	        return auc
+    def cal_auc(self, pre, target):
+        unseen_num = t.sum(1 - self.mask)
+        if unseen_num < 1e-3:
+            return 0
+        else:
+            masked_pre = pre * (1 - self.mask).reshape(pre.shape)
+            masked_target = target * (1 - self.mask).reshape(target.shape)
+            # 将predictions和targets转换成numpy数组以便使用sklearn的roc_auc_score
+            masked_pre_np = masked_pre.cpu().detach().numpy()
+            masked_target_np = masked_target.cpu().detach().numpy()
+            # 计算AUC
+            auc = roc_auc_score(masked_target_np, masked_pre_np)
+            return auc
 
     def cal_aupr(self, pre, target):
         unseen_num = t.sum(1 - self.mask)
