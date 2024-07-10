@@ -30,3 +30,11 @@ rssnet.train(train_p)
 rssnet.show(show_p)
 rssnet.save(save_p)
 ```
+
+## Use the regularizer in your model
+```python
+import rss
+
+
+
+```

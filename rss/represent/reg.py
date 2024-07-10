@@ -225,6 +225,8 @@ class regularizer(nn.Module):
             self.softmax = nn.Softmax(dim=-1)
         elif self.reg_name == 'RUBI':
             self.ite_num = 0
+        elif self.reg_name == 'RED':
+            self.denoising_alg = parameter.get('denoising_alg','nlm')
 
     def forward(self,x,sparse_index=None):
         self.epoch_now += 1
@@ -258,6 +260,8 @@ class regularizer(nn.Module):
             return self.inrr(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'RUBI':
             return self.rubi(x)*self.reg_parameter["coef"]
+        elif self.reg_name == 'RED':
+            return self.red(x)*self.reg_parameter["coef"]
         else:
             raise('Not support regularizer named ',self.reg_name,'please check the regularizer name in TV, LAP, AIR, INRR, RUBI')
 
@@ -501,3 +505,7 @@ class regularizer(nn.Module):
             print(result)
         return result
 
+    def red(self,M):
+        if self.denoising_alg == 'nlm':
+            pass
+        pass

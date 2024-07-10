@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.io import loadmat
 
-def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]):
+def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1],mat_get_func=None):
     # load data from disk
     # return numpy array
     if data_type == 'gray_img' or data_type == 'rgb_img':
@@ -49,6 +50,8 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
                 frame = frame[::down_sample[0],::down_sample[1]]
                 vd_np[:,:,i] = frame
             return vd_np[:,:,::down_sample[2]]
+    elif data_type == 'mat':
+        return mat_get_func(loadmat(mat_file_path))
     else:
         raise('Wrong data type = ',data_type)
 

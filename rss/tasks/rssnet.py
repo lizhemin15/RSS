@@ -82,13 +82,14 @@ class rssnet(object):
                         'mask_type':'random','random_rate':0.0,'mask_path':None,'mask_shape':'same','seeds':88,'down_sample_rate':2,
                         'noise_mode':None,'noise_parameter':0.0,
                         'x_mode':'inr','batch_size':128,'shuffle_if':False,'xrange':1,'ymode':'completion','return_data_type':'tensor',
-                        'pre_full':False,'out_dim_one':True}
+                        'pre_full':False,'out_dim_one':True,'mat_get_func':lambda x: x}
         for key in de_para_dict.keys():
             param_now = self.data_p.get(key,de_para_dict.get(key))
             self.data_p[key] = param_now
         # print('data_p : ',self.data_p)
         self.data = toolbox.load_data(data_path=self.data_p['data_path'],data_type=self.data_p['data_type'],
-                                      data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'])
+                                      data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'],
+                                      mat_get_func=self.data_p['mat_get_func'])
         self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
                                       data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
                                       down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
