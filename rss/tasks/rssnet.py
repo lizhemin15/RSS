@@ -8,6 +8,7 @@ import time
 import pickle as pkl
 import os
 import imageio
+from sklearn.metrics import roc_auc_score
 t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 
@@ -272,6 +273,9 @@ class rssnet(object):
                     self.log('test_loss',loss.item())
                     self.log('psnr',self.cal_psnr(pre,target).item())
                     self.log('nmae',self.cal_nmae(pre,target))
+                    self.log('rmse',self.cal_rmse(pre,target))
+                    self.log('auc',self.cal_auc(pre,target))
+                    self.log('aupr',self.cal_aupr(pre,target))
                     if (ite+1)%(self.train_p['train_epoch']//10) == 0:
                         self.log('img')
                     if self.reg_p['reg_name'] != None:
@@ -285,6 +289,9 @@ class rssnet(object):
                 print('loss on test set',self.log_dict['test_loss'][-1])
                 print('PSNR=',self.log_dict['psnr'][-1],'dB')
                 print('NMAE=',self.log_dict['nmae'][-1])
+                print('RMSE=',self.log_dict['rmse'][-1])
+                print('AUC=',self.log_dict['auc'][-1])
+                print('AUPR=',self.log_dict['aupr'][-1])
                 if self.reg_p['reg_name'] != None:
                     print('loss of regularizer',self.log_dict['reg_loss'][-1])
             
@@ -406,6 +413,47 @@ class rssnet(object):
             return 0
         else:
             return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
+
+    def cal_rmse(self, pre, target):
+        unseen_num = t.sum(1 - self.mask)
+        if unseen_num < 1e-3:
+            return 0
+        else:
+            squared_diff = (pre - target) ** 2
+            masked_squared_diff = squared_diff * (1 - self.mask).reshape(pre.shape)
+            mse = t.sum(masked_squared_diff) / unseen_num
+            rmse = t.sqrt(mse)
+            return rmse
+
+	def cal_auc(self, pre, target):
+	    unseen_num = t.sum(1 - self.mask)
+	    if unseen_num < 1e-3:
+	        return 0
+	    else:
+	        masked_pre = pre * (1 - self.mask).reshape(pre.shape)
+	        masked_target = target * (1 - self.mask).reshape(target.shape)
+	        # 将predictions和targets转换成numpy数组以便使用sklearn的roc_auc_score
+	        masked_pre_np = masked_pre.cpu().detach().numpy()
+	        masked_target_np = masked_target.cpu().detach().numpy()
+	        # 计算AUC
+	        auc = roc_auc_score(masked_target_np, masked_pre_np)
+	        return auc
+
+    def cal_aupr(self, pre, target):
+        unseen_num = t.sum(1 - self.mask)
+        if unseen_num < 1e-3:
+            return 0
+        else:
+            masked_pre = pre * (1 - self.mask).reshape(pre.shape)
+            masked_target = target * (1 - self.mask).reshape(target.shape)
+            # 将predictions和targets转换成numpy数组以便使用sklearn的precision_recall_curve
+            masked_pre_np = masked_pre.cpu().detach().numpy()
+            masked_target_np = masked_target.cpu().detach().numpy()
+            # 计算Precision-Recall曲线
+            precision, recall, _ = precision_recall_curve(masked_target_np, masked_pre_np)
+            # 计算AUPR
+            aupr = auc(recall, precision)
+            return aupr
 
     def gen_gif(self, fps=10, save_type = 'gif', start_frame=0, end_frame=None):
         # 获取文件夹中的所有文件
