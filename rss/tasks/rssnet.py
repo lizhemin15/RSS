@@ -58,7 +58,7 @@ class rssnet(object):
                 print(key,self.parameter_all[key])
 
     def init_net(self):
-        de_para_dict = {'net_name':'SIREN','gpu_id':0,'clip_if':False,'clip_min':0.0,'clip_max':1.0}
+        de_para_dict = {'net_name':'SIREN','gpu_id':0,'clip_if':False,'clip_min':0.0,'clip_max':1.0,'clip_mode':'hard'}
         for key in de_para_dict.keys():
             param_now = self.net_p.get(key,de_para_dict.get(key))
             self.net_p[key] = param_now

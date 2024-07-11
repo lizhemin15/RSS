@@ -43,19 +43,32 @@ def get_nn(parameter={}):
     else:
         clip_min = parameter.get('clip_min',0.0)
         clip_max = parameter.get('clip_max',1.0)
+        clip_mode = parameter.get('clip_mode','hard')
         return nn.Sequential(
                 net,
-                ClipLayer(clip_min, clip_max)
+                ClipLayer(clip_min, clip_max, clip_mode)
             )
 
 class ClipLayer(nn.Module):
-    def __init__(self, min_val, max_val):
+    def __init__(self, min_val, max_val, clip_mode='hard'):
         super(ClipLayer, self).__init__()
         self.min_val = min_val
         self.max_val = max_val
+        self.clip_mode = clip_mode
 
     def forward(self, x):
-        return t.clamp(x, min=self.min_val, max=self.max_val)
+        if self.clip_mode == 'hard':
+            return t.clamp(x, min=self.min_val, max=self.max_val)
+        elif self.clip_mode == 'tanh':
+            # 将输入值归一化到 [-1, 1]
+            x_norm = 2 * (x - self.min_val) / (self.max_val - self.min_val) - 1
+            # 通过 tanh 函数进行非线性变换
+            x_tanh = t.tanh(x_norm)
+            # 将 tanh 的输出缩放到 [min_val, max_val]
+            x_scaled = (x_tanh + 1) / 2 * (self.max_val - self.min_val) + self.min_val
+            return x_scaled
+        else:
+            raise ValueError(f"Unsupported clip_mode: {self.clip_mode}")
 
 class Composition(nn.Module):
     def __init__(self, parameter):
