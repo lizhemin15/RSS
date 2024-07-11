@@ -1,7 +1,7 @@
 import torch as t
 import math
 from rss.represent.utils import to_device
-
+import numpy as np
 def gaussian_kernel(size, sigma):
     """生成一个高斯卷积核."""
     kernel = t.tensor([math.exp(-((x - size//2)**2) / (2*sigma**2)) for x in range(size)])
