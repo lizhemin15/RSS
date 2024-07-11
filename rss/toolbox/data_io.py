@@ -70,7 +70,7 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
                 out = np.asarray(ds).astype(np.float32).T
                 executed = True
             if not executed:
-                out = ds
+                out = {key: np.asarray(value) for key, value in ds.items()}
             db.close()
             return out
     else:
