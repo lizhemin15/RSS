@@ -57,6 +57,7 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
         except:
             db = h5py.File(data_path, 'r')
             ds = mat_get_func(db)
+            executed = False
             try:
                 if 'ir' in ds.keys():
                     data = np.asarray(ds['data'])
