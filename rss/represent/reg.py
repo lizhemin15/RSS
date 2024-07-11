@@ -219,6 +219,9 @@ class regularizer(nn.Module):
             self.net = nn.Sequential(net,nn.Softmax(dim=-1))
             self.inrr_alpha = self.reg_parameter.get('inrr_alpha',1.0)
             self.nabla_matrix_order_k = self.reg_parameter.get('nabla_matrix_order_k',1)
+            self.nabla_matrix_type = self.reg_parameter.get('nabla_matrix_type','TV')
+            if self.nabla_matrix_type == 'Fix':
+                self.nabla_matrix = self.reg_parameter.get('nabla_matrix',None)
         elif self.reg_name == 'DE':
             self.A_0 = parameter['A_0']
             self.temperature = parameter.get('temperature',1)
@@ -452,7 +455,12 @@ class regularizer(nn.Module):
         I_n = to_device(I_n,self.device)
         A_1 = A_0 * (t.mm(Ones,Ones.T)-I_n) # A_1 将中间的元素都归零，作为邻接矩阵
         L = -A_1+t.mm(A_1,t.mm(Ones,Ones.T))*I_n # A_2 将邻接矩阵转化为拉普拉斯矩阵
-        nabla_matrix = self.create_nabla_matrix(n, order_k=self.nabla_matrix_order_k)
+        if self.nabla_matrix_type == 'TV':
+            nabla_matrix = self.create_nabla_matrix(n, order_k=self.nabla_matrix_order_k)
+        elif self.nabla_matrix_type == 'Fix':
+            nabla_matrix = self.nabla_matrix
+        else:
+            raise ValueError("nabla_matrix_type should be 'TV' or 'Fix', but got {}".format(self.nabla_matrix_type))
         # 最终的 L 矩阵
         if self.inrr_alpha >= 0:
             L = self.inrr_alpha*L + (1-self.inrr_alpha)*nabla_matrix
