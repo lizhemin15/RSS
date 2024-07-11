@@ -71,5 +71,23 @@ def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
             mask = np.expand_dims(mask,axis=2)
             mask = np.expand_dims(mask,axis=3)
         return np.zeros(data_shape)+mask
+    elif mask_type == 'random_col':
+        # 生成一个与数据列数相同的随机掩码，用于确定哪些列将被缺失
+        cols = data_shape[1]
+        random_mask = np.random.random(cols)
+        # 创建一个全1的掩码
+        mask = np.ones(data_shape)
+        # 将随机掩码中小于等于random_rate的列置为0
+        mask[:, random_mask <= random_rate] = 0
+        return np.zeros(data_shape) + mask
+    elif mask_type == 'random_row':
+        # 生成一个与数据行数相同的随机掩码，用于确定哪些行将被缺失
+        rows = data_shape[0]
+        random_mask = np.random.random(rows)
+        # 创建一个全1的掩码
+        mask = np.ones(mask_shape)
+        # 将随机掩码中小于等于random_rate的行置为0
+        mask[random_mask <= random_rate, :] = 0
+        return np.zeros(data_shape) + mask
     else:
         raise('Wrong mask type = ',mask_type)
