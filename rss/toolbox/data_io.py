@@ -63,9 +63,13 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
                     ir   = np.asarray(ds['ir'])
                     jc   = np.asarray(ds['jc'])
                     out  = sp.csc_matrix((data, ir, jc)).astype(np.float32)
+                    executed = True
             except:
                 # Transpose in case is a dense matrix because of the row- vs column- major ordering between python and matlab
                 out = np.asarray(ds).astype(np.float32).T
+                executed = True
+            if not executed:
+                out = ds
             db.close()
             return out
     else:
