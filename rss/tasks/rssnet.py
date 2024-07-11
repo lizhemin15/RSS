@@ -81,6 +81,7 @@ class rssnet(object):
     def init_data(self):
         de_para_dict = {'data_path':None,'data_type':'syn','data_shape':(10,10),'down_sample':[1,1,1],
                         'mask_type':'random','random_rate':0.0,'mask_path':None,'mask_shape':'same','seeds':88,'down_sample_rate':2,
+                        'mask_unobs_path':None,
                         'noise_mode':None,'noise_parameter':0.0,
                         'x_mode':'inr','batch_size':128,'shuffle_if':False,'xrange':1,'ymode':'completion','return_data_type':'tensor',
                         'pre_full':False,'out_dim_one':True,'mat_get_func':lambda x: x}
@@ -97,6 +98,13 @@ class rssnet(object):
                                       data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
                                       down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
         self.mask = to_device(t.tensor(self.mask).to(t.float32),self.net_p['gpu_id'])
+        if self.data_p['mask_unobs_path'] == None:
+            self.mask_unobs = 1-self.mask
+        else:
+            self.mask_unobs = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_unobs_path'],
+                                      data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
+                                      down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
+            self.mask_unobs = to_device(t.tensor(self.mask_unobs).to(t.float32),self.net_p['gpu_id'])
         self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],
                                             seeds=self.data_p['seeds'])
         self.data_train = toolbox.get_dataloader(x_mode=self.data_p['x_mode'],batch_size=self.data_p['batch_size'],
@@ -408,30 +416,30 @@ class rssnet(object):
     
     def cal_nmae(self,pre, target):
         max_pixel,min_pixel = t.max(target),t.min(target)
-        unseen_num = t.sum(1-self.mask)
+        unseen_num = t.sum(self.mask_unobs)
         if unseen_num<1e-3:
             return 0
         else:
-            return t.sum(t.abs((pre-target)*(1-self.mask).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
+            return t.sum(t.abs((pre-target)*(self.mask_unobs).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
 
     def cal_rmse(self, pre, target):
-        unseen_num = t.sum(1 - self.mask)
+        unseen_num = t.sum(self.mask_unobs)
         if unseen_num < 1e-3:
             return 0
         else:
             squared_diff = (pre - target) ** 2
-            masked_squared_diff = squared_diff * (1 - self.mask).reshape(pre.shape)
+            masked_squared_diff = squared_diff * (self.mask_unobs).reshape(pre.shape)
             mse = t.sum(masked_squared_diff) / unseen_num
             rmse = t.sqrt(mse)
             return rmse
 
     def cal_auc(self, pre, target):
-        unseen_num = t.sum(1 - self.mask)
+        unseen_num = t.sum(self.mask_unobs)
         if unseen_num < 1e-3:
             return 0
         else:
-            masked_pre = pre * (1 - self.mask).reshape(pre.shape)
-            masked_target = target * (1 - self.mask).reshape(target.shape)
+            masked_pre = pre * (self.mask_unobs).reshape(pre.shape)
+            masked_target = target * (self.mask_unobs).reshape(target.shape)
             # 将predictions和targets转换成numpy数组以便使用sklearn的roc_auc_score
             masked_pre_np = masked_pre.cpu().detach().numpy()
             masked_target_np = masked_target.cpu().detach().numpy()
@@ -440,12 +448,12 @@ class rssnet(object):
             return auc
 
     def cal_aupr(self, pre, target):
-        unseen_num = t.sum(1 - self.mask)
+        unseen_num = t.sum(self.mask_unobs)
         if unseen_num < 1e-3:
             return 0
         else:
-            masked_pre = pre * (1 - self.mask).reshape(pre.shape)
-            masked_target = target * (1 - self.mask).reshape(target.shape)
+            masked_pre = pre * (self.mask_unobs).reshape(pre.shape)
+            masked_target = target * (self.mask_unobs).reshape(target.shape)
             # 将predictions和targets转换成numpy数组以便使用sklearn的precision_recall_curve
             masked_pre_np = masked_pre.cpu().detach().numpy()
             masked_target_np = masked_target.cpu().detach().numpy()

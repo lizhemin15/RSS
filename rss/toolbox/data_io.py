@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.io import loadmat
 import h5py
 
-def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1],mat_get_func=None):
+def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1],mat_get_func=lambda x:x):
     # load data from disk
     # return numpy array
     if data_type == 'gray_img' or data_type == 'rgb_img':
