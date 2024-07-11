@@ -58,7 +58,7 @@ class rssnet(object):
                 print(key,self.parameter_all[key])
 
     def init_net(self):
-        de_para_dict = {'net_name':'SIREN','gpu_id':0}
+        de_para_dict = {'net_name':'SIREN','gpu_id':0,'clip_if':False,'clip_min':0.0,'clip_max':1.0}
         for key in de_para_dict.keys():
             param_now = self.net_p.get(key,de_para_dict.get(key))
             self.net_p[key] = param_now
@@ -239,7 +239,7 @@ class rssnet(object):
                     self.noise_opt.step()
 
                 # test and val loss
-                with t.no_grad():
+                with t.no_grad(): # 这里写的蛮好
                     if self.net_p['net_name'] in ['UNet','ResNet','skip'] or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
                         pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                         pre = pre.reshape(self.data_p['data_shape'])

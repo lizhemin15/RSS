@@ -1,5 +1,6 @@
 from rss.represent.inr import MLP,SIREN
 import torch.nn as nn
+import torch as t
 from rss.represent.tensor import DMF,TF
 from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
@@ -10,6 +11,7 @@ from rss.represent.kan import get_kan
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
+    clip_if = parameter.get('clip_if',False)
     if net_name == None:
         net_name = 'None'
     if net_name == 'composition':
@@ -36,9 +38,24 @@ def get_nn(parameter={}):
         net = get_kan(parameter)
     else:
         raise('Wrong net_name = ',net_name)
-    return net
+    if clip_if==False:
+        return net
+    else:
+        clip_min = parameter.get('clip_min',0.0)
+        clip_max = parameter.get('clip_max',1.0)
+        return nn.Sequential(
+                net,
+                ClipLayer(clip_min, clip_max)
+            )
 
+class ClipLayer(nn.Module):
+    def __init__(self, min_val, max_val):
+        super(ClipLayer, self).__init__()
+        self.min_val = min_val
+        self.max_val = max_val
 
+    def forward(self, x):
+        return t.clamp(x, min=self.min_val, max=self.max_val)
 
 class Composition(nn.Module):
     def __init__(self, parameter):
