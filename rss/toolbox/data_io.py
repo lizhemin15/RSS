@@ -53,7 +53,7 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
             return vd_np[:,:,::down_sample[2]]
     elif data_type == 'mat':
         try:
-            print('Loading mat file from ',data_path)
+            # print('Loading mat file from ',data_path)
             return mat_get_func(loadmat(data_path))
         except:
             db = h5py.File(data_path, 'r')
