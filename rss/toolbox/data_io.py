@@ -58,7 +58,6 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
         except:
             db = h5py.File(data_path, 'r')
             ds = mat_get_func(db)
-            print(ds.keys())
             try:
                 if 'ir' in ds.keys():
                     data = np.asarray(ds['data'])
@@ -66,6 +65,7 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
                     jc   = np.asarray(ds['jc'])
                     out  = sp.csc_matrix((data, ir, jc)).astype(np.float32)
                 else:
+                    print('unsolvable ds: ',ds)
                     out = ds
             except AttributeError:
                 # Transpose in case is a dense matrix because of the row- vs column- major ordering between python and matlab
