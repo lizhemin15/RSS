@@ -60,13 +60,13 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
             ds = mat_get_func(db)
             try:
                 if 'ir' in ds.keys():
-                    print('Solvable ds: ',ds.keys())
+                    # print('Solvable ds: ',ds.keys())
                     data = np.asarray(ds['data'])
                     ir   = np.asarray(ds['ir'])
                     jc   = np.asarray(ds['jc'])
                     out  = sp.csc_matrix((data, ir, jc)).astype(np.float32)
                 else:
-                    print('unsolvable ds: ',ds.keys())
+                    # print('unsolvable ds: ',ds.keys())
                     for key in ds.keys():
                         print("    %s: %s" % (key, ds[key]))
                     out = ds
