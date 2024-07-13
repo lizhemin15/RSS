@@ -280,8 +280,8 @@ class rssnet(object):
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
                     self.log('psnr',self.cal_psnr(pre,target).item())
-                    self.log('nmae',self.cal_nmae(pre,target))
-                    self.log('rmse',self.cal_rmse(pre,target))
+                    self.log('nmae',self.cal_nmae(pre,target).item())
+                    self.log('rmse',self.cal_rmse(pre,target).item())
                     # self.log('auc',self.cal_auc(pre,target))
                     # self.log('aupr',self.cal_aupr(pre,target))
                     if (ite+1)%(self.train_p['train_epoch']//10) == 0:

@@ -24,6 +24,8 @@ class DMF_net(nn.Module):
                     elif init_mode == 'identify':
                         nn.init.eye_(m.weight)
                         m.weight.data = m.weight.data * std_w
+                    else:
+                        raise('Wrong mode = ',init_mode)
         elif self.mode == 'inr':
             net_list = []
             self.input_list = []
