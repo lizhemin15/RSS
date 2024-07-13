@@ -458,7 +458,7 @@ class regularizer(nn.Module):
         if self.nabla_matrix_type == 'TV':
             nabla_matrix = self.create_nabla_matrix(n, order_k=self.nabla_matrix_order_k)
         elif self.nabla_matrix_type == 'Fix':
-            nabla_matrix = self.nabla_matrix
+            nabla_matrix = self.create_nabla_matrix(n, order_k=self.nabla_matrix_order_k,nabla_matrix=self.nabla_matrix)
         else:
             raise ValueError("nabla_matrix_type should be 'TV' or 'Fix', but got {}".format(self.nabla_matrix_type))
         # 最终的 L 矩阵
@@ -469,14 +469,15 @@ class regularizer(nn.Module):
             L = nabla_matrix@L
         return L
     
-    def create_nabla_matrix(self,n, order_k=1):
+    def create_nabla_matrix(self,n, order_k=1, nabla_matrix=None):
         I_n = t.from_numpy(np.eye(n)).to(t.float32)
         I_n = to_device(I_n,self.device)
         # 创建矩阵 J，其 (i, i+1) 处为1，其他地方为0
         J = t.diag(t.ones(n-1), 1)  # 只需要这一行就可以生成 J 矩阵
         J[-1,0] = 1
         J = to_device(J, self.device)
-        nabla_matrix = I_n-(J+J.T)/2
+        if nabla_matrix is None:
+            nabla_matrix = I_n-(J+J.T)/2
         final_nabla_matrix = t.eye(n)
         final_nabla_matrix = to_device(final_nabla_matrix,self.device)
         for k in range(order_k):
