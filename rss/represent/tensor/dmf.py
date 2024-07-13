@@ -11,6 +11,7 @@ class DMF_net(nn.Module):
         self.mode = params.get('mode','vanilla')
         if self.mode == 'vanilla':
             std_w = params.get('std_w',1e-3)
+            init_mode = params.get('init_mode','normal')
             layers = zip(hidden_sizes, hidden_sizes[1:])
             nn_list = []
             for (f_in,f_out) in layers:
@@ -18,7 +19,11 @@ class DMF_net(nn.Module):
             self.model = nn.Sequential(*nn_list)
             for m in self.model.modules():
                 if isinstance(m, nn.Linear):
-                    nn.init.normal_(m.weight,mean=0,std=std_w)
+                    if init_mode == 'normal':
+                        nn.init.normal_(m.weight,mean=0,std=std_w)
+                    elif init_mode == 'identify':
+                        nn.init.eye_(m.weight)
+                        m.weight.data = m.weight.data * std_w
         elif self.mode == 'inr':
             net_list = []
             self.input_list = []
