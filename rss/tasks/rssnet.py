@@ -430,7 +430,12 @@ class rssnet(object):
             return 0
         else:
             if self.rmse_round:
-                squared_diff = (t.clamp(t.round(pre),target.min(),target.max()) - target) ** 2
+                target_max = target.max()
+                if target_max > 2:
+                    target_min = 1
+                else:
+                    target_min = 0
+                squared_diff = (t.clamp(t.round(pre),target_min,target_max) - target) ** 2
             else:
                 squared_diff = (pre - target) ** 2
             masked_squared_diff = squared_diff * (self.mask_unobs).reshape(pre.shape)
