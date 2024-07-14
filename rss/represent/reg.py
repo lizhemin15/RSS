@@ -270,6 +270,7 @@ class regularizer(nn.Module):
 
 
 
+
     def tv(self,M):
         """
         M: torch tensor type
@@ -410,6 +411,7 @@ class regularizer(nn.Module):
         opstr = get_opstr(mode=self.mode,shape=W.shape)
         img = rearrange(W,opstr)
         n = img.shape[0]
+        
         if self.reg_mode == 'single':
             # 共享参数时，需要考虑到inr中的相对位置
             if 'patch' in self.x_trans:
@@ -430,7 +432,8 @@ class regularizer(nn.Module):
             coor = t.linspace(-1,1,n).reshape(-1,1)
         else:
             raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
-           
+
+
         if self.reg_mode == 'single' and self.sparse_index is not None:
             # 这是因为当 self.reg_mode 为 single时，共享同一个inr，所以要在同一个坐标下取相应的子坐标。
             coor = coor[self.sparse_index]

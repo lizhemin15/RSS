@@ -428,7 +428,7 @@ class rssnet(object):
         if unseen_num < 1e-3:
             return 0
         else:
-            squared_diff = (pre - target) ** 2
+            squared_diff = t.clamp((t.round(pre) - target) ** 2,0,1)
             masked_squared_diff = squared_diff * (self.mask_unobs).reshape(pre.shape)
             mse = t.sum(masked_squared_diff) / unseen_num
             rmse = t.sqrt(mse)
