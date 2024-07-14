@@ -172,6 +172,7 @@ class rssnet(object):
             self.train_p[key] = param_now
         if self.train_p['loss_fn'] == 'mse':
             self.loss_fn = nn.MSELoss()
+        self.rmse_round = self.train_p.get('rmse_round',False)
 
 
         # print('train_p : ',self.train_p)
@@ -428,7 +429,10 @@ class rssnet(object):
         if unseen_num < 1e-3:
             return 0
         else:
-            squared_diff = (t.clamp(t.round(pre),target.min(),target.max()) - target) ** 2
+            if self.rmse_round:
+                squared_diff = (t.clamp(t.round(pre),target.min(),target.max()) - target) ** 2
+            else:
+                squared_diff = (pre - target) ** 2
             masked_squared_diff = squared_diff * (self.mask_unobs).reshape(pre.shape)
             mse = t.sum(masked_squared_diff) / unseen_num
             rmse = t.sqrt(mse)
