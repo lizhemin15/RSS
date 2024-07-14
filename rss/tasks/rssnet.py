@@ -97,14 +97,15 @@ class rssnet(object):
         self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
                                       data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
                                       down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
-        self.mask = to_device(t.tensor(self.mask).to(t.float32),self.net_p['gpu_id'])
+        self.mask = to_device(t.tensor(self.mask>0.5).to(t.float32),self.net_p['gpu_id'])
         if self.data_p['mask_unobs_path'] == None:
             self.mask_unobs = 1-self.mask
         else:
             self.mask_unobs = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_unobs_path'],
                                       data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
                                       down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
-            self.mask_unobs = to_device(t.tensor(self.mask_unobs).to(t.float32),self.net_p['gpu_id'])
+            self.mask_unobs = to_device(t.tensor(self.mask_unobs>0.5).to(t.float32),self.net_p['gpu_id'])
+        
         self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],
                                             seeds=self.data_p['seeds'])
         self.data_train = toolbox.get_dataloader(x_mode=self.data_p['x_mode'],batch_size=self.data_p['batch_size'],
@@ -253,21 +254,21 @@ class rssnet(object):
                         pre = pre.reshape(self.data_p['data_shape'])
                         if self.data_p['ymode'] == 'completion':
                             # 只有补全才截取，否则不截取
-                            pre = pre[self.mask==0]
+                            pre = pre[self.mask_unobs==1]
                     else:
                         pre = self.net(self.data_train['obs_tensor'][0])
                         if self.data_p['ymode'] == 'completion':
                             # 只有补全才截取，否则不截取
-                            pre = pre[(self.mask==0).reshape(pre.shape)]
+                            pre = pre[(self.mask_unobs==1).reshape(pre.shape)]
                     # 验证损失，应当在real上
                     target = self.data_train['real_tensor'][1]
                     if self.data_p['ymode'] == 'completion':
-                        target = target[(self.mask==0).reshape(-1)].reshape(pre.shape)
+                        target = target[(self.mask_unobs==1).reshape(-1)].reshape(pre.shape)
                     else:
                         target = target.reshape(pre.shape)
                     loss = self.loss_fn(pre,target)
                     self.log('val_loss',loss.item())
-
+                    # 开始重新计算pre，用于计算指标，以下都是全量的pre，没有截取
                     if self.net_p['net_name'] in ['UNet','ResNet','skip']:
                         pre = self.net(self.data_train['real_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
                         pre = pre.reshape(self.data_p['data_shape'])
