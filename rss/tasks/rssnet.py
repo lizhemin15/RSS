@@ -281,9 +281,9 @@ class rssnet(object):
                     self.target = target
                     loss = self.loss_fn(pre,target)
                     self.log('test_loss',loss.item())
-                    self.log('psnr',self.cal_psnr(pre,target).item())
-                    self.log('nmae',self.cal_nmae(pre,target).item())
-                    self.log('rmse',self.cal_rmse(pre,target).item())
+                    self.log('psnr',self.cal_psnr(pre,target))
+                    self.log('nmae',self.cal_nmae(pre,target))
+                    self.log('rmse',self.cal_rmse(pre,target))
                     # self.log('auc',self.cal_auc(pre,target))
                     # self.log('aupr',self.cal_aupr(pre,target))
                     if (ite+1)%(self.train_p['train_epoch']//10) == 0:
@@ -414,7 +414,7 @@ class rssnet(object):
                 return 100
             return 20 * t.log10(max_pixel / t.sqrt(mse_value))
         
-        return psnr(pre, target)
+        return psnr(pre, target).item()
     
     def cal_nmae(self,pre, target):
         max_pixel,min_pixel = t.max(target),t.min(target)
@@ -422,7 +422,7 @@ class rssnet(object):
         if unseen_num<1e-3:
             return 0
         else:
-            return t.sum(t.abs((pre-target)*(self.mask_unobs).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
+            return t.sum(t.abs((pre-target)*(self.mask_unobs).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel).item()
 
     def cal_rmse(self, pre, target):
         unseen_num = t.sum(self.mask_unobs)
@@ -441,7 +441,7 @@ class rssnet(object):
             masked_squared_diff = squared_diff * (self.mask_unobs).reshape(pre.shape)
             mse = t.sum(masked_squared_diff) / unseen_num
             rmse = t.sqrt(mse)
-            return rmse
+            return rmse.item()
 
     def cal_auc(self, pre, target):
         unseen_num = t.sum(self.mask_unobs)
