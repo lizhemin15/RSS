@@ -177,6 +177,8 @@ class HuberLoss(nn.Module):
     def forward(self, error):
         abs_error = t.abs(error)
         quadratic = t.min(abs_error, t.tensor(self.delta))
+        if self.delta <1e-5:
+            quadratic = abs_error
         linear = abs_error - quadratic
         loss = 0.5 * quadratic**2 + t.tensor(self.delta) * linear
         return t.mean(loss)
