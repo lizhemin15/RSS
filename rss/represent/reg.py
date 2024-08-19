@@ -489,7 +489,15 @@ class regularizer(nn.Module):
         for _ in range(order_k):
             final_nabla_matrix = final_nabla_matrix@nabla_matrix
             # final_nabla_matrix = final_nabla_matrix/final_nabla_matrix[0,0]
-        return final_nabla_matrix
+        # 获取方阵的大小
+        n = final_nabla_matrix.size(0)
+        # 创建一个全零的 tensor，大小与 final_nabla_matrix 相同
+        new_final_nabla_matrix = to_device(t.zeros_like(final_nabla_matrix),self.device)
+        # 设置主对角线、上对角线和下对角线的值
+        new_final_nabla_matrix.diagonal(0).copy_(final_nabla_matrix.diagonal(0))  # 主对角线
+        new_final_nabla_matrix.diagonal(1).copy_(final_nabla_matrix.diagonal(1))  # 上对角线
+        new_final_nabla_matrix.diagonal(-1).copy_(final_nabla_matrix.diagonal(-1))  # 下对角线
+        return new_final_nabla_matrix
  
     def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3,q=0.5):
         # Given laplacian matrix lap and the regularized matrix W, compute the loss
