@@ -204,7 +204,7 @@ class regularizer(nn.Module):
             self.num_blocks_w = (self.n - self.patch_size) // self.stride + 1
         # init opt parameters 
         self.mode = self.reg_parameter['mode']
-        if self.reg_name in ['AIR','INRR','TV']:
+        if self.reg_name in ['AIR','INRR','TV','STV']:
             self.lap_mode = self.reg_parameter.get('lap_mode','vanilla')
             self.huber_delta = self.reg_parameter.get('huber_delta',0.1)
             if self.lap_mode == 'Huber':
@@ -251,6 +251,8 @@ class regularizer(nn.Module):
             x = x[self.sparse_index]
         if self.reg_name == 'TV':
             return self.tv(x)*self.reg_parameter["coef"]
+        elif self.reg_name == 'STV':
+            return self.stv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'WTV':
             return self.wtv(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'NLTV':
@@ -296,6 +298,32 @@ class regularizer(nn.Module):
             return t.norm(t.clamp(Var1-self.quantile_q*t.abs(Var1),min=0,max=self.quantile_q*t.abs(Var1))+t.clamp(Var2-self.quantile_q*t.abs(Var2),min=0,max=self.quantile_q*t.abs(Var2)),p=p)/M.shape[0]
         else:
             raise ValueError("lap_mode should be 'vanilla', 'Huber', or 'quantile', but got {}".format(self.lap_mode))
+
+    def stv(self,M):
+        """
+        M: torch tensor type
+        p: p-norm
+        """
+        p = self.reg_parameter['p_norm']
+        center = M[1:M.shape[0]-1,1:M.shape[1]-1]
+        up = M[1:M.shape[0]-1,0:M.shape[1]-2]
+        down = M[1:M.shape[0]-1,2:M.shape[1]]
+        left = M[0:M.shape[0]-2,1:M.shape[1]-1]
+        right = M[2:M.shape[0],1:M.shape[1]-1]
+        Var11 = center-up
+        Var12 = center-down
+        Var21 = center-left
+        Var22 = center-right
+        if self.lap_mode == 'vanilla':
+            return (t.norm(Var11,p=p)+t.norm(Var12,p=p)+t.norm(Var21,p=p)+t.norm(Var22,p=p))/M.shape[0]/M.shape[1]
+        elif self.lap_mode == 'Huber':
+            return self.huber_loss(t.abs(Var11))+self.huber_loss(t.abs(Var12))+self.huber_loss(t.abs(Var21))+self.huber_loss(t.abs(Var22))
+        elif self.lap_mode == 'quantile':
+            return t.norm(t.clamp(Var11-self.quantile_q*t.abs(Var11),min=0,max=self.quantile_q*t.abs(Var11))+t.clamp(Var12-self.quantile_q*t.abs(Var12),min=0,max=self.quantile_q*t.abs(Var12))+t.clamp(Var21-self.quantile_q*t.abs(Var21),min=0,max=self.quantile_q*t.abs(Var21))+t.clamp(Var22-self.quantile_q*t.abs(Var22),min=0,max=self.quantile_q*t.abs(Var22)),p=p)/M.shape[0]
+        else:
+            raise ValueError("lap_mode should be 'vanilla', 'Huber', or 'quantile', but got {}".format(self.lap_mode))
+
+
 
     def wtv(self, M):
         """
