@@ -267,6 +267,8 @@ class regularizer(nn.Module):
             return self.rubi(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'RED':
             return self.red(x)*self.reg_parameter["coef"]
+        elif self.reg_name == 'CURE':
+            return self.cure(x)*self.reg_parameter["coef"]
         else:
             raise('Not support regularizer named ',self.reg_name,'please check the regularizer name in TV, LAP, AIR, INRR, RUBI')
 
@@ -435,7 +437,6 @@ class regularizer(nn.Module):
         else:
             raise ValueError("reg_mode should be'single' or'multi', but got {}".format(self.reg_mode))
 
-
         if self.reg_mode == 'single' and self.sparse_index is not None:
             # 这是因为当 self.reg_mode 为 single时，共享同一个inr，所以要在同一个坐标下取相应的子坐标。
             coor = coor[self.sparse_index]
@@ -485,10 +486,18 @@ class regularizer(nn.Module):
             nabla_matrix = I_n-(J+J.T)/2
         final_nabla_matrix = t.eye(n)
         final_nabla_matrix = to_device(final_nabla_matrix,self.device)
-        for k in range(order_k):
+        for _ in range(order_k):
             final_nabla_matrix = final_nabla_matrix@nabla_matrix
             # final_nabla_matrix = final_nabla_matrix/final_nabla_matrix[0,0]
-        return final_nabla_matrix
+        # 获取方阵的大小
+        n = final_nabla_matrix.size(0)
+        # 创建一个全零的 tensor，大小与 final_nabla_matrix 相同
+        new_final_nabla_matrix = to_device(t.zeros_like(final_nabla_matrix),self.device)
+        # 设置主对角线、上对角线和下对角线的值
+        new_final_nabla_matrix.diagonal(0).copy_(final_nabla_matrix.diagonal(0))  # 主对角线
+        new_final_nabla_matrix.diagonal(1).copy_(final_nabla_matrix.diagonal(1))  # 上对角线
+        new_final_nabla_matrix.diagonal(-1).copy_(final_nabla_matrix.diagonal(-1))  # 下对角线
+        return new_final_nabla_matrix
  
     def lap_loss(self,W,lap,lap_mode='vanilla',norm_lap_lp=1,huber_delta=0.3,q=0.5):
         # Given laplacian matrix lap and the regularized matrix W, compute the loss
@@ -522,4 +531,8 @@ class regularizer(nn.Module):
     def red(self,M):
         if self.denoising_alg == 'nlm':
             pass
+        pass
+
+    def cure(self,M):
+        tv_loss = self.tv(M)
         pass
