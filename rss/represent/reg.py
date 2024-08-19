@@ -33,7 +33,7 @@ def get_opstr(mode=0,shape=(100,100)):
 
 def get_reg(parameter):
     reg_name = parameter.get('reg_name', 'TV')
-    if reg_name in ['TV', 'LAP', 'WTV', 'NLTV']:
+    if reg_name in ['TV', 'LAP', 'WTV', 'NLTV', 'STV']:
         de_para_dict = {'coef': 1, 'p_norm': 2, "mode":0, 'topk': 10, 'sigma': 1, 'patch_size': 4, 'search_epoch':100}
     elif reg_name == 'DE':
         de_para_dict = {'coef': 1, "mode":0, "lap_k":1}
