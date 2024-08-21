@@ -397,6 +397,7 @@ class rssnet(object):
         if not os.path.exists(self.save_p['save_path']):
             os.makedirs(self.save_p['save_path'])
         with open(self.save_p['save_path']+"logs.pkl", "wb") as f:
+            print('self.log_dict',self.log_dict)
             pkl.dump(self.log_dict, f)
             if verbose == True:
                 print('save logs to',self.save_p['save_path']+"logs.pkl")
