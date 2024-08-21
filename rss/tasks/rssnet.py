@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch as t
 import numpy as np
 import time
-import pickle as pkl
+import dill as pkl
 import os
 import imageio
 from sklearn.metrics import roc_auc_score
@@ -397,7 +397,7 @@ class rssnet(object):
         if not os.path.exists(self.save_p['save_path']):
             os.makedirs(self.save_p['save_path'])
         with open(self.save_p['save_path']+"logs.pkl", "wb") as f:
-            print('self.log_dict',self.log_dict)
+            # print('self.log_dict',self.log_dict)
             pkl.dump(self.log_dict, f)
             if verbose == True:
                 print('save logs to',self.save_p['save_path']+"logs.pkl")
