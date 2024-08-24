@@ -89,5 +89,9 @@ def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
         # 将随机掩码中小于等于random_rate的行置为0
         mask[random_mask <= random_rate, :] = 0
         return np.zeros(data_shape) + mask
+    elif mask_type == 'diagonal':
+        #mask = np.ones((data_shape[0],data_shape[1]))
+        mask = np.tri(data_shape[0], data_shape[1], k=5)
+        return np.zeros(data_shape)+mask
     else:
         raise('Wrong mask type = ',mask_type)
