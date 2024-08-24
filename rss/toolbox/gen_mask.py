@@ -90,8 +90,11 @@ def load_mask(mask_type='random',random_rate=0.0,mask_path=None,data_shape=None,
         mask[random_mask <= random_rate, :] = 0
         return np.zeros(data_shape) + mask
     elif mask_type == 'diagonal':
-        #mask = np.ones((data_shape[0],data_shape[1]))
-        mask = np.tri(data_shape[0], data_shape[1], k=5)
+        mask = np.ones((data_shape[0],data_shape[1]))
+        # 生成一个下标矩阵
+        indices = np.arange(data_shape[0])[:, None] - np.arange(data_shape[1])
+        # 将满足 |i-j| < k 的元素设为0
+        mask[np.abs(indices) < 5] = 0
         return np.zeros(data_shape)+mask
     else:
         raise('Wrong mask type = ',mask_type)
