@@ -295,7 +295,7 @@ class rssnet(object):
             if self.save_p['save_if'] == True:
                 # 无论是否调用 self.show 都保存 logs，而图片只有在调用 self.show 时才保存
                 self.save_logs(verbose=verbose)
-            if verbose == True:    
+            if verbose == True:
                 print('loss on test set',self.log_dict['test_loss'][-1])
                 print('PSNR=',self.log_dict['psnr'][-1],'dB')
                 print('NMAE=',self.log_dict['nmae'][-1])
