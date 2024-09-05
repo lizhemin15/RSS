@@ -11,3 +11,4 @@ einops
 scikit-learn
 seaborn
 h5py
+dill
