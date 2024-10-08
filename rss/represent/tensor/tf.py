@@ -5,7 +5,7 @@ from rss.represent.inr import SIREN
 from rss.represent.kan import get_kan
 
 class TensorFactorization(nn.Module):
-    def __init__(self, dim_ori, dim_cor,mode='tucker'):
+    def __init__(self, dim_ori, dim_cor,mode='tucker',w0=1,w0_initial=30.):
         super().__init__()
         self.mode = mode
         stdv = 1 / math.sqrt(dim_cor[0])*1e-3
@@ -26,7 +26,7 @@ class TensorFactorization(nn.Module):
             self.input_list = []
             for i in range(len(dim_cor)):
                 if self.mode == 'tucker_inr':
-                    net_list.append(SIREN({'dim_in':1,'dim_hidden':256,'dim_out':dim_cor[i],'num_layers':2,'w0':1,'w0_initial':30.,'use_bias':True}))
+                    net_list.append(SIREN({'dim_in':1,'dim_hidden':256,'dim_out':dim_cor[i],'num_layers':2,'w0':w0,'w0_initial':w0_initial,'use_bias':True}))
                 elif self.mode == 'tucker_kan':
                     net_list.append(get_kan({'net_name':"EFF_KAN",'dim_in':1,'dim_hidden':20,'dim_out':dim_cor[i],'num_layers':3,'spline_type':'spline','grid_size':100}))
                 self.input_list.append(torch.linspace(-1,1,dim_ori[i]).reshape(-1,1))
@@ -67,8 +67,9 @@ class TensorFactorization(nn.Module):
         return Gnew
     
 def TF(parameter):
-    de_para_dict = {'sizes':[100,100],'dim_cor':[100,100],'mode':'tucker'}
+    de_para_dict = {'sizes':[100,100],'dim_cor':[100,100],'mode':'tucker','w0':1,'w0_initial':30.}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
-    return TensorFactorization(parameter['sizes'],parameter['dim_cor'],parameter['mode'])
+    return TensorFactorization(dim_ori=parameter['sizes'],dim_cor=parameter['dim_cor'],mode=parameter['mode'],
+                                w0=parameter['w0'],w0_initial=parameter['w0_initial'])
