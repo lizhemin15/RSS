@@ -53,7 +53,7 @@ class ComplexGaborLayer2D(nn.Module):
         scale_y = self.scale_orth(input)
         
         freq_term = torch.exp(1j*self.omega_0*lin)
-        
+        return freq_term
         arg = scale_x.abs().square() + scale_y.abs().square()
         if self.scale_0 < 1e-5:
             return freq_term
