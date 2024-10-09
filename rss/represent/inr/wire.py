@@ -134,8 +134,6 @@ class INR(nn.Module):
     
 
 def WIRE(parameter):
-    print('WIRE only supports 2D input now, more support will be added in the future.')
-
     # 默认参数字典
     de_para_dict = {
         'dim_in': 2,
