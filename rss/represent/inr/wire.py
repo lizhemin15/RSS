@@ -48,7 +48,7 @@ class ComplexGaborLayer2D(nn.Module):
     
     def forward(self, input):
         lin = self.linear(input)
-        print(self.scale_0,self.omega_0))
+        print(self.scale_0,self.omega_0)
         
         scale_x = lin
         scale_y = self.scale_orth(input)
