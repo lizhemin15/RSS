@@ -64,7 +64,7 @@ class ComplexGaborLayer(nn.Module):
             dtype = torch.float
         else:
             dtype = torch.cfloat
-            
+        
         # Set trainable parameters if they are to be simultaneously optimized
         self.omega_0 = nn.Parameter(self.omega_0*torch.ones(1), trainable)
         self.scale_0 = nn.Parameter(self.scale_0*torch.ones(1), trainable)
@@ -160,7 +160,7 @@ def WIRE(parameter):
                parameter['num_layers'], 
                parameter['dim_out'], 
                first_omega_0=parameter['w0_initial'], 
-               hidden_omega_0=parameter['w0'], 
+               hidden_omega_0=parameter['w0_initial'], 
                scale=parameter['scale'], 
                pos_encode=parameter['pos_encode'], 
                sidelength=parameter['sidelength'], 
