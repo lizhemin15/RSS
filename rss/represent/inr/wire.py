@@ -53,6 +53,7 @@ class ComplexGaborLayer2D(nn.Module):
         scale_y = self.scale_orth(input)
         
         freq_term = torch.exp(1j*self.omega_0*lin)
+        print(freq_term)
         return freq_term
         arg = scale_x.abs().square() + scale_y.abs().square()
         if self.scale_0 < 1e-5:
@@ -114,6 +115,7 @@ class INR(nn.Module):
     
 
 def WIRE(parameter):
+    print('WIRE only supports 2D input now, more support will be added in the future.')
     de_para_dict = {
         'dim_in': 2,
         'dim_hidden': 100,
