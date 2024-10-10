@@ -160,7 +160,7 @@ def WIRE(parameter):
                parameter['num_layers'], 
                parameter['dim_out'], 
                first_omega_0=parameter['w0_initial'], 
-               hidden_omega_0=parameter['w0_initial'], 
+               hidden_omega_0=parameter['w0'], 
                scale=parameter['scale'], 
                pos_encode=parameter['pos_encode'], 
                sidelength=parameter['sidelength'], 
