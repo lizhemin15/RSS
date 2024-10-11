@@ -41,7 +41,7 @@ def get_nn(parameter={}):
     elif net_name in ['EFF_KAN','KAN', 'ChebyKAN']:
         net = get_kan(parameter)
     else:
-        raise('Wrong net_name = ',net_name)
+        raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
         return net
     else:
