@@ -227,8 +227,6 @@ class BACON(MFNBase):
                              quantization_interval=quantization_interval)
                 for i in range(hidden_layers + 1)])
 
-        print(self)
-
 
     def forward(self, model_input, mode=None, integral_dim=None):
         coords = model_input
