@@ -229,15 +229,9 @@ class BACON(MFNBase):
 
         print(self)
 
-    def forward_mfn(self, input_dict):
-        if 'coords' in input_dict:
-            coords = input_dict['coords']
-        elif 'ray_samples' in input_dict:
-            if self.in_size > 3:
-                coords = torch.cat((input_dict['ray_samples'], input_dict['ray_orientations']), dim=-1)
-            else:
-                coords = input_dict['ray_samples']
 
+    def forward(self, model_input, mode=None, integral_dim=None):
+        coords = model_input
         if self.reuse_filters:
             filter_outputs = 3 * [self.filters[2](coords), ] + \
                              2 * [self.filters[4](coords), ] + \
@@ -251,23 +245,10 @@ class BACON(MFNBase):
             out = self.filters[0](coords)
             for i in range(1, len(self.filters)):
                 out = self.filters[i](coords) * self.linear[i - 1](out)
-
         out = self.output_linear(out)
-
         if self.output_act:
             out = torch.sin(out)
-
         return out
-
-    def forward(self, model_input, mode=None, integral_dim=None):
-
-        out = {'output': self.forward_mfn(model_input)}
-
-        if self.is_sdf:
-            return {'model_in': model_input['coords'],
-                    'model_out': out['output']}
-
-        return {'model_in': model_input, 'model_out': out}
 
 
 class MultiscaleBACON(MFNBase):
