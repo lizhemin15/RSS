@@ -1,4 +1,4 @@
-from rss.represent.inr import MLP,SIREN,WIRE
+from rss.represent.inr import MLP,SIREN,WIRE,BACONS
 import torch.nn as nn
 import torch as t
 from rss.represent.tensor import DMF,TF
@@ -22,6 +22,8 @@ def get_nn(parameter={}):
         net = SIREN(parameter)
     elif net_name == 'WIRE':
         net = WIRE(parameter)
+    elif net_name == 'BACON':
+        net = BACONS(parameter)
     elif net_name == 'DMF':
         net = DMF(parameter)
     elif net_name == 'TF':
