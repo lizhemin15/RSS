@@ -143,7 +143,7 @@ def FourierNets(parameter):
         'dim_out': 1,
         'num_layers': 3,
         'input_scale': 256.0,
-        'weight_scale': 1.0,
+        'w0_initial': 1.0,
         'bias': True,
         'output_act': False
     }
@@ -158,7 +158,7 @@ def FourierNets(parameter):
         parameter['dim_out'],
         parameter['num_layers'],
         parameter['input_scale'],
-        parameter['weight_scale'],
+        parameter['w0_initial'],
         parameter['bias'],
         parameter['output_act']
     )
