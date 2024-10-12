@@ -24,9 +24,9 @@ def get_nn(parameter={}):
         net = WIRE(parameter)
     elif net_name == 'BACON':
         net = BACONS(parameter)
-    elif net_name == 'FourierNets':
+    elif net_name == 'FourierNet':
         net = FourierNets(parameter)
-    elif net_name == 'GaborNets':
+    elif net_name == 'GaborNet':
         net = GaborNets(parameter)
     elif net_name == 'DMF':
         net = DMF(parameter)
