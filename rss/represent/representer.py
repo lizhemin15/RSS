@@ -140,16 +140,12 @@ class RecurrentINR(nn.Module):
 
     def transform_xin(self, x_in):
         # 执行变换
-        
         result = x_in @ (self.transform_matrix * self.weights.view(-1, 1))
-        
         # 计算最大值和最小值
         result_min = t.min(result)
         result_max = t.max(result)
-        
         # 归一化到 -1 到 1
         normalized_result = 2 * (result - result_min) / (result_max - result_min) - 1
-        
         return normalized_result
 
     def forward(self, x_in):
