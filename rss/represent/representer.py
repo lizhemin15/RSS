@@ -133,7 +133,7 @@ class RecurrentINR(nn.Module):
 
     def transform_xin(self, x_in):
         # 执行变换
-        self.transform_matrix[:self.dim_in] /= 10
+        self.transform_matrix[:self.dim_in] = self.transform_matrix[:self.dim_in]/10
         result = x_in @ self.transform_matrix
         
         # 计算最大值和最小值
