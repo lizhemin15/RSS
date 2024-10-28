@@ -127,11 +127,13 @@ class RecurrentINR(nn.Module):
         self.recurrent_num = parameter.get('recurrent_num',1)
         dim_in = parameter.get('dim_in',2)
         dim_out = parameter.get('dim_out',1)
+        self.dim_in = dim_in
         self.transform_matrix = nn.Parameter(t.randn(dim_in+dim_out,dim_in))
 
 
     def transform_xin(self, x_in):
         # 执行变换
+        self.transform_matrix[:self.dim_in] /= 10
         result = x_in @ self.transform_matrix
         
         # 计算最大值和最小值
