@@ -135,7 +135,7 @@ class RecurrentINR(nn.Module):
     def create_weights(self, dim_in, dim_out):
         # 创建一个权重向量，前 dim_in 行为 1，后 dim_out 行为 1/10
         weights = t.ones(dim_in + dim_out)
-        weights[dim_in:] = 0  # 后 dim_out 行设置为 1/10
+        weights[dim_in:] = 1e-3  # 后 dim_out 行设置为 1/10
         return weights
 
     def transform_xin(self, x_in):
