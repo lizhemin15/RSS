@@ -129,12 +129,19 @@ class RecurrentINR(nn.Module):
         dim_out = parameter.get('dim_out',1)
         self.dim_in = dim_in
         self.transform_matrix = nn.Parameter(t.randn(dim_in+dim_out,dim_in))
+        # 定义权重向量
+        self.weights = self.create_weights(dim_in, dim_out)
 
+    def create_weights(self, dim_in, dim_out):
+        # 创建一个权重向量，前 dim_in 行为 1，后 dim_out 行为 1/10
+        weights = t.ones(dim_in + dim_out)
+        weights[dim_in:] = 0.1  # 后 dim_out 行设置为 1/10
+        return weights
 
     def transform_xin(self, x_in):
         # 执行变换
-        self.transform_matrix[:self.dim_in] = self.transform_matrix[:self.dim_in]/10
-        result = x_in @ self.transform_matrix
+        
+        result = x_in @ (self.transform_matrix * self.weights.view(-1, 1))
         
         # 计算最大值和最小值
         result_min = t.min(result)
