@@ -130,10 +130,23 @@ class RecurrentINR(nn.Module):
         self.transform_matrix = nn.Parameter(t.randn(dim_in+dim_out,dim_in))
 
 
+    def transform_xin(self, x_in):
+        # 执行变换
+        result = x_in @ self.transform_matrix
+        
+        # 计算最大值和最小值
+        result_min = t.min(result)
+        result_max = t.max(result)
+        
+        # 归一化到 -1 到 1
+        normalized_result = 2 * (result - result_min) / (result_max - result_min) - 1
+        
+        return normalized_result
+
     def forward(self, x_in):
         for _ in range(self.recurrent_num):
             x = self.net(x_in)
-            x_in = t.cat([x_in,x],dim=-1) @ self.transform_matrix
+            x_in = self.transform_xin(t.cat([x_in,x],dim=-1))
         return x
 
 
