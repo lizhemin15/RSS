@@ -130,7 +130,7 @@ class RecurrentINR(nn.Module):
         self.dim_in = dim_in
         self.transform_matrix = nn.Parameter(t.randn(dim_in+dim_out,dim_in))
         # 定义权重向量
-        self.weights = self.create_weights(dim_in, dim_out)
+        self.weights = self.create_weights(dim_in, dim_out).to(parameter.get('gpu_id',None))
 
     def create_weights(self, dim_in, dim_out):
         # 创建一个权重向量，前 dim_in 行为 1，后 dim_out 行为 1/10
