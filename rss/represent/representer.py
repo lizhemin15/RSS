@@ -44,6 +44,8 @@ def get_nn(parameter={}):
         net = FeatureMap(parameter)
     elif net_name in ['EFF_KAN','KAN', 'ChebyKAN']:
         net = get_kan(parameter)
+    elif net_name == 'RecurrentINR':
+        net = RecurrentINR(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
@@ -118,8 +120,21 @@ class Contenate(nn.Module):
 
 
 
+class RecurrentINR(nn.Module):
+    def __init__(self,parameter):
+        super().__init__()
+        self.net = get_nn(parameter.get('subnet_name',{'net_name':'SIREN'}))
+        self.recurrent_num = parameter.get('recurrent_num',1)
+        dim_in = parameter.get('dim_in',2)
+        dim_out = parameter.get('dim_out',1)
+        self.transform_matrix = nn.Parameter(t.randn(dim_in+dim_out,dim_in))
 
 
+    def forward(self, x_in):
+        for _ in range(self.recurrent_num):
+            x = self.net(x_in)
+            x_in = t.cat([x_in,x],dim=-1) @ self.transform_matrix
+        return x
 
 
 
