@@ -184,7 +184,7 @@ class HashINR(nn.Module):
             x_now = t.clone(x)
             for i in range(self.neighbor_num*2+1):
                 for j in range(self.neighbor_num*2+1):
-                    delta_x = t.tensor([i-self.neighbor_num//2,j-self.neighbor_num//2]).view(1,2).to(x.device)/100
+                    delta_x = t.tensor([i-self.neighbor_num,j-self.neighbor_num]).view(1,2).to(x.device)/100
                     x_now = t.cat([x_now,self.hash_func(x+delta_x)],dim=-1)
             return self.net(x_now)
 
