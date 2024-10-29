@@ -116,10 +116,6 @@ class Contenate(nn.Module):
         pass
 
 
-
-
-
-
 class RecurrentINR(nn.Module):
     def __init__(self,parameter):
         super().__init__()
