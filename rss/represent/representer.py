@@ -163,7 +163,7 @@ class HashINR(nn.Module):
     def __init__(self,parameter):
         super().__init__()
         hash_para = parameter.get('hash_para',{'net_name':'HashEmbedder'})
-        self.hash_func = get_nn()
+        self.hash_func = get_nn(hash_para)
         n_levels = hash_para.get('n_levels', 16)  # 默认值为 16
         n_features_per_level = hash_para.get('n_features_per_level', 2)  # 默认值为 2
 
