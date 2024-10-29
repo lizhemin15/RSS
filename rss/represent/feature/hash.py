@@ -135,7 +135,7 @@ def get_voxel_vertices(xyz, bounding_box, resolution, log2_hashmap_size, is_3d=T
         voxel_min_vertex = bottom_left_idx * grid_size + box_min
         voxel_max_vertex = voxel_min_vertex + torch.tensor([1.0, 1.0, 1.0], device=xyz.device) * grid_size
 
-        voxel_indices = bottom_left_idx.unsqueeze(1) + BOX_OFFSETS_3D
+        voxel_indices = bottom_left_idx.unsqueeze(1) + BOX_OFFSETS_3D.to(xyz.device)
         hashed_voxel_indices = hash(voxel_indices, log2_hashmap_size)
 
     else:
@@ -143,7 +143,7 @@ def get_voxel_vertices(xyz, bounding_box, resolution, log2_hashmap_size, is_3d=T
         voxel_min_vertex = bottom_left_idx * grid_size + box_min
         voxel_max_vertex = voxel_min_vertex + torch.tensor([1.0, 1.0], device=xyz.device) * grid_size
 
-        voxel_indices = bottom_left_idx.unsqueeze(1) + BOX_OFFSETS_2D
+        voxel_indices = bottom_left_idx.unsqueeze(1) + BOX_OFFSETS_2D.to(xyz.device)
         hashed_voxel_indices = hash(voxel_indices, log2_hashmap_size)
 
     return voxel_min_vertex, voxel_max_vertex, hashed_voxel_indices, keep_mask
