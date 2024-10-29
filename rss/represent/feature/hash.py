@@ -95,7 +95,7 @@ class HashEmbedder(nn.Module):
 
 
 def get_voxel_vertices(xyz, bounding_box, resolution, log2_hashmap_size, is_3d=True):
-    print(bounding_box)
+    print('bounding_box:',bounding_box)
     box_min, box_max = torch.tensor(bounding_box, device=xyz.device)
 
     keep_mask = xyz == torch.max(torch.min(xyz, box_max), box_min)
