@@ -6,7 +6,7 @@ from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
 from rss.represent.unn import UNN
 from rss.represent.kernel import KNN,TDKNN
-from rss.represent.feature import FeatureMap
+from rss.represent.feature import FeatureMap,HashEmbedder
 from rss.represent.kan import get_kan
 
 def get_nn(parameter={}):
@@ -42,6 +42,8 @@ def get_nn(parameter={}):
         net = TDKNN(parameter)
     elif net_name == 'FourierFeature':
         net = FeatureMap(parameter)
+    elif net_name == 'HashEmbedder':
+        net = HashEmbedder(parameter)
     elif net_name in ['EFF_KAN','KAN', 'ChebyKAN']:
         net = get_kan(parameter)
     elif net_name == 'RecurrentINR':
