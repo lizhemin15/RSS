@@ -48,6 +48,8 @@ def get_nn(parameter={}):
         net = get_kan(parameter)
     elif net_name == 'RecurrentINR':
         net = RecurrentINR(parameter)
+    elif net_name == 'HashINR':
+        net = HashINR(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
