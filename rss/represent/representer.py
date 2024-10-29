@@ -118,6 +118,7 @@ class Contenate(nn.Module):
         pass
 
 
+
 class RecurrentINR(nn.Module):
     def __init__(self,parameter):
         super().__init__()
@@ -156,7 +157,21 @@ class RecurrentINR(nn.Module):
 
 
 
+class HashINR(nn.Module):
+    def __init__(self,parameter):
+        super().__init__()
+        hash_para = parameter.get('hash_para',{'net_name':'HashEmbedder'})
+        self.hash_func = get_nn()
+        n_levels = hash_para.get('n_levels', 16)  # 默认值为 16
+        n_features_per_level = hash_para.get('n_features_per_level', 2)  # 默认值为 2
 
+        inr_para = parameter.get('inr_para',{'net_name':'SIREN'})
+        inr_para['dim_in'] = n_levels*n_features_per_level
+        self.net = get_nn(inr_para)
+
+
+    def forward(self, x):
+        return self.net(self.hash_func(x))
 
 
 

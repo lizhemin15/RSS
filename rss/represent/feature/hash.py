@@ -157,3 +157,5 @@ def hash(coords, log2_hashmap_size):
         xor_result ^= coords[..., i] * primes[i]
 
     return torch.tensor((1 << log2_hashmap_size) - 1, device=xor_result.device) & xor_result
+
+    
