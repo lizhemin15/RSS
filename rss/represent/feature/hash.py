@@ -72,7 +72,7 @@ class HashEmbedder(nn.Module):
                 x_embedded_all.append(x_embedded)
 
             keep_mask = keep_mask.sum(dim=-1) == keep_mask.shape[-1]
-            return torch.cat(x_embedded_all, dim=-1), keep_mask
+            return torch.cat(x_embedded_all, dim=-1)#, keep_mask
 
         elif x.shape[1] == 2:
             x_embedded_all = []
@@ -88,7 +88,7 @@ class HashEmbedder(nn.Module):
                 x_embedded_all.append(x_embedded)
 
             keep_mask = keep_mask.sum(dim=-1) == keep_mask.shape[-1]
-            return torch.cat(x_embedded_all, dim=-1), keep_mask
+            return torch.cat(x_embedded_all, dim=-1)#, keep_mask
 
         else:
             raise ValueError("Unsupported input dimension: {}".format(x.shape[1]))
