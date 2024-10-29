@@ -181,11 +181,12 @@ class HashINR(nn.Module):
         if self.hash_mode == 'vanilla':
             return self.net(t.cat([x,self.hash_func(x)],dim=-1))
         elif self.hash_mode == 'patch':
+            x_now = x.copy()
             for i in range(self.neighbor_num*2+1):
                 for j in range(self.neighbor_num*2+1):
                     delta_x = t.tensor([i-self.neighbor_num//2,j-self.neighbor_num//2]).view(1,2).to(x.device)/100
-                    x = t.cat([x,self.hash_func(x+delta_x)],dim=-1)
-            return self.net(x)
+                    x_now = t.cat([x_now,self.hash_func(x+delta_x)],dim=-1)
+            return self.net(x_now)
 
 
 
