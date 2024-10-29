@@ -215,6 +215,7 @@ class rssnet(object):
                     pre = self.net(self.data_train['obs_tensor'][0])
                     reg_tensor = pre.reshape(self.data_p['data_shape'])
                 else:
+                    print(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)].shape)
                     pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
                 
                 loss = 0
