@@ -12,10 +12,36 @@ BOX_OFFSETS_2D = torch.tensor([[[i, j] for i in [0, 1] for j in [0, 1]]],
                                device=device)
 
 
-class HashEmbedder(nn.Module):
+def HashEmbedder(parameter):
+    de_para_dict = {
+        'bounding_box': [-1, 1],
+        'n_levels': 16,
+        'n_features_per_level': 2,
+        'log2_hashmap_size': 19,
+        'base_resolution': 16,
+        'finest_resolution': 512,
+    }
+    
+    for key in de_para_dict.keys():
+        param_now = parameter.get(key, de_para_dict.get(key))
+        parameter[key] = param_now
+    
+    # print('HashEmbedder : ', parameter)
+    return HashEmbedders(
+        bounding_box=parameter['bounding_box'],
+        n_levels=parameter['n_levels'],
+        n_features_per_level=parameter['n_features_per_level'],
+        log2_hashmap_size=parameter['log2_hashmap_size'],
+        base_resolution=parameter['base_resolution'],
+        finest_resolution=parameter['finest_resolution']
+    )
+
+
+class HashEmbedders(nn.Module):
     def __init__(self, bounding_box=[-1, 1], n_levels=16, n_features_per_level=2,
                  log2_hashmap_size=19, base_resolution=16, finest_resolution=512):
-        super(HashEmbedder, self).__init__()
+        super(HashEmbedders, self).__init__()
+        print('bounding_box:',bounding_box)
         self.bounding_box = bounding_box
         self.n_levels = n_levels
         self.n_features_per_level = n_features_per_level
@@ -95,7 +121,7 @@ class HashEmbedder(nn.Module):
 
 
 def get_voxel_vertices(xyz, bounding_box, resolution, log2_hashmap_size, is_3d=True):
-    print('bounding_box:',bounding_box)
+    
     box_min, box_max = torch.tensor(bounding_box, device=xyz.device)
 
     keep_mask = xyz == torch.max(torch.min(xyz, box_max), box_min)
