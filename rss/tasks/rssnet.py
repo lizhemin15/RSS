@@ -199,7 +199,7 @@ class rssnet(object):
         if self.data_p['return_data_type'] in ['tensor','random']:
             if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
                 self.start_time = time.time()
-            full_nets_list = ['UNet','ResNet','skip','DMF','TF']
+            full_nets_list = ['UNet','ResNet','skip','DMF','TF', 'KNN']
             full_pre_if = (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list)
             self.full_pre_if = full_pre_if
             for ite in range(self.train_p['train_epoch']):
