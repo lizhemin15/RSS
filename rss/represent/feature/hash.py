@@ -103,7 +103,7 @@ class HashEmbedders(nn.Module):
         elif x.shape[1] == 2:
             x_embedded_all = []
             for i in range(self.n_levels):
-                resolution = torch.floor(self.base_resolution * self.b ** i)
+                resolution = torch.floor(self.base_resolution * self.b ** i).to(x.device)
                 voxel_min_vertex, voxel_max_vertex, hashed_voxel_indices, keep_mask = get_voxel_vertices(
                     x, self.bounding_box,
                     resolution, self.log2_hashmap_size, is_3d=False)
