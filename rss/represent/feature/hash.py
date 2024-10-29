@@ -41,7 +41,7 @@ class HashEmbedders(nn.Module):
     def __init__(self, bounding_box=[-1, 1], n_levels=16, n_features_per_level=2,
                  log2_hashmap_size=19, base_resolution=16, finest_resolution=512):
         super(HashEmbedders, self).__init__()
-        print('bounding_box:',bounding_box)
+        # ('bounding_box:',bounding_box)
         self.bounding_box = bounding_box
         self.n_levels = n_levels
         self.n_features_per_level = n_features_per_level
@@ -158,4 +158,3 @@ def hash(coords, log2_hashmap_size):
 
     return torch.tensor((1 << log2_hashmap_size) - 1, device=xor_result.device) & xor_result
 
-    

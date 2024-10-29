@@ -168,12 +168,12 @@ class HashINR(nn.Module):
         n_features_per_level = hash_para.get('n_features_per_level', 2)  # 默认值为 2
 
         inr_para = parameter.get('inr_para',{'net_name':'SIREN'})
-        inr_para['dim_in'] = n_levels*n_features_per_level
+        inr_para['dim_in'] = n_levels*n_features_per_level+inr_para.get('dim_in',2)
         self.net = get_nn(inr_para)
 
 
     def forward(self, x):
-        return self.net(self.hash_func(x))
+        return self.net(t.cat([x,self.hash_func(x)],dim=-1))
 
 
 
