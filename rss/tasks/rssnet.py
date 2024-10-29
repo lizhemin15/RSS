@@ -201,6 +201,7 @@ class rssnet(object):
                 self.start_time = time.time()
             full_nets_list = ['UNet','ResNet','skip','DMF','TF']
             full_pre_if = (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list)
+            print(full_pre_if)
             for ite in range(self.train_p['train_epoch']):
                 time_now = time.time()
                 self.log('time',time_now-self.start_time)
