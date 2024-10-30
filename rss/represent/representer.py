@@ -162,6 +162,7 @@ class RecurrentINR(nn.Module):
 class HashINR(nn.Module):
     def __init__(self,parameter):
         super().__init__()
+        self.encode_cor_if = parameter.get('encode_cor_if',True)
         self.hash_mode = parameter.get('hash_mode','vanilla')
         self.neighbor_num = parameter.get('neighbor_num',1)
         hash_para = parameter.get('hash_para',{'net_name':'HashEmbedder'})
@@ -170,6 +171,10 @@ class HashINR(nn.Module):
         n_features_per_level = hash_para.get('n_features_per_level', 2)  # 默认值为 2
 
         inr_para = parameter.get('inr_para',{'net_name':'SIREN'})
+        if self.encode_cor_if:
+            inr_para['dim_in'] = inr_para.get('dim_in',2)
+        else:
+            inr_para['dim_in'] = 0
         if self.hash_mode == 'vanilla':
             inr_para['dim_in'] = n_levels*n_features_per_level+inr_para.get('dim_in',2)
         elif self.hash_mode == 'patch':
@@ -179,13 +184,19 @@ class HashINR(nn.Module):
 
     def forward(self, x):
         if self.hash_mode == 'vanilla':
-            return self.net(t.cat([x,self.hash_func(x)],dim=-1))
+            if self.encode_cor_if:
+                return self.net(t.cat([x,self.hash_func(x)],dim=-1))
+            esle:
+                return self.net(self.hash_func(x))
         elif self.hash_mode == 'patch':
             x_now = t.clone(x)
             for i in range(self.neighbor_num*2+1):
                 for j in range(self.neighbor_num*2+1):
                     delta_x = t.tensor([i-self.neighbor_num,j-self.neighbor_num]).view(1,2).to(x.device)/100
-                    x_now = t.cat([x_now,self.hash_func(x+delta_x)],dim=-1)
+                    if self.encode_cor_if:
+                        x_now = t.cat([x_now,self.hash_func(x+delta_x)],dim=-1)
+                    else:
+                        x_now = self.hash_func(x+delta_x)
             return self.net(x_now)
 
 
