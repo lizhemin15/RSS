@@ -11,6 +11,11 @@ python setup.py build
 python setup.py install
 ```
 
+You may face to lake 'libGL.so.1' error, you can install it by:
+```
+apt-get update
+apt install libgl1-mesa-glx libgl1-mesa-dri
+```
 
 
 ## parameters
