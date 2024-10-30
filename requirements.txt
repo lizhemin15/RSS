@@ -12,3 +12,6 @@ scikit-learn
 seaborn
 h5py
 dill
+fastapi
+uvicorn
+sh
