@@ -186,7 +186,7 @@ class HashINR(nn.Module):
         if self.hash_mode == 'vanilla':
             if self.encode_cor_if:
                 return self.net(t.cat([x,self.hash_func(x)],dim=-1))
-            esle:
+            else:
                 return self.net(self.hash_func(x))
         elif self.hash_mode == 'patch':
             x_now = t.clone(x)
