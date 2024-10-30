@@ -2,6 +2,17 @@
 
 # Obj: RSSNet
 
+## How to install
+```
+git clone https://gitee.com/lizhemin15/RSS.git
+cd RSS
+pip install -r requirements.txt
+python setup.py build
+python setup.py install
+```
+
+
+
 ## parameters
 ```
 include:
