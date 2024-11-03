@@ -132,7 +132,7 @@ class rssnet(object):
             else:
                 raise ValueError('parameter_type should be matrix or implicit')
 
-        
+
 
     def init_opt(self):
         de_para_dict = {'net':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},
@@ -392,6 +392,7 @@ class rssnet(object):
             print('noise_mean',t.abs(self.noise.mean()).item())
         plt.show()
         
+
 
     def save_logs(self,verbose=True):
         # 检测文件夹是否存在，不存在则创建
