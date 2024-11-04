@@ -183,6 +183,9 @@ class HashINR(nn.Module):
 
 
     def forward(self, x):
+        # 检查 x 的维度
+        if x.dim() == 3:
+            x = x.squeeze(0)  # batchsize采样所得，去掉第一维
         if self.hash_mode == 'vanilla':
             if self.encode_cor_if:
                 return self.net(t.cat([x,self.hash_func(x)],dim=-1))
