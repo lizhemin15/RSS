@@ -107,12 +107,15 @@ def get_voxel_vertices(xyz, bounding_box, resolution, log2_hashmap_size, is_d):
 
 def hash(coords, log2_hashmap_size):
     primes = [1, 2654435761, 805459861, 3674653429, 2097192037, 1434869437, 2165219737]
+    
+    # Convert coords to long type to perform bitwise operations
+    coords = coords.long()  # Change this line to convert to integer type
 
-    xor_result = torch.zeros_like(coords)[..., 0]
+    xor_result = torch.zeros_like(coords[..., 0], dtype=torch.long)  # Ensure xor_result is of long type
     for i in range(coords.shape[-1]):
         xor_result ^= coords[..., i] * primes[i % len(primes)]
 
-    return torch.tensor((1 << log2_hashmap_size) - 1, device=xor_result.device) & xor_result
+    return (1 << log2_hashmap_size) - 1 & xor_result
 
 
 # import torch
