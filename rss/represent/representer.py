@@ -226,38 +226,33 @@ class DINER(nn.Module):
         inr_para['dim_in'] = self.feature_dim
         self.net = get_nn(inr_para)
 
+    def trilinear_interp(self, lower_idx, upper_idx, weight):
+        # 三线性插值
+        return (
+            self.G[lower_idx[:, 0], lower_idx[:, 1], lower_idx[:, 2]] * (1 - weight[:, 0][:, None]) * (1 - weight[:, 1][:, None]) * (1 - weight[:, 2][:, None]) +
+            self.G[lower_idx[:, 0], lower_idx[:, 1], upper_idx[:, 2]] * (1 - weight[:, 0][:, None]) * (1 - weight[:, 1][:, None]) * weight[:, 2][:, None] +
+            self.G[lower_idx[:, 0], upper_idx[:, 1], lower_idx[:, 2]] * (1 - weight[:, 0][:, None]) * weight[:, 1][:, None] * (1 - weight[:, 2][:, None]) +
+            self.G[lower_idx[:, 0], upper_idx[:, 1], upper_idx[:, 2]] * (1 - weight[:, 0][:, None]) * weight[:, 1][:, None] * weight[:, 2][:, None] +
+            self.G[upper_idx[:, 0], lower_idx[:, 1], lower_idx[:, 2]] * weight[:, 0][:, None] * (1 - weight[:, 1][:, None]) * (1 - weight[:, 2][:, None]) +
+            self.G[upper_idx[:, 0], lower_idx[:, 1], upper_idx[:, 2]] * weight[:, 0][:, None] * (1 - weight[:, 1][:, None]) * weight[:, 2][:, None] +
+            self.G[upper_idx[:, 0], upper_idx[:, 1], lower_idx[:, 2]] * weight[:, 0][:, None] * weight[:, 1][:, None] * (1 - weight[:, 2][:, None]) +
+            self.G[upper_idx[:, 0], upper_idx[:, 1], upper_idx[:, 2]] * weight[:, 0][:, None] * weight[:, 1][:, None] * weight[:, 2][:, None]
+        )
+
+    def bilinear_interp(self, lower_idx, upper_idx, weight):
+        # 双线性插值
+        return (
+            self.G[lower_idx[:, 0], lower_idx[:, 1]] * (1 - weight[:, 0][:, None]) * (1 - weight[:, 1][:, None]) +
+            self.G[lower_idx[:, 0], upper_idx[:, 1]] * (1 - weight[:, 0][:, None]) * weight[:, 1][:, None] +
+            self.G[upper_idx[:, 0], lower_idx[:, 1]] * weight[:, 0][:, None] * (1 - weight[:, 1][:, None]) +
+            self.G[upper_idx[:, 0], upper_idx[:, 1]] * weight[:, 0][:, None] * weight[:, 1][:, None]
+        )
+
     def interpolate(self, lower_idx, upper_idx, weight):
         if self.dim_in == 2:
-            G00 = self.G[lower_idx[:, 0], lower_idx[:, 1]]
-            G01 = self.G[lower_idx[:, 0], upper_idx[:, 1]]
-            G10 = self.G[upper_idx[:, 0], lower_idx[:, 1]]
-            G11 = self.G[upper_idx[:, 0], upper_idx[:, 1]]
-
-            # 双线性插值
-            return (G00 * (1 - weight[:, 0]) * (1 - weight[:, 1]) +
-                    G01 * (1 - weight[:, 0]) * weight[:, 1] +
-                    G10 * weight[:, 0] * (1 - weight[:, 1]) +
-                    G11 * weight[:, 0] * weight[:, 1])
-        
+            return self.bilinear_interp(lower_idx, upper_idx, weight)
         elif self.dim_in == 3:
-            G000 = self.G[lower_idx[:, 0], lower_idx[:, 1], lower_idx[:, 2]]
-            G001 = self.G[lower_idx[:, 0], lower_idx[:, 1], upper_idx[:, 2]]
-            G010 = self.G[lower_idx[:, 0], upper_idx[:, 1], lower_idx[:, 2]]
-            G011 = self.G[lower_idx[:, 0], upper_idx[:, 1], upper_idx[:, 2]]
-            G100 = self.G[upper_idx[:, 0], lower_idx[:, 1], lower_idx[:, 2]]
-            G101 = self.G[upper_idx[:, 0], lower_idx[:, 1], upper_idx[:, 2]]
-            G110 = self.G[upper_idx[:, 0], upper_idx[:, 1], lower_idx[:, 2]]
-            G111 = self.G[upper_idx[:, 0], upper_idx[:, 1], upper_idx[:, 2]]
-
-            # 三线性插值
-            return (G000 * (1 - weight[:, 0]) * (1 - weight[:, 1]) * (1 - weight[:, 2]) +
-                    G001 * (1 - weight[:, 0]) * (1 - weight[:, 1]) * weight[:, 2] +
-                    G010 * (1 - weight[:, 0]) * weight[:, 1] * (1 - weight[:, 2]) +
-                    G011 * (1 - weight[:, 0]) * weight[:, 1] * weight[:, 2] +
-                    G100 * weight[:, 0] * (1 - weight[:, 1]) * (1 - weight[:, 2]) +
-                    G101 * weight[:, 0] * (1 - weight[:, 1]) * weight[:, 2] +
-                    G110 * weight[:, 0] * weight[:, 1] * (1 - weight[:, 2]) +
-                    G111 * weight[:, 0] * weight[:, 1] * weight[:, 2])
+            return self.trilinear_interp(lower_idx, upper_idx, weight)
         else:
             raise ValueError("dim_in must be either 2 or 3.")
 
@@ -266,14 +261,14 @@ class DINER(nn.Module):
             x = x.squeeze(0)  # 去掉第一维
 
         batch_size = x.shape[0]
-        
+
         # 将坐标归一化到 [0, resolution]
         normalized_x = (x + self.border) / (2 * self.border) * (self.resolution - 1)
-        
+
         # 计算下取整和上取整
         lower_idx = t.clamp(t.floor(normalized_x).long(), 0, self.resolution - 1)
         upper_idx = t.clamp(t.ceil(normalized_x).long(), 0, self.resolution - 1)
-        
+
         # 计算权重
         weight = normalized_x - lower_idx.float()
 
