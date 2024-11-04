@@ -50,6 +50,8 @@ def get_nn(parameter={}):
         net = RecurrentINR(parameter)
     elif net_name == 'HashINR':
         net = HashINR(parameter)
+    elif net_name == 'DINER':
+        net = DINER(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
@@ -205,7 +207,23 @@ class HashINR(nn.Module):
 
 
 
+class DINER(nn.Module):
+    def __init__(self,parameter):
+        super().__init__()
+        self.border = parameter.get('border',1)
+        feature_dim = parameter.get('feature_dim',1)
+        self.resolution = parameter.get('resolution',256)
+        dim_in = parameter.get('dim_in',2)
+        G_shape = [self.resolution]*dim_in+[feature_dim]
+        self.G = t.nn.Parameter(t.randn(G_shape)*1e-3)
+        inr_para = parameter.get('inr_para',{'net_name':'SIREN'})
+        inr_para['dim_out'] = parameter.get('dim_out',1)
+        inr_para['dim_in'] = feature_dim
+        self.net = get_nn(inr_para)
 
+    def forward(self, x):
+
+        pass
 
 
 
