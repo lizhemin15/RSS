@@ -70,6 +70,8 @@ class HashEmbedders(nn.Module):
         return output
 
     def forward(self, x):
+        if self.forward_count == 0:
+            self.box_offsets = self.box_offsets.to(x.device)
         self.forward_count += 1
         if self.non_local_if == False or self.forward_count < 100:
             x_embedded_all = []
