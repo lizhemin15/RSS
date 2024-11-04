@@ -276,7 +276,7 @@ class DINER(nn.Module):
         output = self.interpolate(lower_idx, upper_idx, weight)
 
         # 确保输出的形状是 (batch_size, feature_dim)
-        return output.view(batch_size, self.feature_dim)
+        return output #output.view(batch_size, self.feature_dim)
 
 
 
