@@ -226,41 +226,20 @@ class DINER(nn.Module):
         inr_para['dim_in'] = self.feature_dim
         self.net = get_nn(inr_para)
 
-    def forward(self, x):
-        # 检查 x 的维度
-        if x.dim() == 3:
-            x = x.squeeze(0)  # batchsize采样所得，去掉第一维
-        # 1. 确定输入的形状
-        batch_size = x.shape[0]
-        
-        # 2. 将坐标归一化到 [0, resolution]
-        normalized_x = (x + self.border) / (2 * self.border) * (self.resolution - 1)
-        
-        # 3. 进行下取整和上取整
-        lower_idx = t.floor(normalized_x).long()
-        upper_idx = t.ceil(normalized_x).long()
-        
-        # 确保索引在合法范围内
-        lower_idx = t.clamp(lower_idx, 0, self.resolution - 1)
-        upper_idx = t.clamp(upper_idx, 0, self.resolution - 1)
-        
-        # 4. 计算权重
-        weight = normalized_x - lower_idx.float()
-        
-        # 5. 根据维度执行双线性插值或三线性插值
-        if self.dim_in == 2:  # 二维情况下
+    def interpolate(self, lower_idx, upper_idx, weight):
+        if self.dim_in == 2:
             G00 = self.G[lower_idx[:, 0], lower_idx[:, 1]]
             G01 = self.G[lower_idx[:, 0], upper_idx[:, 1]]
             G10 = self.G[upper_idx[:, 0], lower_idx[:, 1]]
             G11 = self.G[upper_idx[:, 0], upper_idx[:, 1]]
 
             # 双线性插值
-            output = (G00 * (1 - weight[:, 0]) * (1 - weight[:, 1]) +
-                      G01 * (1 - weight[:, 0]) * weight[:, 1] +
-                      G10 * weight[:, 0] * (1 - weight[:, 1]) +
-                      G11 * weight[:, 0] * weight[:, 1])
+            return (G00 * (1 - weight[:, 0]) * (1 - weight[:, 1]) +
+                    G01 * (1 - weight[:, 0]) * weight[:, 1] +
+                    G10 * weight[:, 0] * (1 - weight[:, 1]) +
+                    G11 * weight[:, 0] * weight[:, 1])
         
-        elif self.dim_in == 3:  # 三维情况下
+        elif self.dim_in == 3:
             G000 = self.G[lower_idx[:, 0], lower_idx[:, 1], lower_idx[:, 2]]
             G001 = self.G[lower_idx[:, 0], lower_idx[:, 1], upper_idx[:, 2]]
             G010 = self.G[lower_idx[:, 0], upper_idx[:, 1], lower_idx[:, 2]]
@@ -271,19 +250,37 @@ class DINER(nn.Module):
             G111 = self.G[upper_idx[:, 0], upper_idx[:, 1], upper_idx[:, 2]]
 
             # 三线性插值
-            output = (G000 * (1 - weight[:, 0]) * (1 - weight[:, 1]) * (1 - weight[:, 2]) +
-                      G001 * (1 - weight[:, 0]) * (1 - weight[:, 1]) * weight[:, 2] +
-                      G010 * (1 - weight[:, 0]) * weight[:, 1] * (1 - weight[:, 2]) +
-                      G011 * (1 - weight[:, 0]) * weight[:, 1] * weight[:, 2] +
-                      G100 * weight[:, 0] * (1 - weight[:, 1]) * (1 - weight[:, 2]) +
-                      G101 * weight[:, 0] * (1 - weight[:, 1]) * weight[:, 2] +
-                      G110 * weight[:, 0] * weight[:, 1] * (1 - weight[:, 2]) +
-                      G111 * weight[:, 0] * weight[:, 1] * weight[:, 2])
-
+            return (G000 * (1 - weight[:, 0]) * (1 - weight[:, 1]) * (1 - weight[:, 2]) +
+                    G001 * (1 - weight[:, 0]) * (1 - weight[:, 1]) * weight[:, 2] +
+                    G010 * (1 - weight[:, 0]) * weight[:, 1] * (1 - weight[:, 2]) +
+                    G011 * (1 - weight[:, 0]) * weight[:, 1] * weight[:, 2] +
+                    G100 * weight[:, 0] * (1 - weight[:, 1]) * (1 - weight[:, 2]) +
+                    G101 * weight[:, 0] * (1 - weight[:, 1]) * weight[:, 2] +
+                    G110 * weight[:, 0] * weight[:, 1] * (1 - weight[:, 2]) +
+                    G111 * weight[:, 0] * weight[:, 1] * weight[:, 2])
         else:
             raise ValueError("dim_in must be either 2 or 3.")
 
-        # 6. 确保输出的形状是 (batch_size, feature_dim)
+    def forward(self, x):
+        if x.dim() == 3:
+            x = x.squeeze(0)  # 去掉第一维
+
+        batch_size = x.shape[0]
+        
+        # 将坐标归一化到 [0, resolution]
+        normalized_x = (x + self.border) / (2 * self.border) * (self.resolution - 1)
+        
+        # 计算下取整和上取整
+        lower_idx = t.clamp(t.floor(normalized_x).long(), 0, self.resolution - 1)
+        upper_idx = t.clamp(t.ceil(normalized_x).long(), 0, self.resolution - 1)
+        
+        # 计算权重
+        weight = normalized_x - lower_idx.float()
+
+        # 调用插值函数
+        output = self.interpolate(lower_idx, upper_idx, weight)
+
+        # 确保输出的形状是 (batch_size, feature_dim)
         return output.view(batch_size, self.feature_dim)
 
 
