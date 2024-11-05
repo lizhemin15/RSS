@@ -216,6 +216,9 @@ class DINER(nn.Module):
         self.resolution = parameter.get('resolution', 256)
         self.dim_in = parameter.get('dim_in', 2)
 
+        # 计数参数
+        self.forward_count = 0
+
         # G的形状
         G_shape = [self.resolution] * self.dim_in + [self.feature_dim]
         self.G = nn.Parameter(t.randn(G_shape) * 1e-3)
@@ -256,7 +259,21 @@ class DINER(nn.Module):
         else:
             raise ValueError("dim_in must be either 2 or 3.")
 
+    def update_G(self):
+        # 1. 读取数据并转换为numpy数组
+        G_numpy = self.G.detach().cpu().numpy()  # detach()用于避免梯度计算
+
+        # 2. 在numpy中进行处理
+        # 这里假设我们做一些简单的处理，比如加1
+        G_processed = G_numpy + 1
+
+        # 3. 将处理后的numpy数组转换回PyTorch张量并更新nn.Parameter的data
+        self.G.data = torch.from_numpy(G_processed).float().to(self.G.device)
+
     def forward(self, x):
+        self.forward_count += 1
+        if self.forward_count % 10 == 0:
+            self.update_G()
         if x.dim() == 3:
             x = x.squeeze(0)  # 去掉第一维
 
@@ -275,7 +292,6 @@ class DINER(nn.Module):
         # 调用插值函数
         output = self.interpolate(lower_idx, upper_idx, weight)
 
-        # 确保输出的形状是 (batch_size, feature_dim)
         return self.net(output) #output.view(batch_size, self.feature_dim)
 
 
