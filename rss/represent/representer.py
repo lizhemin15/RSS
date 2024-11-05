@@ -287,6 +287,7 @@ class DINER(nn.Module):
 
 class SIMINER(DINER):
     def __init__(self, parameter):
+        super().__init__(parameter)
         # 计数参数
         self.forward_count = 0
 
