@@ -305,7 +305,7 @@ class SIMINER(DINER):
             G_processed = denoise_nl_means(G_numpy, h=0.8 * sigma_est, fast_mode=True, **patch_kw)
 
             # 3. 将处理后的numpy数组转换为PyTorch张量
-            new_G = torch.from_numpy(G_processed).float().to(self.G.device)
+            new_G = t.from_numpy(G_processed).float().to(self.G.device)
 
             # 4. 使用copy_来更新self.G的值
             self.G.data.copy_(new_G)
@@ -314,7 +314,7 @@ class SIMINER(DINER):
             del new_G  # 如果不再需要，可以显式删除
 
             # 6. 清除未使用的缓存
-            torch.cuda.empty_cache()
+            t.cuda.empty_cache()
 
     def forward(self, x):
         self.forward_count += 1
