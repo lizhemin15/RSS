@@ -287,10 +287,10 @@ class DINER(nn.Module):
 
 class SIMINER(DINER):
     def __init__(self, parameter):
-        super().__init__(parameter)
         # 计数参数
         self.forward_count = 0
         self.feature_dim = parameter.get('feature_dim', 3)
+        super().__init__(parameter)
 
     def update_G(self):
         with t.no_grad():  # 禁用梯度计算
