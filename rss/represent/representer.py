@@ -56,7 +56,7 @@ def get_nn(parameter={}):
         net = HashINR(parameter)
     elif net_name == 'DINER':
         net = DINER(parameter)
-    elif net_naem == 'SIMINER':
+    elif net_name == 'SIMINER':
         net = SIMINER(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
