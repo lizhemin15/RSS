@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from skimage.restoration import denoise_nl_means, estimate_sigma
 import numpy as np
 import bm3d
+import utils
 
 from rss.represent.inr import MLP,SIREN,WIRE,BACONS,FourierNets,GaborNets
 from rss.represent.tensor import DMF,TF
@@ -330,7 +331,7 @@ class SIMINER(DINER):
                 seed = 0  # seed for pseudorandom noise realization
 
                 # Generate noise with given PSD
-                noise, psd, kernel = get_experiment_noise(noise_type, noise_var, seed, G_numpy.shape)
+                noise, psd, kernel = utils.get_experiment_noise(noise_type, noise_var, seed, G_numpy.shape)
                 G_processed = bm3d_rgb(G_numpy, psd)
 
 
