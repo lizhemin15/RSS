@@ -265,7 +265,7 @@ class DINER(nn.Module):
 
         # 2. 在numpy中进行处理
         # 这里假设我们做一些简单的处理，比如加1
-        G_processed = G_numpy + 1
+        G_processed = G_numpy
 
         # 3. 将处理后的numpy数组转换回PyTorch张量并更新nn.Parameter的data
         self.G.data = t.from_numpy(G_processed).float().to(self.G.device)
