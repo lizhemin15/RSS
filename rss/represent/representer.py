@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from skimage.restoration import denoise_nl_means, estimate_sigma
 import numpy as np
 import bm3d
-import utils
 
 from rss.represent.inr import MLP,SIREN,WIRE,BACONS,FourierNets,GaborNets
 from rss.represent.tensor import DMF,TF
@@ -14,6 +13,7 @@ from rss.represent.unn import UNN
 from rss.represent.kernel import KNN,TDKNN
 from rss.represent.feature import FeatureMap,HashEmbedder
 from rss.represent.kan import get_kan
+import rss.represent.utils as utils
 
 def get_nn(parameter={}):
     net_name = parameter.get('net_name','SIREN')
