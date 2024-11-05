@@ -305,7 +305,7 @@ class SIMINER(DINER):
                 )
 
                 # 2. 在numpy中进行处理
-                G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=True, **patch_kw)
+                G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=False, **patch_kw)
 
             # 3. 将处理后的numpy数组转换为PyTorch张量
             new_G = t.from_numpy(G_processed).float().to(self.G.device)
