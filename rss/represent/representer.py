@@ -290,20 +290,21 @@ class SIMINER(DINER):
         # 计数参数
         self.forward_count = 0
         self.feature_dim = parameter.get('feature_dim', 3)
+        self.similar_method = parameter.get('similar_method', 'nlm')
         super().__init__(parameter)
 
     def update_G(self):
         with t.no_grad():  # 禁用梯度计算
             # 1. 读取数据并转换为numpy数组
             G_numpy = self.G.detach().cpu().numpy()  # detach()用于避免梯度计算
+            if self.similar_method == 'nlm':
+                sigma_est = np.mean(estimate_sigma(G_numpy, channel_axis=-1))
+                patch_kw = dict(
+                    patch_size=5, patch_distance=6, channel_axis=-1  # 5x5 patches  # 13x13 search area
+                )
 
-            sigma_est = np.mean(estimate_sigma(G_numpy, channel_axis=-1))
-            patch_kw = dict(
-                patch_size=5, patch_distance=6, channel_axis=-1  # 5x5 patches  # 13x13 search area
-            )
-
-            # 2. 在numpy中进行处理
-            G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=True, **patch_kw)
+                # 2. 在numpy中进行处理
+                G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=False, **patch_kw)
 
             # 3. 将处理后的numpy数组转换为PyTorch张量
             new_G = t.from_numpy(G_processed).float().to(self.G.device)
