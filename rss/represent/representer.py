@@ -268,7 +268,7 @@ class DINER(nn.Module):
         G_processed = G_numpy + 1
 
         # 3. 将处理后的numpy数组转换回PyTorch张量并更新nn.Parameter的data
-        self.G.data = torch.from_numpy(G_processed).float().to(self.G.device)
+        self.G.data = t.from_numpy(G_processed).float().to(self.G.device)
 
     def forward(self, x):
         self.forward_count += 1
