@@ -1,7 +1,10 @@
-from rss.represent.inr import MLP,SIREN,WIRE,BACONS,FourierNets,GaborNets
 import torch.nn as nn
 import torch as t
 import torch.nn.functional as F
+from skimage.restoration import denoise_nl_means, estimate_sigma
+import numpy as np
+
+from rss.represent.inr import MLP,SIREN,WIRE,BACONS,FourierNets,GaborNets
 from rss.represent.tensor import DMF,TF
 from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
@@ -53,6 +56,8 @@ def get_nn(parameter={}):
         net = HashINR(parameter)
     elif net_name == 'DINER':
         net = DINER(parameter)
+    elif net_naem == 'SIMINER':
+        net = SIMINER(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
@@ -216,8 +221,6 @@ class DINER(nn.Module):
         self.resolution = parameter.get('resolution', 256)
         self.dim_in = parameter.get('dim_in', 2)
 
-        # 计数参数
-        self.forward_count = 0
 
         # G的形状
         G_shape = [self.resolution] * self.dim_in + [self.feature_dim]
@@ -259,13 +262,45 @@ class DINER(nn.Module):
         else:
             raise ValueError("dim_in must be either 2 or 3.")
 
+    def forward(self, x):
+        if x.dim() == 3:
+            x = x.squeeze(0)  # 去掉第一维
+
+        batch_size = x.shape[0]
+
+        # 将坐标归一化到 [0, resolution]
+        normalized_x = (x + self.border) / (2 * self.border) * (self.resolution - 1)
+
+        # 计算下取整和上取整
+        lower_idx = t.clamp(t.floor(normalized_x).long(), 0, self.resolution - 1)
+        upper_idx = t.clamp(t.ceil(normalized_x).long(), 0, self.resolution - 1)
+
+        # 计算权重
+        weight = normalized_x - lower_idx.float()
+
+        # 调用插值函数
+        output = self.interpolate(lower_idx, upper_idx, weight)
+
+        return self.net(output) #output.view(batch_size, self.feature_dim)
+
+
+
+class SIMINER(DINER):
+    def __init__(self, parameter):
+        super().__init__(parameter)
+        # 计数参数
+        self.forward_count = 0
+
     def update_G(self):
         # 1. 读取数据并转换为numpy数组
         G_numpy = self.G.detach().cpu().numpy()  # detach()用于避免梯度计算
 
+        sigma_est = np.mean(estimate_sigma(G_numpy, channel_axis=-1))
+        patch_kw = dict(
+            patch_size=5, patch_distance=6, channel_axis=-1  # 5x5 patches  # 13x13 search area
+        )
         # 2. 在numpy中进行处理
-        # 这里假设我们做一些简单的处理，比如加1
-        G_processed = G_numpy
+        G_processed = denoise_nl_means(G_numpy, h=0.8 * sigma_est, fast_mode=True, **patch_kw)
 
         # 3. 将处理后的numpy数组转换回PyTorch张量并更新nn.Parameter的data
         self.G.data = t.from_numpy(G_processed).float().to(self.G.device)
@@ -293,10 +328,6 @@ class DINER(nn.Module):
         output = self.interpolate(lower_idx, upper_idx, weight)
 
         return self.net(output) #output.view(batch_size, self.feature_dim)
-
-
-
-
 
 
 
