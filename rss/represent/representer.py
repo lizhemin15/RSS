@@ -2,6 +2,8 @@ import torch.nn as nn
 import torch as t
 import torch.nn.functional as F
 from skimage.restoration import denoise_nl_means, estimate_sigma
+from skimage.filters import rank
+from skimage.morphology import disk
 import numpy as np
 
 
@@ -324,6 +326,9 @@ class SIMINER(DINER):
 
                 # 2. 在numpy中进行处理
                 G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=True, **patch_kw)
+            elif self.similar_method == 'bmean':
+                footprint = disk(20)
+                G_processed = rank.mean_bilateral(G_numpy, footprint=footprint, s0=500, s1=500)
 
 
             # 3. 将处理后的numpy数组转换为PyTorch张量
