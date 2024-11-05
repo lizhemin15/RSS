@@ -292,7 +292,7 @@ class SIMINER(DINER):
         self.forward_count = 0
 
     def update_G(self):
-        with torch.no_grad():  # 禁用梯度计算
+        with t.no_grad():  # 禁用梯度计算
             # 1. 读取数据并转换为numpy数组
             G_numpy = self.G.detach().cpu().numpy()  # detach()用于避免梯度计算
 
