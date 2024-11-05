@@ -16,4 +16,4 @@ fastapi
 uvicorn
 sh
 PyWavelets
-bm3d
+
