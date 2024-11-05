@@ -292,6 +292,7 @@ class SIMINER(DINER):
         self.feature_dim = parameter.get('feature_dim', 3)
         self.similar_method = parameter.get('similar_method', 'nlm')
         parameter['feature_dim'] = self.feature_dim
+        parameter['resolution'] = 300
         super().__init__(parameter)
 
     def update_G(self):
