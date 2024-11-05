@@ -292,18 +292,29 @@ class SIMINER(DINER):
         self.forward_count = 0
 
     def update_G(self):
-        # 1. 读取数据并转换为numpy数组
-        G_numpy = self.G.detach().cpu().numpy()  # detach()用于避免梯度计算
+        with torch.no_grad():  # 禁用梯度计算
+            # 1. 读取数据并转换为numpy数组
+            G_numpy = self.G.detach().cpu().numpy()  # detach()用于避免梯度计算
 
-        sigma_est = np.mean(estimate_sigma(G_numpy, channel_axis=-1))
-        patch_kw = dict(
-            patch_size=5, patch_distance=6, channel_axis=-1  # 5x5 patches  # 13x13 search area
-        )
-        # 2. 在numpy中进行处理
-        G_processed = denoise_nl_means(G_numpy, h=0.8 * sigma_est, fast_mode=True, **patch_kw)
+            sigma_est = np.mean(estimate_sigma(G_numpy, channel_axis=-1))
+            patch_kw = dict(
+                patch_size=5, patch_distance=6, channel_axis=-1  # 5x5 patches  # 13x13 search area
+            )
 
-        # 3. 将处理后的numpy数组转换回PyTorch张量并更新nn.Parameter的data
-        self.G.data = t.from_numpy(G_processed).float().to(self.G.device)
+            # 2. 在numpy中进行处理
+            G_processed = denoise_nl_means(G_numpy, h=0.8 * sigma_est, fast_mode=True, **patch_kw)
+
+            # 3. 将处理后的numpy数组转换为PyTorch张量
+            new_G = torch.from_numpy(G_processed).float().to(self.G.device)
+
+            # 4. 使用copy_来更新self.G的值
+            self.G.data.copy_(new_G)
+
+            # 5. 清除未使用的临时变量
+            del new_G  # 如果不再需要，可以显式删除
+
+            # 6. 清除未使用的缓存
+            torch.cuda.empty_cache()
 
     def forward(self, x):
         self.forward_count += 1
