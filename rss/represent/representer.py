@@ -3,6 +3,7 @@ import torch as t
 import torch.nn.functional as F
 from skimage.restoration import denoise_nl_means, estimate_sigma
 import numpy as np
+import bm3d
 
 from rss.represent.inr import MLP,SIREN,WIRE,BACONS,FourierNets,GaborNets
 from rss.represent.tensor import DMF,TF
@@ -322,6 +323,16 @@ class SIMINER(DINER):
 
                 # 2. 在numpy中进行处理
                 G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=True, **patch_kw)
+            elif self.similar_method == 'bm3d':
+                G_numpy = G_numpy/G_numpy.max()
+                noise_type = 'g3'
+                noise_var = 0.02  # Noise variance
+                seed = 0  # seed for pseudorandom noise realization
+
+                # Generate noise with given PSD
+                noise, psd, kernel = get_experiment_noise(noise_type, noise_var, seed, G_numpy.shape)
+                G_processed = bm3d_rgb(G_numpy, psd)
+
 
             # 3. 将处理后的numpy数组转换为PyTorch张量
             new_G = t.from_numpy(G_processed).float().to(self.G.device)
