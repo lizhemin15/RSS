@@ -139,6 +139,7 @@ class FFINR(nn.Module):
         super().__init__()
         ffm_para = parameter.get('FourierFeature_para',{'net_name':'FourierFeature','dim_out':100})
         ffm_para['dim_in'] = parameter.get('dim_in',2)
+        ffm_para['gpu_id'] = None if 'gpu_id' not in parameter.keys() else parameter['gpu_id']
         dim_feature = ffm_para['dim_out']
         self.ffm_net = get_nn(ffm_para)
 

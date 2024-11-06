@@ -74,7 +74,7 @@ class Fourier_Feature(nn.Module):
     
 
 def FeatureMap(parameter):
-    de_para_dict = {'dim_in':2,'dim_out':100, 'map_type':'fourier', 'feature_type':'gaussian', 'std':1, 'mean':0, 'gpu_id':None, 'learnable':False}
+    de_para_dict = {'dim_in':2,'dim_out':100, 'map_type':'fourier', 'feature_type':'gaussian', 'std':30, 'mean':0, 'gpu_id':None, 'learnable':False}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
