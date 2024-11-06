@@ -62,6 +62,8 @@ def get_nn(parameter={}):
         net = DINER(parameter)
     elif net_name == 'SIMINER':
         net = SIMINER(parameter)
+    elif net_name == 'FFINR':
+        net = FFINR(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
@@ -130,6 +132,25 @@ class Contenate(nn.Module):
     def forward(self,x_list):
         # Contenate multiple input together to a single net
         pass
+
+
+class FFINR(nn.Module):
+    def __init__(self,parameter):
+        super().__init__()
+        ffm_para = parameter.get('FourierFeature_para',{'net_name':'FourierFeature','dim_out':100})
+        ffm_para['dim_in'] = parameter.get('dim_in',2)
+        dim_feature = ffm_para['dim_out']
+        self.ffm_net = get_nn(ffm_para)
+
+        inr_para = parameter.get('inr_para',{'net_name':'SIREN'})
+        inr_para['dim_out'] = parameter.get('dim_out',1)
+        inr_para['dim_in'] = dim_feature
+        self.net = get_nn(inr_para)
+
+    def forward(self,x):
+        x = self.ffm_net(x)
+        x = self.net(x)
+        return x
 
 
 

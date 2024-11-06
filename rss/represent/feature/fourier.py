@@ -18,7 +18,7 @@ class Fourier_Feature(nn.Module):
         # Initialize the Fourier features based on the selected feature type
         if feature_type == 'gaussian':
             # Gaussian features
-            feature_params = {'std': 1, 'mean': 0}
+            feature_params = {'std': 30, 'mean': 0}
             feature_params.update(kwargs)
             mean = feature_params['mean']
             std = feature_params['std']
