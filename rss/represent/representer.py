@@ -309,7 +309,7 @@ class SIMINER(DINER):
         self.G = nn.Parameter(t.randn(G_shape) * 1e-3)
 
         # 神经网络部分
-        inr_para = parameter.get('inr_para', {'net_name': 'SIREN'})
+        inr_para = parameter.get('inr_para', {'net_name':'MLP','num_layers':2,'dim_hidden':16,'activation':'relu'})
         inr_para['dim_out'] = parameter.get('dim_out', 1)
         inr_para['dim_in'] = self.feature_dim+self.dim_in
         self.net = get_nn(inr_para)
