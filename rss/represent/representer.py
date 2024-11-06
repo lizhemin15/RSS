@@ -317,11 +317,8 @@ class SIMINER(DINER):
         # 计数参数
         self.forward_count = 0
 
-        parameter['feature_dim'] = 3
-        parameter['resolution'] = 300
-
         self.border = parameter.get('border', 1)
-        self.resolution = parameter.get('resolution', 256)
+        self.resolution = parameter.get('resolution', 300)
         self.dim_in = parameter.get('dim_in', 2)
         self.feature_dim = parameter.get('feature_dim', 3)
         self.similar_method = parameter.get('similar_method', 'nlm')
