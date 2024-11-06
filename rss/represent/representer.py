@@ -394,6 +394,7 @@ class SIMINER(DINER):
 
         # 调用插值函数
         output = self.interpolate(lower_idx, upper_idx, weight)
+        self.output = output
         if self.inr_input == 'concat':
             return self.net(t.cat((output, x), dim=-1))
         else:
