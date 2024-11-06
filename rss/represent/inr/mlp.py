@@ -18,7 +18,7 @@ def cal_gain(act):
         return 1.0
 
 class Layer(nn.Module):
-    def __init__(self, dim_in, dim_out, use_bias = True, activation = 'tanh', drop_out=False,init_mode=None,monoto_mode=0):
+    def __init__(self, dim_in, dim_out, use_bias = True, activation = 'relu', drop_out=False,init_mode=None,monoto_mode=0):
         super().__init__()
         self.dim_in = dim_in
         self.activation_name = activation
@@ -76,7 +76,7 @@ class Layer(nn.Module):
 
 class INR(nn.Module):
     def __init__(self, dim_in, dim_hidden, dim_out, num_layers, use_bias = True,
-                 final_activation = None, drop_out = [0],activation = 'tanh', init_mode = None,monoto_mode=0):
+                 final_activation = None, drop_out = [0],activation = 'relu', init_mode = None,monoto_mode=0):
         super().__init__()
         self.num_layers = num_layers
         self.dim_hidden = dim_hidden
@@ -139,7 +139,7 @@ class GaussianSplatting(nn.Module):
 
 
 def MLP(parameter):
-    de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'activation':'tanh'}
+    de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'activation':'relu'}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
