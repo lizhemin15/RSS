@@ -326,7 +326,7 @@ class SIMINER(DINER):
 
                 # 2. 在numpy中进行处理
                 G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=True, **patch_kw)
-                G_processed = gaussian_filter(G_processed, sigma=10)
+                G_processed = gaussian_filter(G_processed, sigma=8 * sigma_est)
             elif self.similar_method == 'wavelet':
                 G_processed = denoise_wavelet(
                                                 G_numpy,
