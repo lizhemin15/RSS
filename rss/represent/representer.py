@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch as t
 import torch.nn.functional as F
 from skimage.restoration import denoise_nl_means, estimate_sigma, denoise_wavelet
+from scipy.ndimage import gaussian_filter
 
 import numpy as np
 
@@ -325,6 +326,7 @@ class SIMINER(DINER):
 
                 # 2. 在numpy中进行处理
                 G_processed = denoise_nl_means(G_numpy, h=8 * sigma_est, fast_mode=True, **patch_kw)
+                G_processed = gaussian_filter(G_processed, sigma=1)
             elif self.similar_method == 'wavelet':
                 G_processed = denoise_wavelet(
                                                 G_numpy,
