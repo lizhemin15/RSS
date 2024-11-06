@@ -143,7 +143,7 @@ class FFINR(nn.Module):
         dim_feature = ffm_para['dim_out']
         self.ffm_net = get_nn(ffm_para)
 
-        inr_para = parameter.get('inr_para',{'net_name':'SIREN'})
+        inr_para = parameter.get('inr_para',{'net_name':'MLP'})
         inr_para['dim_out'] = parameter.get('dim_out',1)
         inr_para['dim_in'] = dim_feature
         self.net = get_nn(inr_para)
