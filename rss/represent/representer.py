@@ -204,7 +204,7 @@ class HashINR(nn.Module):
         n_levels = hash_para.get('n_levels', 16)  # 默认值为 16
         n_features_per_level = hash_para.get('n_features_per_level', 2)  # 默认值为 2
 
-        inr_para = parameter.get('inr_para',{'net_name':'SIREN'})
+        inr_para = parameter.get('inr_para', {'net_name':'MLP','num_layers':2,'dim_hidden':16,'activation':'relu'})
         inr_para['dim_out'] = parameter.get('dim_out',1)
         if self.encode_cor_if:
             inr_para['dim_in'] = parameter.get('dim_in',2)
