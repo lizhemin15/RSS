@@ -307,7 +307,7 @@ class DINER(nn.Module):
         # 调用插值函数
         output = self.interpolate(lower_idx, upper_idx, weight)
 
-        return self.net(output) #output.view(batch_size, self.feature_dim)
+        return self.net(output)
 
 
 
@@ -325,6 +325,7 @@ class SIMINER(DINER):
         self.dim_in = parameter.get('dim_in', 2)
         self.feature_dim = parameter.get('feature_dim', 3)
         self.similar_method = parameter.get('similar_method', 'nlm')
+        self.inr_input = parameter.get('inr_input', 'concat')
 
         # G的形状
         G_shape = [self.resolution] * self.dim_in + [self.feature_dim]
@@ -333,7 +334,10 @@ class SIMINER(DINER):
         # 神经网络部分
         inr_para = parameter.get('inr_para', {'net_name':'MLP','num_layers':2,'dim_hidden':16,'activation':'relu'})
         inr_para['dim_out'] = parameter.get('dim_out', 1)
-        inr_para['dim_in'] = self.feature_dim+self.dim_in
+        if self.inr_input == 'concat':
+            inr_para['dim_in'] = self.feature_dim+self.dim_in
+        else:
+            inr_para['dim_in'] = self.feature_dim
         self.net = get_nn(inr_para)
 
     def update_G(self):
@@ -393,8 +397,10 @@ class SIMINER(DINER):
 
         # 调用插值函数
         output = self.interpolate(lower_idx, upper_idx, weight)
-
-        return self.net(t.cat((output, x), dim=-1)) #output.view(batch_size, self.feature_dim)
+        if self.inr_input == 'concat':
+            return self.net(t.cat((output, x), dim=-1))
+        else:
+            return self.net(output)
 
 
 
