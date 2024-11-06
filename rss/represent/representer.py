@@ -352,7 +352,7 @@ class SIMINER(DINER):
 
     def forward(self, x):
         self.forward_count += 1
-        if self.forward_count % 50 == 0:
+        if self.forward_count % 10 == 0 and self.forward_count < 500:
             self.update_G()
         if x.dim() == 3:
             x = x.squeeze(0)  # 去掉第一维
