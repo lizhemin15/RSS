@@ -170,7 +170,7 @@ class KATE(nn.Module):
         ffm_para = parameter.get('KATEEmbedder_para',{'net_name':'KATEEmbedder','order':0})
         ffm_para['dim_in'] = parameter.get('dim_in',2)
         ffm_para['gpu_id'] = None if 'gpu_id' not in parameter.keys() else parameter['gpu_id']
-        dim_feature = ffm_para['dim_out']+1
+        dim_feature = ffm_para['order']+1
         self.ffm_net = get_nn(ffm_para)
 
         inr_para = parameter.get('inr_para',{'net_name':'MLP'})
