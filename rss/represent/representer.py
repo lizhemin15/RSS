@@ -348,6 +348,7 @@ class DINER(nn.Module):
         # 调用插值函数
         output = self.interpolate(lower_idx, upper_idx, weight)
         self.output = output
+        print(output.shape)
         return self.net(output)
 
 
