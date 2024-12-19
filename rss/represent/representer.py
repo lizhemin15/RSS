@@ -286,7 +286,7 @@ class DINER(nn.Module):
         # G的形状
         G_shape = [self.resolution] * self.dim_in + [self.feature_dim]
         self.G = nn.Parameter(t.randn(G_shape) * 1e-3)
-        print(self.G.shape)
+        
 
         # 神经网络部分
         inr_para = parameter.get('inr_para', {'net_name': 'MLP'})
@@ -318,7 +318,7 @@ class DINER(nn.Module):
 
     def linear_interp(self, lower_idx, upper_idx, weight):
         # 一维线性插值
-        return self.G[lower_idx[:, 0]] * (1 - weight[:, 0]) + self.G[upper_idx[:, 0]] * weight[:, 0]
+        return self.G[lower_idx[:, 0]] * (1 - weight[:, 0][:, None]) + self.G[upper_idx[:, 0]] * weight[:, 0][:, None]
 
     def interpolate(self, lower_idx, upper_idx, weight):
         if self.dim_in == 1:
