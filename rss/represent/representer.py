@@ -152,6 +152,13 @@ class FFINR(nn.Module):
         x = self.ffm_net(x)
         x = self.net(x)
         return x
+    
+    def to(self, device):
+        # Move the model to the specified device
+        super().to(device)  # Call the parent's to() method
+        self.ffm_net.to(device)  # Move ffm_net to device
+        self.net.to(device)      # Move net to device
+        return self  # Return self for chaining
 
 
 
