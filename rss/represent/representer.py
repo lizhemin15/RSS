@@ -286,6 +286,7 @@ class DINER(nn.Module):
         # G的形状
         G_shape = [self.resolution] * self.dim_in + [self.feature_dim]
         self.G = nn.Parameter(t.randn(G_shape) * 1e-3)
+        print(self.G.shape)
 
         # 神经网络部分
         inr_para = parameter.get('inr_para', {'net_name': 'MLP'})
@@ -348,7 +349,7 @@ class DINER(nn.Module):
         # 调用插值函数
         output = self.interpolate(lower_idx, upper_idx, weight)
         self.output = output
-        print(output.shape)
+        
         return self.net(output)
 
 
