@@ -75,7 +75,7 @@ class Fourier_Feature(nn.Module):
     def to(self, device):
         # Move the model to the specified device
         super().to(device)  # Call the parent's to() method
-        self.B.to(device)  # Move ffm_net to device
+        self.B = self.B.to(device)  # Move B to device
         return self  # Return self for chaining
 
 def FeatureMap(parameter):
