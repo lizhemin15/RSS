@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class KATE_Embedder(nn.Module):
+class KATE_Feature(nn.Module):
     def __init__(self, dim_in, dim_out, feature_type='gaussian', **kwargs):
         super().__init__()
         if dim_out % 2 != 0:
@@ -78,10 +78,9 @@ class KATE_Embedder(nn.Module):
         self.B = self.B.to(device)  # Move B to device
         return self  # Return self for chaining
 
-def FeatureMap(parameter):
+def KATE_Embedder(parameter):
     de_para_dict = {'dim_in':2,'dim_out':100, 'map_type':'fourier', 'feature_type':'gaussian', 'std':30, 'mean':0, 'gpu_id':None, 'learnable':False}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
-    if parameter['map_type'] == 'fourier':
-        return Fourier_Feature(**parameter)
+    return KATE_Feature(**parameter)
