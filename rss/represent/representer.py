@@ -259,19 +259,21 @@ class HashINR(nn.Module):
             x = x.squeeze(0)  # batchsize采样所得，去掉第一维
         if self.hash_mode == 'vanilla':
             if self.encode_cor_if:
-                return self.net(t.cat([x,self.hash_func(x)],dim=-1))
+                self.output = t.cat([x,self.hash_func(x)],dim=-1)
             else:
-                return self.net(self.hash_func(x))
+                self.output = self.hash_func(x)
+            return self.net(self.output)
+            
         elif self.hash_mode == 'patch':
-            x_now = t.clone(x)
+            self.output = t.clone(x)
             for i in range(self.neighbor_num*2+1):
                 for j in range(self.neighbor_num*2+1):
                     delta_x = t.tensor([i-self.neighbor_num,j-self.neighbor_num]).view(1,2).to(x.device)/100
                     if self.encode_cor_if:
-                        x_now = t.cat([x_now,self.hash_func(x+delta_x)],dim=-1)
+                        self.output = t.cat([self.output,self.hash_func(x+delta_x)],dim=-1)
                     else:
-                        x_now = self.hash_func(x+delta_x)
-            return self.net(x_now)
+                        self.output = self.hash_func(x+delta_x)
+            return self.net(self.output)
 
 
 
