@@ -283,7 +283,6 @@ class DINER(nn.Module):
         self.resolution = parameter.get('resolution', 256)
         self.dim_in = parameter.get('dim_in', 2)
 
-
         # G的形状
         G_shape = [self.resolution] * self.dim_in + [self.feature_dim]
         self.G = nn.Parameter(t.randn(G_shape) * 1e-3)
@@ -316,13 +315,19 @@ class DINER(nn.Module):
             self.G[upper_idx[:, 0], upper_idx[:, 1]] * weight[:, 0][:, None] * weight[:, 1][:, None]
         )
 
+    def linear_interp(self, lower_idx, upper_idx, weight):
+        # 一维线性插值
+        return self.G[lower_idx[:, 0]] * (1 - weight[:, 0]) + self.G[upper_idx[:, 0]] * weight[:, 0]
+
     def interpolate(self, lower_idx, upper_idx, weight):
-        if self.dim_in == 2:
+        if self.dim_in == 1:
+            return self.linear_interp(lower_idx, upper_idx, weight)
+        elif self.dim_in == 2:
             return self.bilinear_interp(lower_idx, upper_idx, weight)
         elif self.dim_in == 3:
             return self.trilinear_interp(lower_idx, upper_idx, weight)
         else:
-            raise ValueError("dim_in must be either 2 or 3.")
+            raise ValueError("dim_in must be either 1, 2, or 3.")
 
     def forward(self, x):
         if x.dim() == 3:
