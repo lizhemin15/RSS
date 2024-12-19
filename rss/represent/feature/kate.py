@@ -16,8 +16,8 @@ class KATE_Feature(nn.Module):
 
         for i in range(self.order + 1):  # 包括 order
             # 将 x 的 i 次幂乘以参数 a[i] 并在 dim=1 上拼接
-            print(y.shape, self.a[i].shape, x.unsqueeze(1).shape)
-            y = torch.cat((y, self.a[i] * x.unsqueeze(1)**i), dim=1)
+            print(y.shape, self.a[i].shape, x.shape)
+            y = torch.cat((y, self.a[i] * x**i), dim=1)
 
         return y
     
