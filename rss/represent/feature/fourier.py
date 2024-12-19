@@ -72,6 +72,11 @@ class Fourier_Feature(nn.Module):
         concatenated_result = torch.cat((cos_result, sin_result), dim=1)
         return concatenated_result
     
+    def to(self, device):
+        # Move the model to the specified device
+        super().to(device)  # Call the parent's to() method
+        self.B.to(device)  # Move ffm_net to device
+        return self  # Return self for chaining
 
 def FeatureMap(parameter):
     de_para_dict = {'dim_in':2,'dim_out':100, 'map_type':'fourier', 'feature_type':'gaussian', 'std':30, 'mean':0, 'gpu_id':None, 'learnable':False}
