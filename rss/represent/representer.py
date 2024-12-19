@@ -167,10 +167,10 @@ class FFINR(nn.Module):
 class KATE(nn.Module):
     def __init__(self,parameter):
         super().__init__()
-        ffm_para = parameter.get('KATEEmbedder_para',{'net_name':'KATEEmbedder','dim_out':100})
+        ffm_para = parameter.get('KATEEmbedder_para',{'net_name':'KATEEmbedder','order':0})
         ffm_para['dim_in'] = parameter.get('dim_in',2)
         ffm_para['gpu_id'] = None if 'gpu_id' not in parameter.keys() else parameter['gpu_id']
-        dim_feature = ffm_para['dim_out']
+        dim_feature = ffm_para['dim_out']+1
         self.ffm_net = get_nn(ffm_para)
 
         inr_para = parameter.get('inr_para',{'net_name':'MLP'})

@@ -3,83 +3,27 @@ import torch.nn as nn
 
 
 class KATE_Feature(nn.Module):
-    def __init__(self, dim_in, dim_out, feature_type='gaussian', **kwargs):
+    def __init__(self, order=0, **kwargs):
         super().__init__()
-        if dim_out % 2 != 0:
-            raise ValueError("The input number is not an even number: "+str(dim_out))
-        size = (dim_in, dim_out//2)
-
-        # Check if the provided feature type is valid
-        if feature_type not in ['gaussian', 'uniform', 'exponential', 'poisson', 'binomial']:
-            raise ValueError('Invalid feature_type provided = ' + feature_type)
-
-        feature_params = {}
-
-        # Initialize the Fourier features based on the selected feature type
-        if feature_type == 'gaussian':
-            # Gaussian features
-            feature_params = {'std': 30, 'mean': 0}
-            feature_params.update(kwargs)
-            mean = feature_params['mean']
-            std = feature_params['std']
-            self.B = torch.randn(size) * std + mean
-        elif feature_type == 'uniform':
-            # Uniform features
-            feature_params = {'min_value': 0, 'max_value': 1}
-            feature_params.update(kwargs)
-            min_value = feature_params['min_value']
-            max_value = feature_params['max_value']
-            self.B = torch.rand(size) * (max_value - min_value) + min_value
-        elif feature_type == 'exponential':
-            # Exponential features
-            feature_params = {'scale': 1}
-            feature_params.update(kwargs)
-            scale = feature_params['scale']
-            self.B = torch.empty(size).exponential_(1 / scale)
-        elif feature_type == 'poisson':
-            # Poisson features
-            feature_params = {'rate': 1}
-            feature_params.update(kwargs)
-            rate = feature_params['rate']
-            self.B = torch.empty(size).poisson_(rate)
-        elif feature_type == 'binomial':
-            # Binomial features
-            feature_params = {'probabilities': 0.5}
-            feature_params.update(kwargs)
-            probabilities = feature_params['probabilities']
-            self.B = torch.empty(size).bernoulli_(probabilities)
-        elif feature_type == 'sinusoidal':
-            feature_params = {'L': 10000}
-            feature_params.update(kwargs)
-            L = feature_params['L']
-        else:
-            raise ValueError('Invalid feature_type provided')
-
-        # Check if the features should be learnable
-        if 'learnable' in kwargs and kwargs['learnable']:
-            self.B = nn.Parameter(self.B)
-        elif 'gpu_id' in kwargs and isinstance(kwargs['gpu_id'], int):
-            # When kwargs['learnable'] == True, The Parameter will move to cuda with model
-            self.B = self.B.cuda(kwargs['gpu_id'])            
+        self.order = order
+        self.a = nn.Parameter(torch.randn(order + 1))
 
     def forward(self, x):
-        # Perform the forward pass by multiplying input with Fourier features
-        # Assuming the shape of x @ self.B is N×m
-        x_B_result = x @ self.B
-        cos_result = torch.cos(x_B_result)
-        sin_result = torch.sin(x_B_result)
-        # Concatenate using torch.cat
-        concatenated_result = torch.cat((cos_result, sin_result), dim=1)
-        return concatenated_result
+        # 初始化 y 的形状，dim=1的维度为0
+        y_shape = list(x.size())  # 获取 x 的形状
+        y_shape[1] = 0  # 在 dim=1 处设置为 0
+        y = torch.empty(y_shape, device=x.device)  # 在同一设备上创建空张量
+
+        for i in range(self.order + 1):  # 包括 order
+            # 将 x 的 i 次幂乘以参数 a[i] 并在 dim=1 上拼接
+            y = torch.cat((y, self.a[i] * x.unsqueeze(1)**i), dim=1)
+
+        return y
     
-    def to(self, device):
-        # Move the model to the specified device
-        super().to(device)  # Call the parent's to() method
-        self.B = self.B.to(device)  # Move B to device
-        return self  # Return self for chaining
+
 
 def KATE_Embedder(parameter):
-    de_para_dict = {'dim_in':2,'dim_out':100, 'map_type':'fourier', 'feature_type':'gaussian', 'std':30, 'mean':0, 'gpu_id':None, 'learnable':False}
+    de_para_dict = {'order':0}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
