@@ -13,7 +13,7 @@ from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
 from rss.represent.unn import UNN
 from rss.represent.kernel import KNN,TDKNN
-from rss.represent.feature import FeatureMap,HashEmbedder,KATE_Embedder
+from rss.represent.feature import FeatureMap,HashEmbedder
 from rss.represent.kan import get_kan
 
 
@@ -52,8 +52,6 @@ def get_nn(parameter={}):
         net = FeatureMap(parameter)
     elif net_name == 'HashEmbedder':
         net = HashEmbedder(parameter)
-    elif net_name == 'KATEEmbedder':
-        net = KATE_Embedder(parameter)
     elif net_name in ['EFF_KAN','KAN', 'ChebyKAN']:
         net = get_kan(parameter)
     elif net_name == 'RecurrentINR':
@@ -164,31 +162,7 @@ class FFINR(nn.Module):
         self.net.to(device)      # Move net to device
         return self  # Return self for chaining
 
-class KATE(nn.Module):
-    def __init__(self,parameter):
-        super().__init__()
-        ffm_para = parameter.get('KATEEmbedder_para',{'net_name':'KATEEmbedder','order':0})
-        ffm_para['dim_in'] = parameter.get('dim_in',2)
-        ffm_para['gpu_id'] = None if 'gpu_id' not in parameter.keys() else parameter['gpu_id']
-        dim_feature = ffm_para['order']+1
-        self.ffm_net = get_nn(ffm_para)
 
-        inr_para = parameter.get('inr_para',{'net_name':'MLP'})
-        inr_para['dim_out'] = parameter.get('dim_out',1)
-        inr_para['dim_in'] = dim_feature
-        self.net = get_nn(inr_para)
-
-    def forward(self,x):
-        x = self.ffm_net(x)
-        x = self.net(x)
-        return x
-    
-    def to(self, device):
-        # Move the model to the specified device
-        super().to(device)  # Call the parent's to() method
-        self.ffm_net.to(device)  # Move ffm_net to device
-        self.net.to(device)      # Move net to device
-        return self  # Return self for chaining
 
 
 class RecurrentINR(nn.Module):
@@ -274,6 +248,36 @@ class HashINR(nn.Module):
                     else:
                         self.output = self.hash_func(x+delta_x)
             return self.net(self.output)
+
+
+class KATE(HashINR):
+    def __init__(self,parameter):
+        super().__init__(parameter)
+        self.order = parameter.get('order',0)
+
+
+    def forward(self, x):
+        # 检查 x 的维度
+        if x.dim() == 3:
+            x = x.squeeze(0)  # batchsize采样所得，去掉第一维
+        if self.hash_mode == 'vanilla':
+            if self.encode_cor_if or self.order == 1:
+                self.output = t.cat([x,self.hash_func(x)],dim=-1)
+            else:
+                self.output = self.hash_func(x)
+            return self.net(self.output)
+            
+        elif self.hash_mode == 'patch':
+            self.output = t.clone(x)
+            for i in range(self.neighbor_num*2+1):
+                for j in range(self.neighbor_num*2+1):
+                    delta_x = t.tensor([i-self.neighbor_num,j-self.neighbor_num]).view(1,2).to(x.device)/100
+                    if self.encode_cor_if:
+                        self.output = t.cat([self.output,self.hash_func(x+delta_x)],dim=-1)
+                    else:
+                        self.output = self.hash_func(x+delta_x)
+            return self.net(self.output)
+    
 
 
 
