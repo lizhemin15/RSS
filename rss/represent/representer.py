@@ -254,17 +254,42 @@ class KATE(HashINR):
     def __init__(self,parameter):
         super().__init__(parameter)
         self.order = parameter.get('order',0)
+        # 初始化参数向量 a，维度为 self.order
+        self.a = t.nn.Parameter(t.zeros(self.order))  # 或者根据需要初始化为其他值
+        self.encode_cor_if = parameter.get('encode_cor_if',True)
+        self.hash_mode = parameter.get('hash_mode','vanilla')
+        self.neighbor_num = parameter.get('neighbor_num',1)
+        hash_para = parameter.get('hash_para',{'net_name':'HashEmbedder'})
+        self.hash_func = get_nn(hash_para)
+        n_levels = hash_para.get('n_levels', 16)  # 默认值为 16
+        n_features_per_level = hash_para.get('n_features_per_level', 2)  # 默认值为 2
 
+        inr_para = parameter.get('inr_para', {'net_name':'MLP','num_layers':2,'dim_hidden':16,'activation':'relu'})
+        inr_para['dim_out'] = parameter.get('dim_out',1)
+        if self.encode_cor_if or self.order != 0:
+            inr_para['dim_in'] = parameter.get('dim_in',2)*self.order
+        else:
+            inr_para['dim_in'] = 0
+        if self.hash_mode == 'vanilla':
+            inr_para['dim_in'] = n_levels*n_features_per_level+parameter.get('dim_in',2)
+        elif self.hash_mode == 'patch':
+            inr_para['dim_in'] = (self.neighbor_num*2+1)**2*n_levels*n_features_per_level+parameter.get('dim_in',2)
+        self.net = get_nn(inr_para)
 
     def forward(self, x):
         # 检查 x 的维度
         if x.dim() == 3:
             x = x.squeeze(0)  # batchsize采样所得，去掉第一维
         if self.hash_mode == 'vanilla':
-            if self.encode_cor_if or self.order == 1:
-                self.output = t.cat([x,self.hash_func(x)],dim=-1)
-            else:
-                self.output = self.hash_func(x)
+            if self.encode_cor_if or self.order != 0:
+                # 创建一个列表用于存放拼合后的结果
+                combined = []
+                # 根据 self.order 进行拼合
+                for o in range(self.order):
+                    combined.append(self.a[o] * (x ** (self.order - o)))  # a[o] * x^(order - o)
+            combined.append(self.hash_func(x))
+            # 拼合所有的 tensor
+            self.output = t.cat(combined, dim=-1)
             return self.net(self.output)
             
         elif self.hash_mode == 'patch':
