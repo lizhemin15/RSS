@@ -255,7 +255,7 @@ class KATE(HashINR):
         super().__init__(parameter)
         self.order = parameter.get('order',0)
         # 初始化参数向量 a，维度为 self.order
-        self.a = t.nn.Parameter(t.zeros(self.order))  # 或者根据需要初始化为其他值
+        self.a = t.nn.Parameter(t.randn(self.order) * 1e-3)  # 乘以1e-3以确保值较小
         self.encode_cor_if = parameter.get('encode_cor_if',True)
         self.hash_mode = parameter.get('hash_mode','vanilla')
         self.neighbor_num = parameter.get('neighbor_num',1)
