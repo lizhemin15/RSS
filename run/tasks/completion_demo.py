@@ -5,8 +5,7 @@ def basic_completion():
     """Basic image completion example"""
     # Simple one-line usage
     result = rss.task.run('completion',
-                         data_path='data/img/example.jpg',
-                         output_path='results/completed.jpg')
+                         data_path='data/img/example.jpg')
     
     # Show results
     result['model'].show()
@@ -17,7 +16,6 @@ def advanced_completion():
     result = rss.task.run(
         'completion',
         data_path='data/img/example.jpg',
-        output_path='results/completed_siren.jpg',
         net_p={
             'net_list': [
                 {
@@ -41,7 +39,6 @@ def tensor_completion():
     result = rss.task.run(
         'completion',
         data_path='data/img/example.jpg',
-        output_path='results/completed_tensor.jpg',
         net_p={
             'net_list': [
                 {

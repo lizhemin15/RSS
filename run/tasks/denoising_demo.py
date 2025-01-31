@@ -4,8 +4,7 @@ import os
 def basic_denoising():
     """Basic image denoising example"""
     result = rss.task.run('denoising',
-                         data_path='data/img/noisy.jpg',
-                         output_path='results/denoised.jpg')
+                         data_path='data/img/noisy.jpg')
     
     result['model'].show()
 
@@ -14,7 +13,6 @@ def advanced_denoising():
     result = rss.task.run(
         'denoising',
         data_path='data/img/noisy.jpg',
-        output_path='results/denoised_advanced.jpg',
         net_p={
             'net_list': [
                 # First use tensor factorization
@@ -49,7 +47,6 @@ def knn_denoising():
     result = rss.task.run(
         'denoising',
         data_path='data/img/noisy.jpg',
-        output_path='results/denoised_knn.jpg',
         net_p={
             'net_list': [
                 {

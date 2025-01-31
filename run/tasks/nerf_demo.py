@@ -4,8 +4,7 @@ import os
 def basic_nerf():
     """Basic NeRF example"""
     result = rss.task.run('nerf',
-                         data_path='data/nerf/lego',
-                         output_path='results/nerf_render')
+                         data_path='data/nerf/lego')
     
     # Render novel views
     result['model'].render_path()
@@ -15,7 +14,6 @@ def advanced_nerf():
     result = rss.task.run(
         'nerf',
         data_path='data/nerf/lego',
-        output_path='results/nerf_advanced',
         net_p={
             'net_list': [
                 {

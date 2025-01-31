@@ -5,7 +5,6 @@ def basic_super_resolution():
     """Basic super resolution example"""
     result = rss.task.run('super_resolution',
                          data_path='data/img/low_res.jpg',
-                         output_path='results/high_res.jpg',
                          scale_factor=4)  # 4x upscaling
     
     result['model'].show()
@@ -15,7 +14,6 @@ def advanced_super_resolution():
     result = rss.task.run(
         'super_resolution',
         data_path='data/img/low_res.jpg',
-        output_path='results/high_res_advanced.jpg',
         scale_factor=4,
         net_p={
             'net_list': [
