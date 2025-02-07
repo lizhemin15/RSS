@@ -15,6 +15,7 @@ from rss.represent.unn import UNN
 from rss.represent.kernel import KNN,TDKNN
 from rss.represent.feature import FeatureMap,HashEmbedder
 from rss.represent.kan import get_kan
+from rss.represent.transformer import TIP
 
 
 def get_nn(parameter={}):
@@ -66,6 +67,8 @@ def get_nn(parameter={}):
         net = FFINR(parameter)
     elif net_name == 'KATE':
         net = KATE(parameter)
+    elif net_name == 'TIP':
+        net = TIP(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
