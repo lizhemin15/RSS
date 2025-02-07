@@ -213,7 +213,7 @@ class TransformerDIP(nn.Module):
 
 def TIP(parameter):
     de_para_dict = {'img_size': 256, 'patch_size': 16,'stride': 8, 'in_chans': 3, 'embed_dim': 256, 'depth': 12, 'num_heads': 8,'mlp_ratio': 4.}
-    de_para_dict.update(parameter)
+    parameter.update(de_para_dict)
     return TransformerDIP(img_size=parameter['img_size'], patch_size=parameter['patch_size'], stride=parameter['stride'], in_chans=parameter['inchans'],
                           embed_dim=parameter['embed_dim'], depth=parameter['depth'], num_heads=parameter['num_heads'], mlp_ratio=parameter['mlp_ratio'])
     
