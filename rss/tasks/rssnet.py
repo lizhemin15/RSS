@@ -461,7 +461,7 @@ class rssnet(object):
         if unseen_num<1e-3:
             return 0
         else:
-            result = t.sum(t.abs((pre-target)*(self.mask_unobs).reshape(pre.shape))/unseen_num/(max_pixel-min_pixel)
+            result = t.sum(t.abs((pre-target)*(self.mask_unobs).reshape(pre.shape))/unseen_num/(max_pixel-min_pixel))
             return result.item()
 
     def cal_rmse(self, pre, target):
