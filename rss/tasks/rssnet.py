@@ -317,7 +317,10 @@ class rssnet(object):
             loss = self._compute_loss(pre, reg_tensor)
             self._backward_and_optimize(loss)
         elif self.task_p['task_type'] in ['fpr','gpr']:
-            for _ in range(self.task_p['hyper_params']['numit_inner']):
+            numit_inner = self.task_p.get('hyper_params', {}).get('numit_inner', 5)
+            if not hasattr(self, 'var_pr_v'):
+                self.var_pr_v = 0
+            for _ in range(numit_inner):
                 pre, reg_tensor = self._forward_pass()
                 loss = self._compute_loss(pre, reg_tensor)
                 self._backward_and_optimize(loss)
