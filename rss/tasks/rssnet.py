@@ -314,14 +314,19 @@ class rssnet(object):
             self.target = target
             if self.data_p['ymode'] == 'completion':
                 test_loss = self.loss_fn(pre_val, target)
+                # For metrics calculation, reshape pre to match target
+                pre_metrics = pre.reshape(self.data_p['data_shape'])
+                target_metrics = self.data_train['real_tensor'][1]
             else:
                 test_loss = self.loss_fn(pre, target.reshape(pre.shape))
+                pre_metrics = pre
+                target_metrics = target.reshape(pre.shape)
             
             # Log metrics
             self.log('test_loss', test_loss.item())
-            self.log('psnr', self.cal_psnr(pre, target))
-            self.log('nmae', self.cal_nmae(pre, target))
-            self.log('rmse', self.cal_rmse(pre, target))
+            self.log('psnr', self.cal_psnr(pre_metrics, target_metrics))
+            self.log('nmae', self.cal_nmae(pre_metrics, target_metrics))
+            self.log('rmse', self.cal_rmse(pre_metrics, target_metrics))
             
             if (iteration+1)%(self.train_p['train_epoch']//10) == 0:
                 self.log('img')
@@ -456,7 +461,7 @@ class rssnet(object):
         if unseen_num<1e-3:
             return 0
         else:
-            result = t.sum(t.abs((pre-target)*(self.mask_unobs).reshape(pre.shape)))/unseen_num/(max_pixel-min_pixel)
+            result = t.sum(t.abs((pre-target)*(self.mask_unobs).reshape(pre.shape))/unseen_num/(max_pixel-min_pixel)
             return result.item()
 
     def cal_rmse(self, pre, target):
