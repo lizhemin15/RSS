@@ -13,16 +13,14 @@ __copyright__ = 'Copyright 2023 Zhemin Li'
 
 # from rss.represent import get_nn
 
-from rss.tasks import rssnet
+from rss.tasks import rssnet,task
 from rss.represent import get_reg,get_nn
-from rss.tasks.task_manager import TaskManager
 
 
 
 __all__ = ['rssnet','get_reg','get_nn','task']
 
-# Create global task manager instance
-task = TaskManager()
+
 
 
         

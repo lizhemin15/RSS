@@ -274,7 +274,7 @@ class KATE(HashINR):
         else:
             inr_para['dim_in'] = 0
         if self.hash_mode == 'vanilla':
-            inr_para['dim_in'] = n_levels*n_features_per_level+parameter.get('dim_in',2)
+            inr_para['dim_in'] = n_levels*n_features_per_level+parameter.get('dim_in',2)*self.order
         elif self.hash_mode == 'patch':
             inr_para['dim_in'] = (self.neighbor_num*2+1)**2*n_levels*n_features_per_level+parameter.get('dim_in',2)
         self.net = get_nn(inr_para)

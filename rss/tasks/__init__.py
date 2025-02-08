@@ -1,10 +1,10 @@
 #from rss.tasks.NeRF import nerf
 from rss.tasks.rssnet import rssnet
 
-__all__ = ['rssnet']
+__all__ = ['rssnet','task']
 
 
-def get_task(parameters):
+def task(parameters):
     """
     Get the task class.
 
