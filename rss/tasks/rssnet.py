@@ -312,7 +312,10 @@ class rssnet(object):
             # Calculate test metrics
             self.pre = pre
             self.target = target
-            test_loss = self.loss_fn(pre, target)
+            if self.data_p['ymode'] == 'completion':
+                test_loss = self.loss_fn(pre_val, target)
+            else:
+                test_loss = self.loss_fn(pre, target.reshape(pre.shape))
             
             # Log metrics
             self.log('test_loss', test_loss.item())
