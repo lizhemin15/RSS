@@ -190,123 +190,152 @@ class rssnet(object):
             self.show_p[key] = param_now
 
 
-    def train(self,verbose=True):
-        # Construct loss function
-        if self.data_p['return_data_type'] == 'random':
-            unn_index = 0
-        else:
-            unn_index = 1
-        if self.data_p['return_data_type'] in ['tensor','random']:
-            if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
-                self.start_time = time.time()
-            full_nets_list = ['UNet','ResNet','skip','DMF','TF', 'KNN', 'TIP']
-            full_pre_if = (self.net_p['net_name'] in full_nets_list) or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list)
-            self.full_pre_if = full_pre_if
-            for ite in range(self.train_p['train_epoch']):
-                time_now = time.time()
-                self.log('time',time_now-self.start_time)
-                
-                if full_pre_if:
-                    pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
-                    pre = pre.reshape(self.data_p['data_shape'])
-                    reg_tensor = pre.reshape(self.data_p['data_shape'])
-                    pre = pre[self.mask==1]
-
-                elif self.reg_p['reg_name'] != None:
-                    pre = self.net(self.data_train['obs_tensor'][0])
-                    reg_tensor = pre.reshape(self.data_p['data_shape'])
-                else:
-                    pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
-                
-                loss = 0
-
-                if self.reg_p['reg_name'] != None:
-                    reg_loss = self.reg(reg_tensor)
-                    loss += reg_loss
-                    if not full_pre_if:
-                        pre = pre[(self.mask).reshape(pre.shape)==1]
-                
-                target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
-                if self.noise_p['noise_term'] == True:
-                    if self.noise_p['parameter_type'] =='implicit':
-                        self.noise = self.noise1**2 - self.noise2**2
-                    loss += self.loss_fn(pre+self.noise[(self.mask==1)].reshape(pre.shape),target)
-                    if self.noise_p['parameter_type'] =='matrix':
-                        loss += self.noise_p['sparse_coef']*t.mean(t.abs(self.noise))
-                else:
-                    loss += self.loss_fn(pre,target)
-
-                self.log('fid_loss',loss.item())
-                self.net_opt.zero_grad()
-                if self.train_reg_if:
-                    self.reg_opt.zero_grad()
-                if self.noise_p['noise_term'] == True:
-                    self.noise_opt.zero_grad()
-                loss.backward()
-                self.net_opt.step()
-                if self.train_reg_if:
-                    self.reg_opt.step()
-                if self.noise_p['noise_term'] == True:
-                    self.noise_opt.step()
-
-                # test and val loss
-                with t.no_grad(): # 这里写的蛮好
-                    if self.net_p['net_name'] in ['UNet','ResNet','skip'] or (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
-                        pre = self.net(self.data_train['obs_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
-                        pre = pre.reshape(self.data_p['data_shape'])
-                        if self.data_p['ymode'] == 'completion':
-                            # 只有补全才截取，否则不截取
-                            pre = pre[self.mask_unobs==1]
-                    else:
-                        pre = self.net(self.data_train['obs_tensor'][0])
-                        if self.data_p['ymode'] == 'completion':
-                            # 只有补全才截取，否则不截取
-                            pre = pre[(self.mask_unobs==1).reshape(pre.shape)]
-                    # 验证损失，应当在real上
-                    target = self.data_train['real_tensor'][1]
-                    if self.data_p['ymode'] == 'completion':
-                        target = target[(self.mask_unobs==1).reshape(-1)].reshape(pre.shape)
-                    else:
-                        target = target.reshape(pre.shape)
-                    loss = self.loss_fn(pre,target)
-                    self.log('val_loss',loss.item())
-                    # 开始重新计算pre，用于计算指标，以下都是全量的pre，没有截取
-                    if self.net_p['net_name'] in ['UNet','ResNet','skip']:
-                        pre = self.net(self.data_train['real_tensor'][unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
-                        pre = pre.reshape(self.data_p['data_shape'])
-                    else:
-                        pre = self.net(self.data_train['real_tensor'][0])
-                    # 注意这里取的是real，在缺失的情况下是和之前算loss的是一样的，但是在噪声情况下，real取的是真值，而算loss的情况下用的是观测值。
-                    target = self.data_train['real_tensor'][1].reshape(pre.shape)
-                    self.pre = pre
-                    self.target = target
-                    loss = self.loss_fn(pre,target)
-                    self.log('test_loss',loss.item())
-                    self.log('psnr',self.cal_psnr(pre,target))
-                    self.log('nmae',self.cal_nmae(pre,target))
-                    self.log('rmse',self.cal_rmse(pre,target))
-                    # self.log('auc',self.cal_auc(pre,target))
-                    # self.log('aupr',self.cal_aupr(pre,target))
-                    if (ite+1)%(self.train_p['train_epoch']//10) == 0:
-                        self.log('img')
-                    if self.reg_p['reg_name'] != None:
-                        self.log('reg_loss',reg_loss)
-
-            # 迭代指定 epoch 后，保存logs
-            if self.save_p['save_if'] == True:
-                # 无论是否调用 self.show 都保存 logs，而图片只有在调用 self.show 时才保存
-                self.save_logs(verbose=verbose)
-            if verbose == True:
-                print('loss on test set',self.log_dict['test_loss'][-1])
-                print('PSNR=',self.log_dict['psnr'][-1],'dB')
-                print('NMAE=',self.log_dict['nmae'][-1])
-                print('RMSE=',self.log_dict['rmse'][-1])
-                # print('AUC=',self.log_dict['auc'][-1])
-                # print('AUPR=',self.log_dict['aupr'][-1])
-                if self.reg_p['reg_name'] != None:
-                    print('loss of regularizer',self.log_dict['reg_loss'][-1])
+    def train(self, verbose=True):
+        """Train the model."""
+        self._prepare_training()
+        
+        for ite in range(self.train_p['train_epoch']):
+            # Log training time
+            time_now = time.time()
+            self.log('time', time_now-self.start_time)
             
+            # Forward pass and loss computation
+            pre, reg_tensor = self._forward_pass() 
+            loss = self._compute_loss(pre, reg_tensor)
+            
+            # Backward and optimize
+            self._backward_and_optimize(loss)
+            
+            # Evaluate and log metrics
+            if ite % (self.train_p['train_epoch']//10) == 0:
+                self._evaluate_and_log(ite)
+                
+        # Finalize training
+        self._finalize_training(verbose)
 
+    def _prepare_training(self):
+        """Prepare for training by initializing necessary variables."""
+        if self.data_p['return_data_type'] == 'random':
+            self.unn_index = 0
+        else:
+            self.unn_index = 1
+        
+        if (not hasattr(self, 'log_dict')) or ('time' not in self.log_dict):
+            self.start_time = time.time()
+        
+        full_nets_list = ['UNet', 'ResNet', 'skip', 'DMF', 'TF', 'KNN', 'TIP']
+        self.full_pre_if = (self.net_p['net_name'] in full_nets_list) or \
+                           (self.net_p['net_name']=='KNN' and self.net_p['mode'] in full_nets_list) or \
+                           (self.net_p['net_name']=='composition' and self.net_p['net_list'][0]['net_name'] in full_nets_list)
+
+    def _forward_pass(self):
+        """Execute forward pass and return predictions."""
+        if self.full_pre_if:
+            pre = self.net(self.data_train['obs_tensor'][self.unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+            pre = pre.reshape(self.data_p['data_shape'])
+            reg_tensor = pre.reshape(self.data_p['data_shape'])
+            pre = pre[self.mask==1]
+        elif self.reg_p['reg_name'] != None:
+            pre = self.net(self.data_train['obs_tensor'][0])
+            reg_tensor = pre.reshape(self.data_p['data_shape'])
+        else:
+            pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
+            reg_tensor = None
+        
+        return pre, reg_tensor
+
+    def _compute_loss(self, pre, reg_tensor):
+        """Compute training loss including regularization if applicable."""
+        loss = 0
+        
+        # Add regularization loss if applicable
+        if self.reg_p['reg_name'] != None:
+            reg_loss = self.reg(reg_tensor)
+            loss += reg_loss
+            self.log('reg_loss', reg_loss)
+            if not self.full_pre_if:
+                pre = pre[(self.mask).reshape(pre.shape)==1]
+        
+        # Compute main loss
+        target = self.data_train['obs_tensor'][1][(self.mask==1).reshape(-1)].reshape(pre.shape)
+        if self.noise_p['noise_term']:
+            if self.noise_p['parameter_type'] == 'implicit':
+                self.noise = self.noise1**2 - self.noise2**2
+            loss += self.loss_fn(pre+self.noise[(self.mask==1)].reshape(pre.shape), target)
+            if self.noise_p['parameter_type'] == 'matrix':
+                loss += self.noise_p['sparse_coef']*t.mean(t.abs(self.noise))
+        else:
+            loss += self.loss_fn(pre, target)
+        
+        return loss
+
+    def _backward_and_optimize(self, loss):
+        """Execute backward pass and optimization step."""
+        self.net_opt.zero_grad()
+        if self.train_reg_if:
+            self.reg_opt.zero_grad()
+        if self.noise_p['noise_term']:
+            self.noise_opt.zero_grad()
+        
+        loss.backward()
+        
+        self.net_opt.step()
+        if self.train_reg_if:
+            self.reg_opt.step()
+        if self.noise_p['noise_term']:
+            self.noise_opt.step()
+
+    def _evaluate_and_log(self, iteration):
+        """Evaluate model and log metrics."""
+        with t.no_grad():
+            # Get predictions
+            if self.net_p['net_name'] in ['UNet','ResNet','skip'] or \
+               (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
+                pre = self.net(self.data_train['obs_tensor'][self.unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+                pre = pre.reshape(self.data_p['data_shape'])
+            else:
+                pre = self.net(self.data_train['obs_tensor'][0])
+            
+            # Calculate validation loss
+            if self.data_p['ymode'] == 'completion':
+                pre_val = pre[self.mask_unobs==1]
+            else:
+                pre_val = pre
+            target = self.data_train['real_tensor'][1]
+            if self.data_p['ymode'] == 'completion':
+                target = target[(self.mask_unobs==1).reshape(-1)].reshape(pre_val.shape)
+            else:
+                target = target.reshape(pre_val.shape)
+            
+            val_loss = self.loss_fn(pre_val, target)
+            self.log('val_loss', val_loss.item())
+            
+            # Calculate test metrics
+            self.pre = pre
+            self.target = target
+            test_loss = self.loss_fn(pre, target)
+            
+            # Log metrics
+            self.log('test_loss', test_loss.item())
+            self.log('psnr', self.cal_psnr(pre, target))
+            self.log('nmae', self.cal_nmae(pre, target))
+            self.log('rmse', self.cal_rmse(pre, target))
+            
+            if (iteration+1)%(self.train_p['train_epoch']//10) == 0:
+                self.log('img')
+
+    def _finalize_training(self, verbose):
+        """Finalize training by saving logs and printing results if requested."""
+        if self.save_p['save_if']:
+            self.save_logs(verbose=verbose)
+        
+        if verbose:
+            print('loss on test set', self.log_dict['test_loss'][-1])
+            print('PSNR=', self.log_dict['psnr'][-1], 'dB')
+            print('NMAE=', self.log_dict['nmae'][-1])
+            print('RMSE=', self.log_dict['rmse'][-1])
+            if self.reg_p['reg_name'] != None:
+                print('loss of regularizer', self.log_dict['reg_loss'][-1])
 
     def log(self,name,content=None):
         if 'log_dict' not in self.__dict__:
