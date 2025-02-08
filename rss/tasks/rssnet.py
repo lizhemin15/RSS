@@ -68,9 +68,11 @@ class rssnet(object):
         de_para_dict = {
             'task_type': 'completion',  # 支持 'completion', 'denoising', 'fpr', 'gpr'
             'loss_type': 'mse',  # 默认使用MSE loss
-            'metrics': ['psnr', 'nmae', 'rmse']  # 默认评估指标
+            'metrics': ['psnr', 'nmae', 'rmse'],  # 默认评估指标
+            'hyper_params': {} # 超参数
         }
         
+
         for key in de_para_dict.keys():
             param_now = self.task_p.get(key, de_para_dict.get(key))
             self.task_p[key] = param_now
@@ -148,16 +150,36 @@ class rssnet(object):
                                       mat_get_func=self.data_p['mat_get_func'])
         if self.data_p['data_shape'] == None:
             self.data_p['data_shape'] = self.data.shape
-        self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_path'],
-                                      data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
-                                      down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
+        
+        # 根据task_type决定mask生成方式
+        if self.task_p['task_type'] in ['fpr', 'gpr']:
+            # 对于fpr和gpr任务,使用全1的mask
+            self.mask = t.ones(self.data.shape)
+        else:
+            # 其他任务使用原有的mask生成逻辑
+            self.mask = toolbox.load_mask(mask_type=self.data_p['mask_type'],
+                                        random_rate=self.data_p['random_rate'],
+                                        mask_path=self.data_p['mask_path'],
+                                        data_shape=self.data.shape,
+                                        mask_shape=self.data_p['mask_shape'],
+                                        seeds=self.data_p['seeds'],
+                                        down_sample_rate=self.data_p['down_sample_rate'],
+                                        gpu_id=self.net_p['gpu_id'])
+        
         self.mask = to_device(t.tensor(self.mask>0.5).to(t.float32),self.net_p['gpu_id'])
+        
+        # mask_unobs的生成保持不变
         if self.data_p['mask_unobs_path'] == None:
             self.mask_unobs = 1-self.mask
         else:
-            self.mask_unobs = toolbox.load_mask(mask_type=self.data_p['mask_type'],random_rate=self.data_p['random_rate'],mask_path=self.data_p['mask_unobs_path'],
-                                      data_shape=self.data.shape,mask_shape=self.data_p['mask_shape'],seeds=self.data_p['seeds'],
-                                      down_sample_rate=self.data_p['down_sample_rate'],gpu_id=self.net_p['gpu_id'])
+            self.mask_unobs = toolbox.load_mask(mask_type=self.data_p['mask_type'],
+                                              random_rate=self.data_p['random_rate'],
+                                              mask_path=self.data_p['mask_unobs_path'],
+                                              data_shape=self.data.shape,
+                                              mask_shape=self.data_p['mask_shape'],
+                                              seeds=self.data_p['seeds'],
+                                              down_sample_rate=self.data_p['down_sample_rate'],
+                                              gpu_id=self.net_p['gpu_id'])
             self.mask_unobs = to_device(t.tensor(self.mask_unobs>0.5).to(t.float32),self.net_p['gpu_id'])
         
         self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],
@@ -290,9 +312,17 @@ class rssnet(object):
 
     def _forward_backward_optimize(self):
         """Forward pass, loss computation, backward pass, and optimization step."""
-        pre, reg_tensor = self._forward_pass()
-        loss = self._compute_loss(pre, reg_tensor)
-        self._backward_and_optimize(loss)
+        if self.task_p['task_type'] in ['completion','denoising']:
+            pre, reg_tensor = self._forward_pass()
+            loss = self._compute_loss(pre, reg_tensor)
+            self._backward_and_optimize(loss)
+        elif self.task_p['task_type'] in ['fpr','gpr']:
+            for _ in range(self.task_p['hyper_params']['numit_inner']):
+                pre, reg_tensor = self._forward_pass()
+                loss = self._compute_loss(pre, reg_tensor)
+                self._backward_and_optimize(loss)
+
+
 
 
     def _prepare_training(self):
