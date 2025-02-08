@@ -316,7 +316,7 @@ class rssnet(object):
                 test_loss = self.loss_fn(pre_val, target)
                 # For metrics calculation, reshape pre to match target
                 pre_metrics = pre.reshape(self.data_p['data_shape'])
-                target_metrics = self.data_train['real_tensor'][1]
+                target_metrics = self.data_train['real_tensor'][1].reshape(self.data_p['data_shape'])
             else:
                 test_loss = self.loss_fn(pre, target.reshape(pre.shape))
                 pre_metrics = pre
