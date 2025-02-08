@@ -8,7 +8,12 @@ import time
 import dill as pkl
 import os
 import imageio
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
+from scipy.special import expit as sigmoid
+from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import peak_signal_noise_ratio as ski_psnr
+from skimage.metrics import mean_squared_error as ski_mse
+from skimage.metrics import normalized_root_mse as ski_nrmse
 t.backends.cudnn.enabled = True
 t.backends.cudnn.benchmark = True 
 
@@ -69,6 +74,17 @@ class rssnet(object):
         for key in de_para_dict.keys():
             param_now = self.task_p.get(key, de_para_dict.get(key))
             self.task_p[key] = param_now
+        
+        # 如果需要使用lpips,提前检查依赖
+        if 'lpips' in self.task_p['metrics']:
+            try:
+                self._has_lpips = True
+            except ImportError:
+                print("Warning: LPIPS metric is requested but 'torchmetrics' package is not installed. "
+                      "Please install it with 'pip install torchmetrics'")
+                self._has_lpips = False
+        else:
+            self._has_lpips = False
 
     def init_net(self):
         de_para_dict = {'net_name':'SIREN','gpu_id':0,'clip_if':False,'clip_min':0.0,'clip_max':1.0,'clip_mode':'hard'}
@@ -385,11 +401,32 @@ class rssnet(object):
                 pre_metrics = pre
                 target_metrics = target.reshape(pre.shape)
             
-            # Log metrics
+            # Log test loss
             self.log('test_loss', test_loss.item())
-            self.log('psnr', self.cal_psnr(pre_metrics, target_metrics))
-            self.log('nmae', self.cal_nmae(pre_metrics, target_metrics))
-            self.log('rmse', self.cal_rmse(pre_metrics, target_metrics))
+            
+            # 更新指标计算方法映射
+            metric_funcs = {
+                'psnr': self.cal_psnr,
+                'nmae': self.cal_nmae,
+                'rmse': self.cal_rmse,
+                'auc': self.cal_auc,
+                'aupr': self.cal_aupr,
+                'ssim': self.cal_ssim,
+                'mse': self.cal_mse,
+                'mae': self.cal_mae,
+                'nrmse': self.cal_nrmse,
+                'lpips': self.cal_lpips
+            }
+            
+            # 根据metrics列表计算并记录指标
+            for metric in self.task_p['metrics']:
+                if metric in metric_funcs:
+                    metric_value = metric_funcs[metric](pre_metrics, target_metrics)
+                    # 只记录非None的指标值
+                    if metric_value is not None:
+                        self.log(metric, metric_value)
+                else:
+                    print(f"Warning: Metric '{metric}' is not supported")
             
             if (iteration+1)%(self.train_p['train_epoch']//10) == 0:
                 self.log('img')
@@ -547,34 +584,80 @@ class rssnet(object):
             return rmse.item()
 
     def cal_auc(self, pre, target):
+        """Calculate AUC score for binary classification.
+        
+        Args:
+            pre: Model predictions
+            target: Ground truth labels
+            
+        Returns:
+            float: AUC score
+        """
         unseen_num = t.sum(self.mask_unobs)
         if unseen_num < 1e-3:
             return 0
         else:
+            # 获取未观测区域的预测和真实值
             masked_pre = pre * (self.mask_unobs).reshape(pre.shape)
             masked_target = target * (self.mask_unobs).reshape(target.shape)
-            # 将predictions和targets转换成numpy数组以便使用sklearn的roc_auc_score
-            masked_pre_np = masked_pre.cpu().detach().numpy()
-            masked_target_np = masked_target.cpu().detach().numpy()
-            # 计算AUC
-            auc = roc_auc_score(masked_target_np, masked_pre_np)
-            return auc
+            
+            # 转换为numpy数组
+            masked_pre_np = masked_pre.cpu().detach().numpy().flatten()
+            masked_target_np = masked_target.cpu().detach().numpy().flatten()
+            
+            # 检查是否为有效的二分类问题
+            unique_labels = np.unique(masked_target_np)
+            if len(unique_labels) < 2:
+                return 0.5  # 当只有一个类别时返回0.5
+            
+            # 将预测值转换为概率
+            masked_pre_np = sigmoid(masked_pre_np)
+            
+            try:
+                # 计算AUC
+                auc_score = roc_auc_score(masked_target_np, masked_pre_np)
+                return auc_score
+            except ValueError:
+                return 0.5  # 处理异常情况
 
     def cal_aupr(self, pre, target):
+        """Calculate Area Under Precision-Recall Curve (AUPR) for binary classification.
+        
+        Args:
+            pre: Model predictions
+            target: Ground truth labels
+            
+        Returns:
+            float: AUPR score
+        """
         unseen_num = t.sum(self.mask_unobs)
         if unseen_num < 1e-3:
             return 0
         else:
+            # 获取未观测区域的预测和真实值
             masked_pre = pre * (self.mask_unobs).reshape(pre.shape)
             masked_target = target * (self.mask_unobs).reshape(target.shape)
-            # 将predictions和targets转换成numpy数组以便使用sklearn的precision_recall_curve
-            masked_pre_np = masked_pre.cpu().detach().numpy()
-            masked_target_np = masked_target.cpu().detach().numpy()
-            # 计算Precision-Recall曲线
-            precision, recall, _ = precision_recall_curve(masked_target_np, masked_pre_np)
-            # 计算AUPR
-            aupr = auc(recall, precision)
-            return aupr
+            
+            # 转换为numpy数组
+            masked_pre_np = masked_pre.cpu().detach().numpy().flatten()
+            masked_target_np = masked_target.cpu().detach().numpy().flatten()
+            
+            # 检查是否为有效的二分类问题
+            unique_labels = np.unique(masked_target_np)
+            if len(unique_labels) < 2:
+                return 0.5  # 当只有一个类别时返回0.5
+            
+            # 将预测值转换为概率
+            masked_pre_np = sigmoid(masked_pre_np)
+            
+            try:
+                # 计算Precision-Recall曲线
+                precision, recall, _ = precision_recall_curve(masked_target_np, masked_pre_np)
+                # 计算AUPR
+                aupr_score = auc(recall, precision)
+                return aupr_score
+            except ValueError:
+                return 0.5  # 处理异常情况
 
     def gen_gif(self, fps=10, save_type = 'gif', start_frame=0, end_frame=None):
         # 获取文件夹中的所有文件
@@ -588,17 +671,156 @@ class rssnet(object):
         # 生成GIF
         imageio.mimsave(self.save_p['save_path']+'result.'+save_type, images, fps=fps)
 
-
-    # def cal_psnr(self,imageA, imageB):
-    #     def mse(imageA, imageB):
-    #         err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
-    #         err /= float(imageA.shape[0] * imageA.shape[1])
-    #         return err
+    def cal_ssim(self, pre, target):
+        """Calculate SSIM (Structural Similarity Index) between prediction and target.
         
-    #     def psnr(imageA, imageB):
-    #         max_pixel = np.max(imageB)
-    #         mse_value = mse(imageA, imageB)
-    #         if mse_value == 0:
-    #             return 100
-    #         return 20 * np.log10(max_pixel / np.sqrt(mse_value))
-    #     return psnr(imageA, imageB)
+        Args:
+            pre: Predicted image tensor
+            target: Target image tensor
+            
+        Returns:
+            float: SSIM value
+        """
+        unseen_num = t.sum(self.mask_unobs)
+        if unseen_num < 1e-3:
+            return 1.0
+        else:
+            # 转换为numpy数组
+            pre_np = pre.cpu().detach().numpy()
+            target_np = target.cpu().detach().numpy()
+            
+            # 确保数值范围在[0,1]之间
+            pre_np = np.clip(pre_np, 0, 1)
+            target_np = np.clip(target_np, 0, 1)
+            
+            try:
+                # 计算SSIM
+                ssim_value = ssim(target_np, pre_np, 
+                                data_range=1.0,
+                                multichannel=False)
+                return ssim_value
+            except ValueError:
+                return 0.0
+
+    def cal_mse(self, pre, target):
+        """Calculate MSE (Mean Squared Error) between prediction and target.
+        
+        Args:
+            pre: Predicted image tensor
+            target: Target image tensor
+            
+        Returns:
+            float: MSE value
+        """
+        unseen_num = t.sum(self.mask_unobs)
+        if unseen_num < 1e-3:
+            return 0.0
+        else:
+            # 获取未观测区域的预测和真实值
+            masked_pre = pre * (self.mask_unobs).reshape(pre.shape)
+            masked_target = target * (self.mask_unobs).reshape(target.shape)
+            
+            # 计算MSE
+            mse_value = t.mean((masked_pre - masked_target) ** 2)
+            return mse_value.item()
+
+    def cal_mae(self, pre, target):
+        """Calculate MAE (Mean Absolute Error) between prediction and target.
+        
+        Args:
+            pre: Predicted image tensor
+            target: Target image tensor
+            
+        Returns:
+            float: MAE value
+        """
+        unseen_num = t.sum(self.mask_unobs)
+        if unseen_num < 1e-3:
+            return 0.0
+        else:
+            # 获取未观测区域的预测和真实值
+            masked_pre = pre * (self.mask_unobs).reshape(pre.shape)
+            masked_target = target * (self.mask_unobs).reshape(target.shape)
+            
+            # 计算MAE
+            mae_value = t.mean(t.abs(masked_pre - masked_target))
+            return mae_value.item()
+
+    def cal_nrmse(self, pre, target):
+        """Calculate NRMSE (Normalized Root Mean Square Error) between prediction and target.
+        
+        Args:
+            pre: Predicted image tensor
+            target: Target image tensor
+            
+        Returns:
+            float: NRMSE value
+        """
+        unseen_num = t.sum(self.mask_unobs)
+        if unseen_num < 1e-3:
+            return 0.0
+        else:
+            # 转换为numpy数组
+            pre_np = pre.cpu().detach().numpy()
+            target_np = target.cpu().detach().numpy()
+            
+            try:
+                # 计算NRMSE
+                nrmse_value = ski_nrmse(target_np, pre_np, normalization='euclidean')
+                return nrmse_value
+            except ValueError:
+                return 0.0
+
+    def cal_lpips(self, pre, target):
+        """Calculate LPIPS (Learned Perceptual Image Patch Similarity) between prediction and target.
+        
+        Args:
+            pre: Predicted image tensor
+            target: Target image tensor
+            
+        Returns:
+            float: LPIPS value
+        """
+        unseen_num = t.sum(self.mask_unobs)
+        if unseen_num < 1e-3:
+            return 0.0
+        
+        # 如果没有lpips依赖,返回None
+        if not self._has_lpips:
+            return None
+        
+        try:
+            # 动态导入LPIPS
+            from torchmetrics.image import LearnedPerceptualImagePatchSimilarity as LPIPS
+            
+            # 延迟初始化LPIPS模型
+            if not hasattr(self, '_lpips_model'):
+                self._lpips_model = LPIPS(net_type='alex').to(f"cuda:{self.net_p['gpu_id']}" 
+                                                             if self.net_p['gpu_id'] >= 0 
+                                                             else 'cpu')
+            
+            # 转换为numpy数组
+            pre_np = pre.cpu().detach().numpy()
+            target_np = target.cpu().detach().numpy()
+            
+            # 确保数值范围在[0,1]之间
+            pre_np = np.clip(pre_np, 0, 1)
+            target_np = np.clip(target_np, 0, 1)
+            
+            # 转换为LPIPS需要的格式 (B,C,H,W), 值域[-1,1]
+            pre_t = t.from_numpy(pre_np).unsqueeze(0).unsqueeze(0) * 2 - 1
+            target_t = t.from_numpy(target_np).unsqueeze(0).unsqueeze(0) * 2 - 1
+            
+            # 移动到正确的设备
+            pre_t = pre_t.to(self._lpips_model.device)
+            target_t = target_t.to(self._lpips_model.device)
+            
+            # 计算LPIPS
+            with t.no_grad():
+                lpips_value = self._lpips_model(pre_t, target_t).item()
+            
+            return lpips_value
+            
+        except Exception as e:
+            print(f"Warning: Error calculating LPIPS: {str(e)}")
+            return None
