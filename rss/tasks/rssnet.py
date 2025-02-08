@@ -14,8 +14,9 @@ t.backends.cudnn.benchmark = True
 
 class rssnet(object):
     def __init__(self,parameters,verbose=True) -> None:
-        parameter_list = ['net_p','reg_p','data_p', 'noise_p', 'opt_p','train_p','show_p','save_p']
+        parameter_list = ['net_p','reg_p','data_p', 'noise_p', 'opt_p','train_p','show_p','save_p','task_p']
         self.init_parameter(parameters,parameter_list)
+        self.init_task()
         self.init_net()
         self.init_reg()
         self.init_data()
@@ -57,6 +58,18 @@ class rssnet(object):
             if verbose:
                 print(key,self.parameter_all[key])
 
+    def init_task(self):
+        """Initialize task-specific parameters and settings."""
+        de_para_dict = {
+            'task_type': 'completion',  # 支持 'completion', 'denoising', 'fpr', 'gpr'
+            'loss_type': 'mse',  # 默认使用MSE loss
+            'metrics': ['psnr', 'nmae', 'rmse']  # 默认评估指标
+        }
+        
+        for key in de_para_dict.keys():
+            param_now = self.task_p.get(key, de_para_dict.get(key))
+            self.task_p[key] = param_now
+
     def init_net(self):
         de_para_dict = {'net_name':'SIREN','gpu_id':0,'clip_if':False,'clip_min':0.0,'clip_max':1.0,'clip_mode':'hard'}
         for key in de_para_dict.keys():
@@ -79,15 +92,40 @@ class rssnet(object):
             self.reg = to_device(self.reg,self.reg_p['gpu_id'])
 
     def init_data(self):
-        de_para_dict = {'data_path':None,'data_type':'syn','data_shape':(10,10),'down_sample':[1,1,1],
-                        'mask_type':'random','random_rate':0.0,'mask_path':None,'mask_shape':'same','seeds':88,'down_sample_rate':2,
-                        'mask_unobs_path':None,
-                        'noise_mode':None,'noise_parameter':0.0,
-                        'x_mode':'inr','batch_size':128,'shuffle_if':False,'xrange':1,'ymode':'completion','return_data_type':'tensor',
-                        'pre_full':False,'out_dim_one':True,'mat_get_func':lambda x: x}
+        # 保留所有默认参数
+        de_para_dict = {
+            'data_path': None,
+            'data_type': 'syn',
+            'data_shape': (10,10),
+            'down_sample': [1,1,1],
+            'mask_type': 'random',
+            'random_rate': 0.0,
+            'mask_path': None,
+            'mask_shape': 'same',
+            'seeds': 88,
+            'down_sample_rate': 2,
+            'mask_unobs_path': None,
+            'noise_mode': None,
+            'noise_parameter': 0.0,
+            'x_mode': 'inr',
+            'batch_size': 128,
+            'shuffle_if': False,
+            'xrange': 1,
+            'ymode': 'completion',  # 保留默认值
+            'return_data_type': 'tensor',
+            'pre_full': False,
+            'out_dim_one': True,
+            'mat_get_func': lambda x: x
+        }
+        
+        # 如果task_p中有task_type,则覆盖ymode
+        if hasattr(self, 'task_p') and 'task_type' in self.task_p:
+            de_para_dict['ymode'] = self.task_p['task_type']
+        
         for key in de_para_dict.keys():
-            param_now = self.data_p.get(key,de_para_dict.get(key))
+            param_now = self.data_p.get(key, de_para_dict.get(key))
             self.data_p[key] = param_now
+
         # print('data_p : ',self.data_p)
         self.data = toolbox.load_data(data_path=self.data_p['data_path'],data_type=self.data_p['data_type'],
                                       data_shape=self.data_p['data_shape'],down_sample=self.data_p['down_sample'],
@@ -108,11 +146,19 @@ class rssnet(object):
         
         self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],
                                             seeds=self.data_p['seeds'])
-        self.data_train = toolbox.get_dataloader(x_mode=self.data_p['x_mode'],batch_size=self.data_p['batch_size'],
-                                                 shuffle_if=self.data_p['shuffle_if'],
-                                                data=self.data,mask=self.mask,xrange=self.data_p['xrange'],noisy_data=self.data_noise,
-                                                ymode=self.data_p['ymode'],return_data_type=self.data_p['return_data_type'],
-                                                gpu_id=self.net_p['gpu_id'],out_dim_one=self.data_p['out_dim_one'])
+        self.data_train = toolbox.get_dataloader(
+            x_mode=self.data_p['x_mode'],
+            batch_size=self.data_p['batch_size'],
+            shuffle_if=self.data_p['shuffle_if'],
+            data=self.data,
+            mask=self.mask,
+            xrange=self.data_p['xrange'],
+            noisy_data=self.data_noise,
+            ymode=self.data_p['ymode'],
+            return_data_type=self.data_p['return_data_type'],
+            gpu_id=self.net_p['gpu_id'],
+            out_dim_one=self.data_p['out_dim_one']
+        )
 
     def init_noise(self):
         de_para_dict = {'noise_term':False,'sparse_coef':1, 'parameter_type': 'matrix', 'init_std': 1e-3}
@@ -166,16 +212,32 @@ class rssnet(object):
                 raise ValueError('parameter_type should be matrix or implicit')
 
     def init_train(self):
-        de_para_dict = {'task_name':self.data_p['ymode'],'train_epoch':10,'loss_fn':'mse'}
+        # 保留所有默认参数
+        de_para_dict = {
+            'task_name': 'completion',  # 保留默认值
+            'train_epoch': 10,
+            'loss_fn': 'mse',  # 保留默认值
+            'rmse_round': False
+        }
+        
+        # 如果task_p中有相应设置,则覆盖默认值
+        if hasattr(self, 'task_p'):
+            if 'task_type' in self.task_p:
+                de_para_dict['task_name'] = self.task_p['task_type']
+            if 'loss_type' in self.task_p:
+                de_para_dict['loss_fn'] = self.task_p['loss_type']
+        
         for key in de_para_dict.keys():
-            param_now = self.train_p.get(key,de_para_dict.get(key))
+            param_now = self.train_p.get(key, de_para_dict.get(key))
             self.train_p[key] = param_now
+
+        # 根据train_p['loss_fn']设置loss function
+        # 这样保持了向后兼容性
         if self.train_p['loss_fn'] == 'mse':
             self.loss_fn = nn.MSELoss()
-        self.rmse_round = self.train_p.get('rmse_round',False)
-
-
-        # print('train_p : ',self.train_p)
+        elif self.train_p['loss_fn'] == 'mae':
+            self.loss_fn = nn.L1Loss()
+        # 可以添加其他 loss types...
 
     def init_save(self):
         de_para_dict = {'save_if':False,'save_path':''}
@@ -188,6 +250,7 @@ class rssnet(object):
         for key in de_para_dict.keys():
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
+
 
 
     def train(self, verbose=True):
@@ -296,12 +359,12 @@ class rssnet(object):
                 pre = self.net(self.data_train['obs_tensor'][0])
             
             # Calculate validation loss
-            if self.data_p['ymode'] == 'completion':
+            if self.task_p['task_type'] == 'completion':
                 pre_val = pre.reshape(self.data_p['data_shape'])[self.mask_unobs==1]
             else:
                 pre_val = pre
             target = self.data_train['real_tensor'][1]
-            if self.data_p['ymode'] == 'completion':
+            if self.task_p['task_type'] == 'completion':
                 target = target[(self.mask_unobs==1).reshape(-1)].reshape(pre_val.shape)
             else:
                 target = target.reshape(pre_val.shape)
@@ -312,7 +375,7 @@ class rssnet(object):
             # Calculate test metrics
             self.pre = pre
             self.target = target
-            if self.data_p['ymode'] == 'completion':
+            if self.task_p['task_type'] == 'completion':
                 test_loss = self.loss_fn(pre_val, target)
                 # For metrics calculation, reshape pre to match target
                 pre_metrics = pre.reshape(self.data_p['data_shape'])
@@ -385,7 +448,7 @@ class rssnet(object):
             #print('PSNR=',self.cal_psnr(show_img,self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()),'dB')
         elif self.show_p['show_content'] == 'original':
             show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
-            if self.data_p['ymode'] == 'completion':
+            if self.task_p['task_type'] == 'completion':
                 show_img = show_img*self.mask.reshape(self.data_p['data_shape']).detach().cpu().numpy()
 
         else:
@@ -474,7 +537,7 @@ class rssnet(object):
                 target_min = 1
             else:
                 target_min = 0
-            if self.rmse_round:
+            if self.train_p['rmse_round']:
                 squared_diff = (t.clamp(t.round(pre),target_min,target_max) - target) ** 2
             else:
                 squared_diff = (t.clamp(pre,target_min,target_max) - target) ** 2
