@@ -292,13 +292,12 @@ class rssnet(object):
             if self.net_p['net_name'] in ['UNet','ResNet','skip'] or \
                (self.net_p['net_name']=='KNN' and self.net_p['mode'] in ['UNet','ResNet','skip']):
                 pre = self.net(self.data_train['obs_tensor'][self.unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
-                pre = pre.reshape(self.data_p['data_shape'])
             else:
                 pre = self.net(self.data_train['obs_tensor'][0])
             
             # Calculate validation loss
             if self.data_p['ymode'] == 'completion':
-                pre_val = pre[self.mask_unobs==1]
+                pre_val = pre.reshape(self.data_p['data_shape'])[self.mask_unobs==1]
             else:
                 pre_val = pre
             target = self.data_train['real_tensor'][1]
