@@ -279,11 +279,7 @@ class rssnet(object):
             self.log('time', time_now-self.start_time)
             
             # Forward pass and loss computation
-            pre, reg_tensor = self._forward_pass() 
-            loss = self._compute_loss(pre, reg_tensor)
-            
-            # Backward and optimize
-            self._backward_and_optimize(loss)
+            self._forward_backward_optimize()
             
             # Evaluate and log metrics
             if ite % (self.train_p['train_epoch']//10) == 0:
@@ -292,7 +288,15 @@ class rssnet(object):
         # Finalize training
         self._finalize_training(verbose)
 
+    def _forward_backward_optimize(self):
+        """Forward pass, loss computation, backward pass, and optimization step."""
+        pre, reg_tensor = self._forward_pass()
+        loss = self._compute_loss(pre, reg_tensor)
+        self._backward_and_optimize(loss)
+
+
     def _prepare_training(self):
+
         """Prepare for training by initializing necessary variables."""
         if self.data_p['return_data_type'] == 'random':
             self.unn_index = 0
@@ -310,7 +314,8 @@ class rssnet(object):
     def _forward_pass(self):
         """Execute forward pass and return predictions."""
         if self.full_pre_if:
-            pre = self.net(self.data_train['obs_tensor'][self.unn_index].reshape(1,-1,self.data_p['data_shape'][0],self.data_p['data_shape'][1]))
+            pre = self.net(self.data_train['obs_tensor'][self.unn_index].reshape(1,-1,self.data_p['data_shape'][0],
+                                                                                 self.data_p['data_shape'][1]))
             pre = pre.reshape(self.data_p['data_shape'])
             reg_tensor = pre.reshape(self.data_p['data_shape'])
             pre = pre[self.mask==1]
