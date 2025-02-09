@@ -91,7 +91,7 @@ class rssnet(object):
 
         # 根据任务不同初始化一些变量
         if self.task_p['task_type'] in ['fpr','gpr']:
-            self.var_pr_d = self.data_p['mask_shape'][1]
+            self.var_pr_d = self.task_p['hyper_params']['d']
             self.var_pr_r = self.task_p['hyper_params']['r']
             self.var_pr_m = int(self.var_pr_r*self.var_pr_d)
             self.var_pr_I = to_device(t.ones((1,1,self.var_pr_m,self.var_pr_m)),self.task_p['gpu_id'])
