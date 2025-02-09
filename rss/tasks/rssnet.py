@@ -91,14 +91,15 @@ class rssnet(object):
 
         # 根据任务不同初始化一些变量
         if self.task_p['task_type'] in ['fpr','gpr']:
-            self.var_pr_d = self.task_p['hyper_params']['d']
-            self.var_pr_r = self.task_p['hyper_params']['r']
+            hyper_params = self.task_p.get('hyper_params', {})
+            self.var_pr_d = hyper_params.get('d', self.data_p.get('data_shape',[256,])[0])
+            self.var_pr_r = hyper_params.get('r', 1.9)
             self.var_pr_m = int(self.var_pr_r*self.var_pr_d)
             self.var_pr_I = to_device(t.ones((1,1,self.var_pr_m,self.var_pr_m)),self.task_p['gpu_id'])
-            self.var_pr_w = self.task_p.get('hyper_params',{}).get('w',0.0) # initialized Lagrange multiplier
-            self.var_pr_numit_inner = self.task_p.get('hyper_params',{}).get('numit_inner',5)
-            self.var_pr_rho = self.task_p.get('hyper_params',{}).get('rho',1.0) # for ADMM
-            self.var_pr_ksi = self.task_p.get('hyper_params',{}).get('ksi',0.001) # Smoothing of the objective function
+            self.var_pr_w = hyper_params.get('w', 0.0)  # initialized Lagrange multiplier
+            self.var_pr_numit_inner = hyper_params.get('numit_inner', 5)  # 内部迭代次数
+            self.var_pr_rho = hyper_params.get('rho', 1.0)  # for ADMM
+            self.var_pr_ksi = hyper_params.get('ksi', 0.001)  # Smoothing of the objective function
             self.var_pr_W = self.var_pr_I*self.var_pr_w
 
 
