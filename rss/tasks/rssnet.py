@@ -342,11 +342,10 @@ class rssnet(object):
             # 初始化 b 变量
             if not hasattr(self, 'var_pr_b'):
                 self.var_pr_b = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).unsqueeze(0).unsqueeze(0)
+                self.var_pr_b = toolbox.pr_helpers.apply_f(self.var_pr_b,self.var_pr_m)
             # 初始化 v 变量
             if not hasattr(self, 'var_pr_v'):
-                img_var_meas1 = toolbox.pr_helpers.apply_f(self.var_pr_b,self.var_pr_m)
-                print(img_var_meas1.shape)
-                self.var_pr_v = to_device(toolbox.pr_helpers.ifftn(img_var_meas1), self.task_p['gpu_id'])
+                self.var_pr_v = to_device(toolbox.pr_helpers.ifftn(self.var_pr_b), self.task_p['gpu_id'])
             
             
 
@@ -365,9 +364,9 @@ class rssnet(object):
             ft = toolbox.pr_helpers.fftn(F.pad(x,(0,m-d,0,m-d),"constant",0) + W/rho, m)
             ft_abs = t.abs(ft)
             # Print shapes of variables used in scale calculation
-            print("b shape:", b.shape)  # Expected: [1, 1, m, m]
-            print("I shape:", I.shape)  # Expected: [1, 1, m, m]
-            print("ft_abs shape:", ft_abs.shape)  # Expected: [1, 1, m, m]
+            # print("b shape:", b.shape)  # Expected: [1, 1, m, m]
+            # print("I shape:", I.shape)  # Expected: [1, 1, m, m]
+            # print("ft_abs shape:", ft_abs.shape)  # Expected: [1, 1, m, m]
             scale = t.sqrt(b**2 + ksi*I) / t.sqrt(ft_abs**2 + ksi*I)
             v = toolbox.pr_helpers.ifftn(scale * ft)
             
