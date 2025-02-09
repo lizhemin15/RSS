@@ -69,10 +69,10 @@ class rssnet(object):
             'task_type': 'completion',  # 支持 'completion', 'denoising', 'fpr', 'gpr'
             'loss_type': 'mse',  # 默认使用MSE loss
             'metrics': ['psnr', 'nmae', 'rmse'],  # 默认评估指标
-            'hyper_params': {} # 超参数
+            'hyper_params': {}, # 超参数
+            'gpu_id': 0  # 添加gpu_id参数,默认为0
         }
         
-
         for key in de_para_dict.keys():
             param_now = self.task_p.get(key, de_para_dict.get(key))
             self.task_p[key] = param_now
@@ -88,23 +88,31 @@ class rssnet(object):
         else:
             self._has_lpips = False
 
+        # 根据任务不同初始化一些变量
+        if self.task_p['task_type'] in ['fpr','gpr']:
+            self.var_pr_target = self.data_train['obs_tensor'].reshape(self.data_p['data_shape'])
+            self.var_pr_d = self.data_p['mask_shape'][1]
+            self.var_pr_r = self.task_p['hyper_params']['r']
+            self.var_pr_m = int(self.var_pr_r*self.var_pr_d)
+            self.var_pr_I = t.ones((1,1,self.var_pr_m,self.var_pr_m))
+
     def init_net(self):
-        de_para_dict = {'net_name':'SIREN','gpu_id':0,'clip_if':False,'clip_min':0.0,'clip_max':1.0,'clip_mode':'hard'}
+        de_para_dict = {'net_name':'SIREN','clip_if':False,'clip_min':0.0,'clip_max':1.0,'clip_mode':'hard'}
         for key in de_para_dict.keys():
             param_now = self.net_p.get(key,de_para_dict.get(key))
             self.net_p[key] = param_now
-        # print('net_p : ',self.net_p)
+        # 使用task_p中的gpu_id
+        self.net_p['gpu_id'] = self.task_p['gpu_id']
         self.net = represent.get_nn(self.net_p)
         self.net = to_device(self.net,self.net_p['gpu_id'])
-
 
     def init_reg(self):
         de_para_dict = {'reg_name':None}
         for key in de_para_dict.keys():
             param_now = self.reg_p.get(key,de_para_dict.get(key))
             self.reg_p[key] = param_now
-        self.reg_p['gpu_id'] = self.net_p['gpu_id']
-        # print('net_p : ',self.net_p)
+        # 使用task_p中的gpu_id
+        self.reg_p['gpu_id'] = self.task_p['gpu_id']
         if self.reg_p['reg_name'] != None:
             self.reg = represent.get_reg(self.reg_p)
             self.reg = to_device(self.reg,self.reg_p['gpu_id'])
@@ -164,7 +172,7 @@ class rssnet(object):
                                         mask_shape=self.data_p['mask_shape'],
                                         seeds=self.data_p['seeds'],
                                         down_sample_rate=self.data_p['down_sample_rate'],
-                                        gpu_id=self.net_p['gpu_id'])
+                                        gpu_id=self.task_p['gpu_id'])
         
         self.mask = to_device(t.tensor(self.mask>0.5).to(t.float32),self.net_p['gpu_id'])
         
@@ -179,7 +187,7 @@ class rssnet(object):
                                               mask_shape=self.data_p['mask_shape'],
                                               seeds=self.data_p['seeds'],
                                               down_sample_rate=self.data_p['down_sample_rate'],
-                                              gpu_id=self.net_p['gpu_id'])
+                                              gpu_id=self.task_p['gpu_id'])
             self.mask_unobs = to_device(t.tensor(self.mask_unobs>0.5).to(t.float32),self.net_p['gpu_id'])
         
         self.data_noise = toolbox.add_noise(self.data,mode=self.data_p['noise_mode'],parameter=self.data_p['noise_parameter'],
@@ -215,8 +223,6 @@ class rssnet(object):
                 self.noise = self.noise1**2 - self.noise2**2
             else:
                 raise ValueError('parameter_type should be matrix or implicit')
-
-
 
     def init_opt(self):
         de_para_dict = {'net':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},
@@ -289,8 +295,6 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
 
-
-
     def train(self, verbose=True):
         """Train the model."""
         self._prepare_training()
@@ -318,6 +322,7 @@ class rssnet(object):
             self._backward_and_optimize(loss)
         elif self.task_p['task_type'] in ['fpr','gpr']:
             numit_inner = self.task_p.get('hyper_params', {}).get('numit_inner', 5)
+
             if not hasattr(self, 'var_pr_v'):
                 self.var_pr_v = 0
             for _ in range(numit_inner):
@@ -325,11 +330,7 @@ class rssnet(object):
                 loss = self._compute_loss(pre, reg_tensor)
                 self._backward_and_optimize(loss)
 
-
-
-
     def _prepare_training(self):
-
         """Prepare for training by initializing necessary variables."""
         if self.data_p['return_data_type'] == 'random':
             self.unn_index = 0
@@ -358,7 +359,8 @@ class rssnet(object):
         else:
             pre = self.net(self.data_train['obs_tensor'][0][(self.mask==1).reshape(-1)])
             reg_tensor = None
-        
+        if self.task_p['task_type'] in ['fpr','gpr']:
+            pre = pre.reshape(self.data_p['data_shape'])
         return pre, reg_tensor
 
     def _compute_loss(self, pre, reg_tensor):
@@ -502,8 +504,6 @@ class rssnet(object):
         else:
             self.log_dict[name].append(content)
 
-
-
     def show(self):
         de_para_dict = {'show_type':'gray_img','show_content':'original','show_axis':False, 'show_info_on_img':False}
         for key in de_para_dict.keys():
@@ -566,8 +566,6 @@ class rssnet(object):
             print('noise_mean',t.abs(self.noise.mean()).item())
         plt.show()
         
-
-
     def save_logs(self,verbose=True):
         # 检测文件夹是否存在，不存在则创建
         if not os.path.exists(self.save_p['save_path']):
@@ -833,8 +831,8 @@ class rssnet(object):
             
             # 延迟初始化LPIPS模型
             if not hasattr(self, '_lpips_model'):
-                self._lpips_model = LPIPS(net_type='alex').to(f"cuda:{self.net_p['gpu_id']}" 
-                                                             if self.net_p['gpu_id'] >= 0 
+                self._lpips_model = LPIPS(net_type='alex').to(f"cuda:{self.task_p['gpu_id']}"  # 使用task_p中的gpu_id
+                                                             if self.task_p['gpu_id'] >= 0 
                                                              else 'cpu')
             
             # 转换为numpy数组
