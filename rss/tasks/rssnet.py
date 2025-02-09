@@ -3,6 +3,7 @@ from rss.represent.utils import to_device
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import torch as t
+import torch.nn.functional as F
 import numpy as np
 import time
 import dill as pkl
@@ -94,7 +95,13 @@ class rssnet(object):
             self.var_pr_d = self.data_p['mask_shape'][1]
             self.var_pr_r = self.task_p['hyper_params']['r']
             self.var_pr_m = int(self.var_pr_r*self.var_pr_d)
-            self.var_pr_I = t.ones((1,1,self.var_pr_m,self.var_pr_m))
+            self.var_pr_I = to_device(t.ones((1,1,self.var_pr_m,self.var_pr_m)),self.task_p['gpu_id'])
+            self.var_pr_w = self.task_p.get('hyper_params',{}).get('w',0.0) # initialized Lagrange multiplier
+            self.var_pr_numit_inner = self.task_p.get('hyper_params',{}).get('numit_inner',5)
+            self.var_pr_rho = self.task_p.get('hyper_params',{}).get('rho',1.0) # for ADMM
+            self.var_pr_ksi = self.task_p.get('hyper_params',{}).get('ksi',0.001) # Smoothing of the objective function
+            self.var_pr_W = self.var_pr_I*self.var_pr_w
+
 
     def init_net(self):
         de_para_dict = {'net_name':'SIREN','clip_if':False,'clip_min':0.0,'clip_max':1.0,'clip_mode':'hard'}
@@ -205,6 +212,8 @@ class rssnet(object):
             gpu_id=self.net_p['gpu_id'],
             out_dim_one=self.data_p['out_dim_one']
         )
+
+            
 
     def init_noise(self):
         de_para_dict = {'noise_term':False,'sparse_coef':1, 'parameter_type': 'matrix', 'init_std': 1e-3}
@@ -327,14 +336,40 @@ class rssnet(object):
             loss = self._compute_loss(pre, reg_tensor)
             self._backward_and_optimize(loss)
         elif self.task_p['task_type'] in ['fpr','gpr']:
-            numit_inner = self.task_p.get('hyper_params', {}).get('numit_inner', 5)
-
+            # 初始化 v 变量
             if not hasattr(self, 'var_pr_v'):
-                self.var_pr_v = 0
-            for _ in range(numit_inner):
+                t_shape = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape'])
+                self.var_pr_v = to_device(toolbox.pr_helpers.ifftn(t_shape), self.task_p['gpu_id'])
+            
+            # 简化重复使用的变量
+            d = self.var_pr_d 
+            m = self.var_pr_m
+            W = self.var_pr_W
+            rho = self.var_pr_rho
+            ksi = self.var_pr_ksi
+            b = self.var_pr_b
+            I = self.var_pr_I
+            v = self.var_pr_v
+            
+            # 主要计算
+            x = F.pad(v - W/rho, (0,d-m,0,d-m), "constant", 0)
+            ft = toolbox.pr_helpers.fftn(F.pad(x,(0,m-d,0,m-d),"constant",0) + W/rho, m)
+            ft_abs = t.abs(ft)
+            scale = t.sqrt(b**2 + ksi*I) / t.sqrt(ft_abs**2 + ksi*I)
+            v = toolbox.pr_helpers.ifftn(scale * ft)
+            
+            # 内部迭代
+            for _ in range(self.var_pr_numit_inner):
                 pre, reg_tensor = self._forward_pass()
                 loss = self._compute_loss(pre, reg_tensor)
                 self._backward_and_optimize(loss)
+            
+            # 更新 v
+            v.data[:,:,0:d,0:d],_ = self._forward_pass().reshape(d,d,1).permute((2,0,1))[None,...]
+            W = W + rho*(F.pad(x, (0,m-d,0,m-d), "constant", 0) - v)
+            
+
+
 
     def _prepare_training(self):
         """Prepare for training by initializing necessary variables."""
@@ -389,6 +424,8 @@ class rssnet(object):
             loss += self.loss_fn(pre+self.noise[(self.mask==1)].reshape(pre.shape), target)
             if self.noise_p['parameter_type'] == 'matrix':
                 loss += self.noise_p['sparse_coef']*t.mean(t.abs(self.noise))
+        elif self.task_p['task_type'] in ['fpr','gpr']:
+            loss += self.loss_fn(pre, self.var_pr_v[0,0,0:self.var_pr_d,0:self.var_pr_d])
         else:
             loss += self.loss_fn(pre, target)
         
