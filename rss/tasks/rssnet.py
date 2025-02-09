@@ -342,8 +342,10 @@ class rssnet(object):
             # 初始化 v 变量
             if not hasattr(self, 'var_pr_v'):
                 t_shape = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape'])
-                self.var_pr_v = to_device(toolbox.pr_helpers.ifftn(t_shape), self.task_p['gpu_id'])
+                img_var_meas1 = toolbox.pr_helpers.apply_f(t_shape,self.var_pr_m)
+                self.var_pr_v = to_device(toolbox.pr_helpers.ifftn(img_var_meas1), self.task_p['gpu_id'])
             
+
             # 简化重复使用的变量
             d = self.var_pr_d 
             m = self.var_pr_m
