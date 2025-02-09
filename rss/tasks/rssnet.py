@@ -343,6 +343,7 @@ class rssnet(object):
             if not hasattr(self, 'var_pr_v'):
                 t_shape = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape'])
                 img_var_meas1 = toolbox.pr_helpers.apply_f(t_shape,self.var_pr_m)
+                print(img_var_meas1.shape)
                 self.var_pr_v = to_device(toolbox.pr_helpers.ifftn(img_var_meas1), self.task_p['gpu_id'])
             
 
