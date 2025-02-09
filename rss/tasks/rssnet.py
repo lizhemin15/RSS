@@ -378,7 +378,8 @@ class rssnet(object):
                 self._backward_and_optimize(loss)
             
             # 更新 v
-            v.data[:,:,0:d,0:d],_ = self._forward_pass().reshape(d,d,1).permute((2,0,1))[None,...]
+            v_data,_ = self._forward_pass()
+            v.data[:,:,0:d,0:d] = v_data.reshape(d,d,1).permute((2,0,1))[None,...]
             W = W + rho*(F.pad(x, (0,m-d,0,m-d), "constant", 0) - v)
 
 
