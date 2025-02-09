@@ -213,13 +213,19 @@ class rssnet(object):
             self.noise_p[key] = param_now
         if self.noise_p['noise_term'] == True:
             if self.noise_p['parameter_type'] =='matrix':
-                self.noise = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std'], requires_grad=True)
-                self.noise.data = to_device(self.noise.data,self.net_p['gpu_id'])
+                # 使用 to_device 替换 .to()
+                noise_data = t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std']
+                noise_data = to_device(noise_data, self.net_p['gpu_id'])
+                self.noise = nn.Parameter(noise_data, requires_grad=True)
             elif self.noise_p['parameter_type'] == 'implicit':
-                self.noise1 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std'], requires_grad=True)
-                self.noise1.data = to_device(self.noise1.data,self.net_p['gpu_id'])
-                self.noise2 = nn.Parameter(t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std'], requires_grad=True)
-                self.noise2.data = to_device(self.noise2.data,self.net_p['gpu_id'])
+                # 使用 to_device 替换 .to()
+                noise1_data = t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std']
+                noise1_data = to_device(noise1_data, self.net_p['gpu_id'])
+                self.noise1 = nn.Parameter(noise1_data, requires_grad=True)
+                
+                noise2_data = t.randn(self.data_p['data_shape']).to(t.float32)*self.noise_p['init_std']
+                noise2_data = to_device(noise2_data, self.net_p['gpu_id'])
+                self.noise2 = nn.Parameter(noise2_data, requires_grad=True)
                 self.noise = self.noise1**2 - self.noise2**2
             else:
                 raise ValueError('parameter_type should be matrix or implicit')
@@ -808,50 +814,35 @@ class rssnet(object):
                 return 0.0
 
     def cal_lpips(self, pre, target):
-        """Calculate LPIPS (Learned Perceptual Image Patch Similarity) between prediction and target.
-        
-        Args:
-            pre: Predicted image tensor
-            target: Target image tensor
-            
-        Returns:
-            float: LPIPS value
-        """
+        """Calculate LPIPS between prediction and target."""
         unseen_num = t.sum(self.mask_unobs)
         if unseen_num < 1e-3:
             return 0.0
         
-        # 如果没有lpips依赖,返回None
         if not self._has_lpips:
             return None
         
         try:
-            # 动态导入LPIPS
             from torchmetrics.image import LearnedPerceptualImagePatchSimilarity as LPIPS
             
-            # 延迟初始化LPIPS模型
             if not hasattr(self, '_lpips_model'):
-                self._lpips_model = LPIPS(net_type='alex').to(f"cuda:{self.task_p['gpu_id']}"  # 使用task_p中的gpu_id
-                                                             if self.task_p['gpu_id'] >= 0 
-                                                             else 'cpu')
+                # 使用 to_device 替换 .to()
+                lpips_model = LPIPS(net_type='alex')
+                self._lpips_model = to_device(lpips_model, self.task_p['gpu_id'])
             
-            # 转换为numpy数组
             pre_np = pre.cpu().detach().numpy()
             target_np = target.cpu().detach().numpy()
             
-            # 确保数值范围在[0,1]之间
             pre_np = np.clip(pre_np, 0, 1)
             target_np = np.clip(target_np, 0, 1)
             
-            # 转换为LPIPS需要的格式 (B,C,H,W), 值域[-1,1]
             pre_t = t.from_numpy(pre_np).unsqueeze(0).unsqueeze(0) * 2 - 1
             target_t = t.from_numpy(target_np).unsqueeze(0).unsqueeze(0) * 2 - 1
             
-            # 移动到正确的设备
-            pre_t = pre_t.to(self._lpips_model.device)
-            target_t = target_t.to(self._lpips_model.device)
+            # 使用 to_device 替换 .to()
+            pre_t = to_device(pre_t, self.task_p['gpu_id'])
+            target_t = to_device(target_t, self.task_p['gpu_id'])
             
-            # 计算LPIPS
             with t.no_grad():
                 lpips_value = self._lpips_model(pre_t, target_t).item()
             
