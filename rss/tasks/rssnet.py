@@ -91,7 +91,6 @@ class rssnet(object):
 
         # 根据任务不同初始化一些变量
         if self.task_p['task_type'] in ['fpr','gpr']:
-            self.var_pr_target = self.data_train['obs_tensor'].reshape(self.data_p['data_shape'])
             self.var_pr_d = self.data_p['mask_shape'][1]
             self.var_pr_r = self.task_p['hyper_params']['r']
             self.var_pr_m = int(self.var_pr_r*self.var_pr_d)
@@ -367,7 +366,7 @@ class rssnet(object):
             # 更新 v
             v.data[:,:,0:d,0:d],_ = self._forward_pass().reshape(d,d,1).permute((2,0,1))[None,...]
             W = W + rho*(F.pad(x, (0,m-d,0,m-d), "constant", 0) - v)
-            
+
 
 
 
