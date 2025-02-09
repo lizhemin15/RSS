@@ -153,7 +153,10 @@ class rssnet(object):
         
         # 如果task_p中有task_type,则覆盖ymode
         if hasattr(self, 'task_p') and 'task_type' in self.task_p:
-            de_para_dict['ymode'] = self.task_p['task_type']
+            if self.task_p['task_type'] == 'denoising':
+                de_para_dict['ymode'] = 'denoising'
+            else:
+                de_para_dict['ymode'] = 'completion'
         
         for key in de_para_dict.keys():
             param_now = self.data_p.get(key, de_para_dict.get(key))
