@@ -361,12 +361,20 @@ class rssnet(object):
             v = self.var_pr_v
             
             # 主要计算
+
+            
             x = F.pad(v - W/rho, (0,d-m,0,d-m), "constant", 0)
             ft = toolbox.pr_helpers.fftn(F.pad(x,(0,m-d,0,m-d),"constant",0) + W/rho, m)
             ft_abs = t.abs(ft)
+            # Print shapes of variables used in scale calculation
+            print("b shape:", b.shape)  # Expected: [1, 1, m, m]
+            print("ksi shape:", ksi.shape)  # Expected: scalar
+            print("I shape:", I.shape)  # Expected: [1, 1, m, m]
+            print("ft_abs shape:", ft_abs.shape)  # Expected: [1, 1, m, m]
             scale = t.sqrt(b**2 + ksi*I) / t.sqrt(ft_abs**2 + ksi*I)
             v = toolbox.pr_helpers.ifftn(scale * ft)
             
+
             # 内部迭代
             for _ in range(self.var_pr_numit_inner):
                 pre, reg_tensor = self._forward_pass()
