@@ -339,12 +339,15 @@ class rssnet(object):
             loss = self._compute_loss(pre, reg_tensor)
             self._backward_and_optimize(loss)
         elif self.task_p['task_type'] in ['fpr','gpr']:
+            # 初始化 b 变量
+            if not hasattr(self, 'var_pr_b'):
+                self.var_pr_b = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).unsqueeze(0).unsqueeze(0)
             # 初始化 v 变量
             if not hasattr(self, 'var_pr_v'):
-                t_shape = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape'])
-                img_var_meas1 = toolbox.pr_helpers.apply_f(t_shape,self.var_pr_m)
+                img_var_meas1 = toolbox.pr_helpers.apply_f(self.var_pr_b,self.var_pr_m)
                 print(img_var_meas1.shape)
                 self.var_pr_v = to_device(toolbox.pr_helpers.ifftn(img_var_meas1), self.task_p['gpu_id'])
+            
             
 
             # 简化重复使用的变量

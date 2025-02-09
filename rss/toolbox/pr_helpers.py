@@ -36,9 +36,6 @@ def get_coords(H, W):
     return coords.flatten(0, -2)
 
 def apply_f(x, m):
-    # 如果x只有两个维度，添加一个维度
-    if len(x.shape) == 2:
-        x = x.unsqueeze(0).unsqueeze(0)
     d = x.shape[2]
     if x.shape[1] == 3:
         (r, g, b) = torch.split(x, [1, 1, 1], dim = 1)
@@ -54,9 +51,6 @@ def apply_f(x, m):
 
 def apply_f_(Ameas, x, m):
     set_random_seed(42)
-    # 如果x只有两个维度，添加一个维度
-    if len(x.shape) == 2:
-        x = x.unsqueeze(0).unsqueeze(0)
     d = x.shape[2]
     if x.shape[1] == 3:
         (r, g, b) = torch.split(x, [1, 1, 1], dim = 1)
