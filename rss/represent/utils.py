@@ -77,14 +77,14 @@ def get_opt(opt_type='Adam', parameters=None, lr=1e-3, weight_decay=0):
 
 
 def to_device(obj,device):
-    if t.cuda.is_available() and device != 'cpu':
-        # 获取当前设备
+    # 如果指定了GPU但CUDA不可用,发出警告
+    if device != 'cpu' and not t.cuda.is_available():
         current_device = obj.device if hasattr(obj, 'device') else 'cpu'
+        print(f'Warning: Cannot move object to {device} as CUDA is not available. Staying on {current_device}')
+        return obj
         
-        # 如果指定设备与当前设备不一致,发出警告
-        if str(current_device) != str(device):
-            print(f'Warning: Object is being moved from {current_device} to {device}')
-            
+    # 如果CUDA可用且指定了GPU设备,移动到GPU
+    if t.cuda.is_available() and device != 'cpu':
         obj = obj.cuda(device)
     return obj
 
