@@ -36,12 +36,13 @@ def get_coords(H, W):
     return coords.flatten(0, -2)
 
 def apply_f(x, m):
-    d = x.shape[2]
     # 如果x只有两个维度，添加一个维度
     if len(x.shape) == 2:
         x = x.unsqueeze(0)
+    d = x.shape[2]
     if x.shape[1] == 3:
         (r, g, b) = torch.split(x, [1, 1, 1], dim = 1)
+
         r_, g_, b_ = torch.fft.fftn(F.pad(r, (0, m - d, 0, m - d), "constant", 0)),\
                      torch.fft.fftn(F.pad(g, (0, m - d, 0, m - d), "constant", 0)), \
                      torch.fft.fftn(F.pad(b, (0, m - d, 0, m - d), "constant", 0))
