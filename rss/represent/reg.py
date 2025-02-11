@@ -567,11 +567,13 @@ class regularizer(nn.Module):
         opstr = get_opstr(mode=self.mode, shape=x.shape)
         x = rearrange(x, opstr)
         
-        # 计算奇异值
+        # 添加小的扰动以提高数值稳定性
+        x = x + 1e-8 * t.randn_like(x)
+        
         try:
             U, S, V = t.svd(x)
             # 返回奇异值之和
             return t.sum(S)/x.shape[0]/x.shape[1]
-        except:
-            # 处理数值不稳定的情况
-            return t.tensor(0.0).to(x.device)
+        except t.linalg.LinAlgError:
+            # 在数值不稳定时返回一个小的非零值
+            return t.tensor(1e-8, device=x.device, requires_grad=True)
