@@ -24,6 +24,8 @@ def load_data(data_path,data_type='gray_img',data_shape=None,down_sample=[1,1,1]
     elif data_type == 'syn':
         if data_path == 'circle':
             return syn_circle(data_shape)
+        elif data_path == 'low_rank':
+            return syn_low_rank(data_shape)
         else:
             return syn_circle(data_shape)
     elif data_type == 'rgb_video' or data_type == 'gray_video':
@@ -98,3 +100,9 @@ def syn_circle(data_shape):
     z = np.sin(100*np.pi*np.sin(np.pi/3*np.sqrt(x1**2+y1**2)))
     z = z.astype('float32')/z.max()
     return z
+
+
+def syn_low_rank(data_shape):
+    x = np.random.randn(data_shape[0],5)
+    y = np.random.randn(data_shape[1],5)
+    return np.dot(x,y.T)

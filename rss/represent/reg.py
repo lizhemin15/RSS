@@ -47,6 +47,8 @@ def get_reg(parameter):
         de_para_dict = {'reg_list':[{'reg_name':'TV'}]}
     elif reg_name == 'GroupReg':
         de_para_dict = {'group_para':{'n_clusters':10,'metric':'cosine'},'each_reg_name':'AIR','start_epoch':100,'search_epoch':1000}
+    elif reg_name == 'Nuclear':
+        de_para_dict = {'coef': 1, 'mode': 0}
     else:
         de_para_dict = {"mode":None}
     #if reg_name not in MultiRegDict.keys():
@@ -271,11 +273,10 @@ class regularizer(nn.Module):
             return self.red(x)*self.reg_parameter["coef"]
         elif self.reg_name == 'CURE':
             return self.cure(x)*self.reg_parameter["coef"]
+        elif self.reg_name == 'Nuclear':
+            return self.nuclear(x)*self.reg_parameter["coef"]
         else:
-            raise('Not support regularizer named ',self.reg_name,'please check the regularizer name in TV, LAP, AIR, INRR, RUBI')
-
-
-
+            raise('Not support regularizer named ',self.reg_name,'please check the regularizer name in TV, LAP, AIR, INRR, RUBI, Nuclear')
 
     def tv(self,M):
         """
@@ -322,8 +323,6 @@ class regularizer(nn.Module):
             return t.norm(t.clamp(Var11-self.quantile_q*t.abs(Var11),min=0,max=self.quantile_q*t.abs(Var11))+t.clamp(Var12-self.quantile_q*t.abs(Var12),min=0,max=self.quantile_q*t.abs(Var12))+t.clamp(Var21-self.quantile_q*t.abs(Var21),min=0,max=self.quantile_q*t.abs(Var21))+t.clamp(Var22-self.quantile_q*t.abs(Var22),min=0,max=self.quantile_q*t.abs(Var22)),p=p)/M.shape[0]
         else:
             raise ValueError("lap_mode should be 'vanilla', 'Huber', or 'quantile', but got {}".format(self.lap_mode))
-
-
 
     def wtv(self, M):
         """
@@ -392,8 +391,6 @@ class regularizer(nn.Module):
             
             return t.mean(k_nearest_distances * (M.unsqueeze(-1) - k_nearest_values) ** 2)
 
-
-
     def lap_reg(self,M):
         """
         M: torch tensor type
@@ -407,7 +404,6 @@ class regularizer(nn.Module):
         right = M[2:M.shape[0],1:M.shape[1]-1]
         Var = 4*center-up-down-left-right
         return t.norm(Var,p=p)/M.shape[0]
-
 
     def air(self,W,mode='learn'):
         lap_k = self.reg_parameter.get('lap_k',1)
@@ -433,8 +429,6 @@ class regularizer(nn.Module):
         W = rearrange(W,opstr)
         return self.lap_loss(W,self.lap,lap_mode=self.lap_mode,norm_lap_lp=self.norm_lap_lp,huber_delta=self.huber_delta,q=self.quantile_q)
         # t.trace(t.mm(W.T,t.mm(self.lap,W)))/(W.shape[0]*W.shape[1])#+l1 #行关系
-
-
 
     def inrr(self,W):
         # GroupReg 中，multi和single模式下传入的W都是已经取了 sparse_index 的
@@ -544,7 +538,6 @@ class regularizer(nn.Module):
         else:
             raise ValueError("lap_mode should be 'vanilla', 'lp', or 'Huber', but got {}".format(lap_mode))
 
-
     def rubi(self,M):
         if self.ite_num == 0:
             self.M_old = M.detach().clone()
@@ -564,3 +557,21 @@ class regularizer(nn.Module):
     def cure(self,M):
         tv_loss = self.tv(M)
         pass
+
+    def nuclear(self, x):
+        """
+        计算矩阵的核范数(奇异值之和)
+        x: torch tensor type
+        """
+        # 重排矩阵维度
+        opstr = get_opstr(mode=self.mode, shape=x.shape)
+        x = rearrange(x, opstr)
+        
+        # 计算奇异值
+        try:
+            U, S, V = t.svd(x)
+            # 返回奇异值之和
+            return t.sum(S)/x.shape[0]/x.shape[1]
+        except:
+            # 处理数值不稳定的情况
+            return t.tensor(0.0).to(x.device)
