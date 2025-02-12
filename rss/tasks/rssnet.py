@@ -489,6 +489,7 @@ class rssnet(object):
 
     def _evaluate_and_log(self, iteration):
         """Evaluate model and log metrics."""
+        self.iteration = iteration
         with t.no_grad():
             # Get predictions
             if self.net_p['net_name'] in ['UNet','ResNet','skip'] or \
@@ -563,8 +564,6 @@ class rssnet(object):
                 else:
                     print(f"Warning: Metric '{metric}' is not supported")
             
-            if (iteration+1)%(self.train_p['train_epoch']//10) == 0:
-                self.log('img')
 
     def _finalize_training(self, verbose):
         """Finalize training by saving logs and printing results if requested."""
