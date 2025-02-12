@@ -313,10 +313,11 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
 
-    def train(self, verbose=True, save_all_log = False):
+    def train(self, verbose=True, save_all_log = False, callback = None):
         """Train the model."""
         self._prepare_training()
-        
+        self.callback = callback
+
         for ite in range(self.train_p['train_epoch']):
             # Log training time
             time_now = time.time()
@@ -511,6 +512,9 @@ class rssnet(object):
 
             # Log prediction
             self.log('img')
+
+            if self.callback is not None:
+                self.callback(self)
             
             # 更新指标计算方法映射
             metric_funcs = {
