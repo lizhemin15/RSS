@@ -243,12 +243,35 @@ class rssnet(object):
                 raise ValueError('parameter_type should be matrix or implicit')
 
     def init_opt(self):
+        # 定义默认参数
         de_para_dict = {'net':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},
-                        'reg':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},
-                        'noise':{'opt_name':'Adam','lr':1e-4,'weight_decay':0}}
+                       'reg':{'opt_name':'Adam','lr':1e-4,'weight_decay':0},
+                       'noise':{'opt_name':'Adam','lr':1e-4,'weight_decay':0}}
+
+        def update_nested_dict(default_dict, user_dict):
+            """递归地用默认值更新嵌套字典的缺失值"""
+            if not isinstance(default_dict, dict) or not isinstance(user_dict, dict):
+                return user_dict
+            
+            result = user_dict.copy()
+            for key, default_value in default_dict.items():
+                if key not in result:
+                    result[key] = default_value
+                elif isinstance(default_value, dict):
+                    result[key] = update_nested_dict(default_value, result[key])
+            return result
+
+        # 遍历每个优化器类型
         for key in de_para_dict.keys():
-            param_now = self.opt_p.get(key,de_para_dict.get(key))
-            self.opt_p[key] = param_now
+            # 获取用户配置的参数
+            param_now = self.opt_p.get(key, {})
+            
+            # 如果参数不是字典,转换为空字典
+            if not isinstance(param_now, dict):
+                param_now = {}
+                
+            # 递归更新所有层级的默认参数
+            self.opt_p[key] = update_nested_dict(de_para_dict[key], param_now)
         # print('opt_p : ',self.opt_p)
         self.net_opt = represent.get_opt(opt_type=self.opt_p['net']['opt_name'],
                                          parameters=self.net.parameters(),lr=self.opt_p['net']['lr'],
