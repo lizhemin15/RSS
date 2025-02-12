@@ -313,7 +313,7 @@ class rssnet(object):
             param_now = self.show_p.get(key,de_para_dict.get(key))
             self.show_p[key] = param_now
 
-    def train(self, verbose=True):
+    def train(self, verbose=True, save_all_log = False):
         """Train the model."""
         self._prepare_training()
         
@@ -326,7 +326,9 @@ class rssnet(object):
             self._forward_backward_optimize()
             
             # Evaluate and log metrics
-            if ite % (self.train_p['train_epoch']//10) == 0:
+            if save_all_log:
+                self._evaluate_and_log(ite)
+            elif ite % (self.train_p['train_epoch']//10) == 0:
                 self._evaluate_and_log(ite)
                 
         # Finalize training
