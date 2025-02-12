@@ -302,7 +302,7 @@ class rssnet(object):
         # 可以添加其他 loss types...
 
     def init_save(self):
-        de_para_dict = {'save_if':False,'save_path':''}
+        de_para_dict = {'save_if':False, 'img_save_if':False, 'pkl_save_if':False, 'save_path':''}
         for key in de_para_dict.keys():
             param_now = self.save_p.get(key,de_para_dict.get(key))
             self.save_p[key] = param_now
@@ -530,7 +530,7 @@ class rssnet(object):
 
     def _finalize_training(self, verbose):
         """Finalize training by saving logs and printing results if requested."""
-        if self.save_p['save_if']:
+        if self.save_p['save_if'] or self.save_p['pkl_save_if']:
             self.save_logs(verbose=verbose)
         
         if verbose:
@@ -604,7 +604,7 @@ class rssnet(object):
                 epoch = 0
                 psnr = 0
             plt.text(20, 40, 'Epoch='+str(epoch)+'\nPSNR='+str(psnr)+'dB', color='white', fontsize=12, backgroundcolor='black')
-        if self.save_p['save_if'] == True:
+        if self.save_p['save_if'] or self.save_p['img_save_if']:
             if self.save_p['save_path'].split('.')[-1] in ['png','jpg','jpeg']:
                 save_img_path = self.save_p['save_path']
             else:
