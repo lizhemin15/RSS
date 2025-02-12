@@ -495,6 +495,12 @@ class rssnet(object):
                 # For metrics calculation, reshape pre to match target
                 pre_metrics = pre.reshape(self.data_p['data_shape'])
                 target_metrics = self.data_train['real_tensor'][1].reshape(self.data_p['data_shape'])
+                
+                # Calculate FID loss for observed positions
+                pre_fid = pre_metrics[self.mask==1]
+                target_fid = target_metrics[self.mask==1]
+                fid_loss = self.loss_fn(pre_fid, target_fid)
+                self.log('fid_loss', fid_loss.item())
             else:
                 test_loss = self.loss_fn(pre, target.reshape(pre.shape))
                 pre_metrics = pre
