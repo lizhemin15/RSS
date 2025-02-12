@@ -500,6 +500,9 @@ class rssnet(object):
             
             # Log test loss
             self.log('test_loss', test_loss.item())
+
+            # Log prediction
+            self.log('img')
             
             # 更新指标计算方法映射
             metric_funcs = {
@@ -580,11 +583,11 @@ class rssnet(object):
             #print('PSNR=',self.cal_psnr(show_img,self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()),'dB')
         elif self.show_p['show_content'] == 'original':
             show_img = self.data_train['obs_tensor'][1].reshape(self.data_p['data_shape']).detach().cpu().numpy()
-            if self.task_p['task_type'] == 'completion':
-                show_img = show_img*self.mask.reshape(self.data_p['data_shape']).detach().cpu().numpy()
-
         else:
             raise('Wrong show_content in show_p:',self.show_p['show_content'])
+        
+
+
         if self.show_p['show_type'] == 'gray_img':
             plt.imshow(show_img,'gray',vmin=0,vmax=1)
         elif self.show_p['show_type'] == 'red_img':
@@ -604,6 +607,7 @@ class rssnet(object):
                 epoch = 0
                 psnr = 0
             plt.text(20, 40, 'Epoch='+str(epoch)+'\nPSNR='+str(psnr)+'dB', color='white', fontsize=12, backgroundcolor='black')
+
         if self.save_p['save_if'] or self.save_p['img_save_if']:
             if self.save_p['save_path'].split('.')[-1] in ['png','jpg','jpeg']:
                 save_img_path = self.save_p['save_path']
