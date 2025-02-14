@@ -206,7 +206,7 @@ class regularizer(nn.Module):
             self.num_blocks_w = (self.n - self.patch_size) // self.stride + 1
         # init opt parameters 
         self.mode = self.reg_parameter['mode']
-        if self.reg_name in ['AIR','INRR','TV','STV']:
+        if self.reg_name in ['AIR','INRR','TV','STV','DE']:
             self.lap_mode = self.reg_parameter.get('lap_mode','vanilla')
             self.huber_delta = self.reg_parameter.get('huber_delta',0.1)
             if self.lap_mode == 'Huber':
