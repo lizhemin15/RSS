@@ -37,7 +37,7 @@ def GAUSS(parameter):
         'dim_hidden': 256, 
         'dim_out': 1,
         'num_layers': 4,
-        'w0_initial': 30.0
+        'w0_initial': 10.0
     }
     
     for key in de_para_dict.keys():
