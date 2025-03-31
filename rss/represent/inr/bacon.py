@@ -10,14 +10,14 @@ def BACONS(parameter):
     # 默认参数字典
     de_para_dict = {
         'dim_in': 2,
-        'dim_hidden': 100,
+        'dim_hidden': 256,
         'dim_out': 1,
         'num_layers': 3,
         'weight_scale': 1.0,
         'bias': True,
         'output_act': False,
-        'w0_initial': 128,
-        'quantization_interval': 2 * np.pi,  # 假设数据范围 [-.5, .5]
+        'w0_initial': 10,
+        'quantization_interval': 1,  # 假设数据范围 [-.5, .5]
         'centered': True,
         'input_scales': [1/8, 1/8, 1/4, 1/4, 1/4],
         'output_layers': [1, 2, 4],
