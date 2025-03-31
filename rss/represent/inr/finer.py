@@ -76,7 +76,8 @@ def FINER(parameter):
         'first_omega_0': 30,
         'hidden_omega_0': 30,
         'first_bias_scale': None,
-        'scale_req_grad': False
+        'scale_req_grad': False,
+        'bias': True
     }  
     
     for key in de_para_dict.keys():
