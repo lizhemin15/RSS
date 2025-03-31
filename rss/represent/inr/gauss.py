@@ -34,7 +34,7 @@ class Gauss(nn.Module):
 def GAUSS(parameter):
     de_para_dict = {
         'dim_in': 2,
-        'dim_hidden': 100, 
+        'dim_hidden': 256, 
         'dim_out': 1,
         'num_layers': 4,
         'w0_initial': 30.0

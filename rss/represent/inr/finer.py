@@ -70,7 +70,7 @@ class Finer(nn.Module):
 def FINER(parameter):
     de_para_dict = {
         'dim_in': 2,
-        'dim_hidden': 100, 
+        'dim_hidden': 256, 
         'dim_out': 1,
         'num_layers': 4,
         'first_omega_0': 30,
