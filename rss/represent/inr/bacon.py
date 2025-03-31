@@ -16,7 +16,7 @@ def BACONS(parameter):
         'weight_scale': 1.0,
         'bias': True,
         'output_act': False,
-        'w0_initial': 10,
+        'w0_initial': 128,
         'quantization_interval': 1,  # 假设数据范围 [-.5, .5]
         'centered': True,
         'input_scales': [1/8, 1/8, 1/4, 1/4, 1/4],
