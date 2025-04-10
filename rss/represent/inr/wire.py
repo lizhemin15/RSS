@@ -87,7 +87,7 @@ class INR(nn.Module):
                  out_features, outermost_linear=True,
                  first_omega_0=30, hidden_omega_0=30., scale=10.0,
                  pos_encode=False, sidelength=512, fn_samples=None,
-                 use_nyquist=True):
+                 use_nyquist=True, asi_if=False):
         super().__init__()
         
         # All results in the paper were with the default complex 'gabor' nonlinearity
@@ -120,12 +120,24 @@ class INR(nn.Module):
         final_linear = nn.Linear(hidden_features,
                                  out_features,
                                  dtype=dtype)            
-        self.net.append(final_linear)
-        
+        # self.net.append(final_linear)
+        self.last_layer = final_linear
+        self.asi_if = asi_if
+        if self.asi_if:
+            self.last_layer_asi = nn.Linear(hidden_features, out_features)
+            with torch.no_grad():
+                self.last_layer_asi.weight.copy_(self.last_layer.weight)
+                if self.last_layer.bias is not None and self.last_layer_asi.bias is not None:
+                    self.last_layer_asi.bias.copy_(self.last_layer.bias)
+
         self.net = nn.Sequential(*self.net)
     
     def forward(self, coords):
-        output = self.net(coords)
+        if self.asi_if:
+            output = self.net(coords)
+            output = (self.last_layer(output)- self.last_layer_asi(output))*1.4142135623730951/2
+        else:
+            output = self.net(coords)
         
         if self.wavelet == 'gabor':
             return output.real
@@ -146,7 +158,8 @@ def WIRE(parameter):
         'pos_encode': False,
         'sidelength': 512,
         'fn_samples': None,
-        'use_nyquist': True
+        'use_nyquist': True,
+        'asi_if': False
     }
     
     # 更新参数
@@ -165,7 +178,8 @@ def WIRE(parameter):
                pos_encode=parameter['pos_encode'], 
                sidelength=parameter['sidelength'], 
                fn_samples=parameter['fn_samples'], 
-               use_nyquist=parameter['use_nyquist'])
+               use_nyquist=parameter['use_nyquist'],
+               asi_if=parameter['asi_if'])
 
 
 
