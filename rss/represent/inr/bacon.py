@@ -22,7 +22,8 @@ def BACONS(parameter):
         'input_scales': [1/8, 1/8, 1/4, 1/4, 1/4],
         'output_layers': [1, 2, 4],
         'is_sdf': False,
-        'reuse_filters': False
+        'reuse_filters': False,
+        'asi_if': False
     }
     
     # 更新参数
@@ -37,7 +38,8 @@ def BACONS(parameter):
                   frequency=(parameter['w0_initial'],parameter['w0_initial']), quantization_interval=parameter['quantization_interval'], 
                   centered=parameter['centered'], input_scales=parameter['input_scales'], 
                   output_layers=parameter['output_layers'], is_sdf=parameter['is_sdf'], 
-                  reuse_filters=parameter['reuse_filters'])
+                  reuse_filters=parameter['reuse_filters'],
+                  asi_if=parameter['asi_if'])
 
 
 def init_weights_normal(m):
@@ -132,7 +134,7 @@ def mfn_weights_init(m):
 class MFNBase(nn.Module):
 
     def __init__(self, hidden_size, out_size, n_layers, weight_scale,
-                 bias=True, output_act=False):
+                 bias=True, output_act=False, asi_if=False):
         super().__init__()
 
         self.linear = nn.ModuleList(
@@ -140,11 +142,19 @@ class MFNBase(nn.Module):
         )
 
         self.output_linear = nn.Linear(hidden_size, out_size)
+        self.asi_if = asi_if
 
         self.output_act = output_act
 
         self.linear.apply(mfn_weights_init)
         self.output_linear.apply(mfn_weights_init)
+
+        if self.asi_if:
+            self.output_linear_asi = nn.Linear(hidden_size, out_size)
+            with torch.no_grad():
+                self.output_linear_asi.weight.copy_(self.output_linear.weight)
+                if self.output_linear.bias is not None and self.output_linear_asi.bias is not None:
+                    self.output_linear_asi.bias.copy_(self.output_linear.bias)
 
     def forward(self, model_input):
 
@@ -155,7 +165,12 @@ class MFNBase(nn.Module):
         out = self.filters[0](coords)
         for i in range(1, len(self.filters)):
             out = self.filters[i](coords) * self.linear[i - 1](out)
-        out = self.output_linear(out)
+        
+        if self.asi_if:
+            out = self.output_linear(out)
+            out = (out - self.output_linear_asi(out))*1.4142135623730951/2
+        else:
+            out = self.output_linear(out)
 
         if self.output_act:
             out = torch.sin(out)
@@ -204,10 +219,11 @@ class BACON(MFNBase):
                  output_layers=None,
                  is_sdf=False,
                  reuse_filters=False,
+                 asi_if=False,
                  **kwargs):
 
         super().__init__(hidden_size, out_size, hidden_layers,
-                         weight_scale, bias, output_act)
+                         weight_scale, bias, output_act, asi_if)
 
         self.quantization_interval = quantization_interval
         self.hidden_layers = hidden_layers
@@ -243,7 +259,11 @@ class BACON(MFNBase):
             out = self.filters[0](coords)
             for i in range(1, len(self.filters)):
                 out = self.filters[i](coords) * self.linear[i - 1](out)
-        out = self.output_linear(out)
+        if self.asi_if:
+            out = self.output_linear(out)
+            out = (out - self.output_linear_asi(out))*1.4142135623730951/2
+        else:
+            out = self.output_linear(out)
         if self.output_act:
             out = torch.sin(out)
         return out
