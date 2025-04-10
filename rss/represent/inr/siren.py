@@ -85,6 +85,9 @@ class SirenNet(nn.Module):
         self.asi_if = asi_if
         if self.asi_if:
             self.last_layer_asi = Siren(dim_in = dim_hidden, dim_out = dim_out, w0 = w0, use_bias = use_bias, activation = final_activation, drop_out=drop_out[-1])
+            self.last_layer_asi.weight.data.copy_(self.last_layer.weight.data)
+            if self.last_layer.bias is not None and self.last_layer_asi.bias is not None:
+                self.last_layer_asi.bias.data.copy_(self.last_layer.bias.data)
 
     def forward(self, x, mods = None):
         mods = cast_tuple(mods, self.num_layers)
