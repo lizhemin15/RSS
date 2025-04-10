@@ -82,7 +82,8 @@ class SirenNet(nn.Module):
 
         final_activation = nn.Identity() if not exists(final_activation) else final_activation
         self.last_layer = Siren(dim_in = dim_hidden, dim_out = dim_out, w0 = w0, use_bias = use_bias, activation = final_activation, drop_out=drop_out[-1])
-        if asi_if:
+        self.asi_if = asi_if
+        if self.asi_if:
             self.last_layer_asi = Siren(dim_in = dim_hidden, dim_out = dim_out, w0 = w0, use_bias = use_bias, activation = final_activation, drop_out=drop_out[-1])
 
     def forward(self, x, mods = None):
@@ -107,7 +108,7 @@ def SIREN(parameter):
         parameter[key] = param_now
     # print('SIREN : ',parameter)
     return SirenNet(parameter['dim_in'], parameter['dim_hidden'], parameter['dim_out'], parameter['num_layers'],
-                    parameter['w0'], parameter['w0_initial'], parameter['use_bias'], parameter['final_activation'])
+                    parameter['w0'], parameter['w0_initial'], parameter['use_bias'], parameter['final_activation'], parameter['asi_if'])
 
 
 
