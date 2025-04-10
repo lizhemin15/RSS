@@ -76,11 +76,11 @@ class Layer(nn.Module):
 
 class INR(nn.Module):
     def __init__(self, dim_in, dim_hidden, dim_out, num_layers, use_bias = True,
-                 final_activation = None, drop_out = [0],activation = 'relu', init_mode = None,monoto_mode=0):
+                 final_activation = None, drop_out = [0],activation = 'relu', init_mode = None,monoto_mode=0,asi_if=False):
         super().__init__()
         self.num_layers = num_layers
         self.dim_hidden = dim_hidden
-
+        self.asi_if = asi_if
         self.layers = nn.ModuleList([])
         for ind in range(num_layers):
             is_first = ind == 0
@@ -99,12 +99,21 @@ class INR(nn.Module):
         final_activation = 'identity' if not exists(final_activation) else final_activation
         self.last_layer = Layer(dim_in = dim_hidden, dim_out = dim_out, use_bias = use_bias,
                                  activation = final_activation, drop_out=drop_out[-1],monoto_mode=monoto_mode)
+        if self.asi_if:
+            self.last_layer_asi = Layer(dim_in = dim_hidden, dim_out = dim_out, use_bias = use_bias,
+                                 activation = final_activation, drop_out=drop_out[-1],monoto_mode=monoto_mode)
+            self.last_layer_asi.weight.data.copy_(self.last_layer.weight.data)
+            if self.last_layer.bias is not None and self.last_layer_asi.bias is not None:
+                self.last_layer_asi.bias.data.copy_(self.last_layer.bias.data)
 
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
 
-        return self.last_layer(x)
+        if self.asi_if:
+            return (self.last_layer(x)- self.last_layer_asi(x))*1.4142135623730951/2
+        else:
+            return self.last_layer(x)
 
 
 
@@ -139,13 +148,13 @@ class GaussianSplatting(nn.Module):
 
 
 def MLP(parameter):
-    de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'activation':'relu'}
+    de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'activation':'relu','asi_if':False}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
     # print('MLP : ',parameter)
     return INR(dim_in=parameter['dim_in'], dim_hidden=parameter['dim_hidden'], dim_out=parameter['dim_out'], 
-               num_layers=parameter['num_layers'], activation = parameter['activation'])
+               num_layers=parameter['num_layers'], activation = parameter['activation'], asi_if = parameter['asi_if'])
 
 def Splatting(parameter):
     pass
