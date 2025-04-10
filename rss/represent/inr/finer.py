@@ -48,7 +48,7 @@ class FinerLayer(nn.Module):
 
 class Finer(nn.Module):
     def __init__(self, in_features, hidden_features, hidden_layers, out_features, first_omega_0=30, hidden_omega_0=30.0, bias=True, 
-                 first_bias_scale=None, scale_req_grad=False):
+                 first_bias_scale=None, scale_req_grad=False, asi_if=False):
         super().__init__()
         self.net = []
         self.net.append(FinerLayer(in_features, hidden_features, is_first=True, omega_0=first_omega_0, first_bias_scale=first_bias_scale, scale_req_grad=scale_req_grad))
@@ -60,12 +60,22 @@ class Finer(nn.Module):
         with torch.no_grad():
             final_linear.weight.uniform_(-np.sqrt(6 / hidden_features) / hidden_omega_0,
                                           np.sqrt(6 / hidden_features) / hidden_omega_0)
-        self.net.append(final_linear)
+        # self.net.append(final_linear)
         self.net = nn.Sequential(*self.net)
+        self.last_layer = final_linear
+        self.asi_if = asi_if
+        if self.asi_if:
+            self.last_layer_asi = nn.Linear(hidden_features, out_features)
+            with torch.no_grad():
+                self.last_layer_asi.weight.uniform_(-np.sqrt(6 / hidden_features) / hidden_omega_0,
+                                          np.sqrt(6 / hidden_features) / hidden_omega_0)
 
     def forward(self, coords):
         output = self.net(coords)
-        return output   
+        if self.asi_if:
+            return (self.last_layer(output)- self.last_layer_asi(output))*1.4142135623730951/2
+        else:
+            return self.last_layer(output)
     
 def FINER(parameter):
     de_para_dict = {
@@ -77,7 +87,8 @@ def FINER(parameter):
         'hidden_omega_0': 30,
         'first_bias_scale': None,
         'scale_req_grad': False,
-        'bias': True
+        'bias': True,
+        'asi_if': False
     }  
     
     for key in de_para_dict.keys():
@@ -93,5 +104,6 @@ def FINER(parameter):
         hidden_omega_0=parameter['hidden_omega_0'],
         bias=parameter['bias'], 
         first_bias_scale=parameter['first_bias_scale'],
-        scale_req_grad=parameter['scale_req_grad']
+        scale_req_grad=parameter['scale_req_grad'],
+        asi_if=parameter['asi_if']
     )
