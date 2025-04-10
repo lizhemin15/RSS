@@ -60,7 +60,7 @@ class Siren(nn.Module):
 # siren network
 
 class SirenNet(nn.Module):
-    def __init__(self, dim_in, dim_hidden, dim_out, num_layers, w0 = 1., w0_initial = 30., use_bias = True, final_activation = None, drop_out=[0,0,0,0,0]):
+    def __init__(self, dim_in, dim_hidden, dim_out, num_layers, w0 = 1., w0_initial = 30., use_bias = True, final_activation = None, drop_out=[0,0,0,0,0], asi_if = False):
         super().__init__()
         self.num_layers = num_layers
         self.dim_hidden = dim_hidden
@@ -82,6 +82,8 @@ class SirenNet(nn.Module):
 
         final_activation = nn.Identity() if not exists(final_activation) else final_activation
         self.last_layer = Siren(dim_in = dim_hidden, dim_out = dim_out, w0 = w0, use_bias = use_bias, activation = final_activation, drop_out=drop_out[-1])
+        if asi_if:
+            self.last_layer_asi = Siren(dim_in = dim_hidden, dim_out = dim_out, w0 = w0, use_bias = use_bias, activation = final_activation, drop_out=drop_out[-1])
 
     def forward(self, x, mods = None):
         mods = cast_tuple(mods, self.num_layers)
@@ -91,13 +93,15 @@ class SirenNet(nn.Module):
 
             if exists(mod):
                 x *= rearrange(mod, 'd -> () d')
-
-        return self.last_layer(x)
+        if self.asi_if:
+            return (self.last_layer(x)- self.last_layer_asi(x))*1.4142135623730951/2
+        else:
+            return self.last_layer(x)
 
 
 
 def SIREN(parameter):
-    de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'w0':1,'w0_initial':30.,'use_bias':True, 'final_activation':None}
+    de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'w0':1,'w0_initial':30.,'use_bias':True, 'final_activation':None, 'asi_if':False}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
