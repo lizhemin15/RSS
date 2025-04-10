@@ -67,8 +67,9 @@ class Finer(nn.Module):
         if self.asi_if:
             self.last_layer_asi = nn.Linear(hidden_features, out_features)
             with torch.no_grad():
-                self.last_layer_asi.weight.uniform_(-np.sqrt(6 / hidden_features) / hidden_omega_0,
-                                          np.sqrt(6 / hidden_features) / hidden_omega_0)
+                self.last_layer_asi.weight.copy_(self.last_layer.weight)
+                if self.last_layer.bias is not None and self.last_layer_asi.bias is not None:
+                    self.last_layer_asi.bias.copy_(self.last_layer.bias)
 
     def forward(self, coords):
         output = self.net(coords)
