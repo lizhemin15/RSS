@@ -108,7 +108,7 @@ def SIREN(parameter):
         parameter[key] = param_now
     # print('SIREN : ',parameter)
     return SirenNet(parameter['dim_in'], parameter['dim_hidden'], parameter['dim_out'], parameter['num_layers'],
-                    parameter['w0'], parameter['w0_initial'], parameter['use_bias'], parameter['final_activation'], parameter['asi_if'])
+                    parameter['w0'], parameter['w0_initial'], parameter['use_bias'], parameter['final_activation'], asi_if=parameter['asi_if'])
 
 
 
