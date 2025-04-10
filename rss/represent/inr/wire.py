@@ -138,6 +138,7 @@ class INR(nn.Module):
             output = (self.last_layer(output)- self.last_layer_asi(output))*1.4142135623730951/2
         else:
             output = self.net(coords)
+            output = self.last_layer(output)
         
         if self.wavelet == 'gabor':
             return output.real
