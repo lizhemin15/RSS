@@ -141,10 +141,9 @@ class INR(nn.Module):
             output = self.last_layer(output)
         
         if self.wavelet == 'gabor':
-            print('gabor')
             return output.real
          
-        return output
+        return output.real
     
 
 def WIRE(parameter):
