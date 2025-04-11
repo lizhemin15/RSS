@@ -357,17 +357,35 @@ class KAN(torch.nn.Module):
             elif spline_type == "fourier":
                 self.layers.append(NaiveFourierKANLayer(inputdim=in_features, outdim=out_features, gridsize=grid_size, addbias=True))
             elif spline_type == "chebyshev":
-                self.layers.append(ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size))
+                if layer_i < len(layers_hidden) - 1:
+                    self.layers.append(ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size))
+                else:
+                    self.last_layer_num = layer_i
+                    self.last_layer = ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size)
+                    if self.asi_if:
+                        # 创建独立的last_layer_asi，但初始化参数与last_layer相同
+                        self.last_layer_asi = ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size)
+                        # 只在初始化时复制参数值，之后两者独立优化
+                        with torch.no_grad():
+                            for param_name, param in self.last_layer.named_parameters():
+                                if hasattr(self.last_layer_asi, param_name):
+                                    getattr(self.last_layer_asi, param_name).copy_(param)
             else:
                 raise ValueError("Spline type not recognized")
             if self.layer_norm and layer_i < len(layers_hidden) - 2:
                 self.layers.append(nn.LayerNorm(out_features))
 
     def forward(self, x: torch.Tensor, update_grid=False):
-        for layer in self.layers:
+        for layer_i,layer in enumerate(self.layers):
             if update_grid:
                 layer.update_grid(x)
-            x = layer(x)
+            if layer_i == self.last_layer_num:
+                if self.asi_if:
+                    x = (self.last_layer(x)- self.last_layer_asi(x))*1.4142135623730951/2
+                else:
+                    x = self.last_layer(x)
+            else:
+                x = layer(x)
         return x
 
     def regularization_loss(self, regularize_activation=1.0, regularize_entropy=1.0):
