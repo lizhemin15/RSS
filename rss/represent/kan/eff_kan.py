@@ -376,16 +376,14 @@ class KAN(torch.nn.Module):
                 self.layers.append(nn.LayerNorm(out_features))
 
     def forward(self, x: torch.Tensor, update_grid=False):
-        for layer_i,layer in enumerate(self.layers):
+        for layer in self.layers:
             if update_grid:
                 layer.update_grid(x)
-            if layer_i == self.last_layer_num*2:
-                if self.asi_if:
-                    x = (self.last_layer(x)- self.last_layer_asi(x))*1.4142135623730951/2
-                else:
-                    x = self.last_layer(x)
-            else:
-                x = layer(x)
+            x = layer(x)
+        if self.asi_if:
+            x = (self.last_layer(x)- self.last_layer_asi(x))*1.4142135623730951/2
+        else:
+            x = self.last_layer(x)
         return x
 
     def regularization_loss(self, regularize_activation=1.0, regularize_entropy=1.0):
