@@ -357,7 +357,7 @@ class KAN(torch.nn.Module):
             elif spline_type == "fourier":
                 self.layers.append(NaiveFourierKANLayer(inputdim=in_features, outdim=out_features, gridsize=grid_size, addbias=True))
             elif spline_type == "chebyshev":
-                if layer_i < len(layers_hidden) - 1:
+                if layer_i < len(layers_hidden) - 2:
                     self.layers.append(ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size))
                 else:
                     self.last_layer_num = layer_i
