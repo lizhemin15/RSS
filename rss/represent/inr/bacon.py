@@ -260,8 +260,7 @@ class BACON(MFNBase):
             for i in range(1, len(self.filters)):
                 out = self.filters[i](coords) * self.linear[i - 1](out)
         if self.asi_if:
-            out = self.output_linear(out)
-            out = (out - self.output_linear_asi(out))*1.4142135623730951/2
+            out = (self.output_linear(out) - self.output_linear_asi(out))*1.4142135623730951/2
         else:
             out = self.output_linear(out)
         if self.output_act:
