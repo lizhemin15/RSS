@@ -361,7 +361,6 @@ class KAN(torch.nn.Module):
                     self.layers.append(ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size))
                 else:
                     self.last_layer_num = layer_i
-                    print(self.last_layer_num)
                     self.last_layer = ChebyKANLayer(input_dim=in_features, output_dim=out_features, degree=grid_size)
                     if self.asi_if:
                         # 创建独立的last_layer_asi，但初始化参数与last_layer相同
@@ -380,7 +379,7 @@ class KAN(torch.nn.Module):
         for layer_i,layer in enumerate(self.layers):
             if update_grid:
                 layer.update_grid(x)
-            if layer_i == self.last_layer_num*2+1:
+            if layer_i == self.last_layer_num*2:
                 if self.asi_if:
                     x = (self.last_layer(x)- self.last_layer_asi(x))*1.4142135623730951/2
                 else:
