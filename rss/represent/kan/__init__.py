@@ -1,5 +1,5 @@
 from rss.represent.kan.eff_kan import KAN as EFF_KAN
-from rss.represent.kan.fast_kan import KAN as FastKAN
+from rss.represent.kan.fast_kan import FastKAN
 
 __all__ = ["EFF_KAN","FastKAN"]
 
