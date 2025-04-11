@@ -1,7 +1,7 @@
 from rss.represent.kan.eff_kan import KAN as EFF_KAN
+from rss.represent.kan.fast_kan import KAN as FastKAN
 
-
-__all__ = ["EFF_KAN"]
+__all__ = ["EFF_KAN","FastKAN"]
 
 
 def get_kan(parameter):
@@ -15,5 +15,9 @@ def get_kan(parameter):
         return EFF_KAN([parameter['dim_in'],*[parameter['dim_hidden']]*parameter['num_layers'],
                       parameter['dim_out']],spline_type=parameter['spline_type'],grid_size=parameter['grid_size'],
                       layer_norm = parameter['layer_norm'])
+    elif parameter.get('net_name','SIREN') == "FAST_KAN":
+        return FastKAN(layers_hidden=[parameter['dim_in'],*[parameter['dim_hidden']]*parameter['num_layers']],
+                       grid_min=-1,grid_max=1,
+                       num_grids=parameter['grid_size'])
     else:
-        raise NotImplementedError
+        raise NotImplementedError('net_name must be EFF_KAN or FAST_KAN')
