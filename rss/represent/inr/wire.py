@@ -124,7 +124,8 @@ class INR(nn.Module):
         self.last_layer = final_linear
         self.asi_if = asi_if
         if self.asi_if:
-            self.last_layer_asi = nn.Linear(hidden_features, out_features)
+            self.last_layer_asi = nn.Linear(hidden_features, out_features,
+                                 dtype=dtype)
             with torch.no_grad():
                 self.last_layer_asi.weight.copy_(self.last_layer.weight)
                 if self.last_layer.bias is not None and self.last_layer_asi.bias is not None:
@@ -143,7 +144,7 @@ class INR(nn.Module):
         if self.wavelet == 'gabor':
             return output.real
          
-        return output.real
+        return output
     
 
 def WIRE(parameter):
