@@ -259,15 +259,15 @@ class NaiveFourierKANLayer(torch.nn.Module):
         k = torch.reshape(torch.arange(1, self.gridsize+1, device=x.device), (1, 1, 1, self.gridsize))
         xrshp = torch.reshape(x, (x.shape[0], 1, x.shape[1], 1)) 
         # This should be fused to avoid materializing memory
-        c = torch.cos(k * xrshp)
-        s = torch.sin(k * xrshp)
-        # We compute the interpolation of the various functions defined by their Fourier coefficient for each input coordinate and we sum them 
-        y = torch.sum(c * self.fouriercoeffs[0:1], (-2, -1)) 
-        y += torch.sum(s * self.fouriercoeffs[1:2], (-2, -1))
-        if self.addbias:
-            y += self.bias
+        # c = torch.cos(k * xrshp)
+        # s = torch.sin(k * xrshp)
+        # # We compute the interpolation of the various functions defined by their Fourier coefficient for each input coordinate and we sum them 
+        # y = torch.sum(c * self.fouriercoeffs[0:1], (-2, -1)) 
+        # y += torch.sum(s * self.fouriercoeffs[1:2], (-2, -1))
+        # if self.addbias:
+        #     y += self.bias
         # End fuse
-        '''
+        
         # You can use einsum instead to reduce memory usage
         # It stills not as good as fully fused but it should help
         # einsum is usually slower though
@@ -279,7 +279,7 @@ class NaiveFourierKANLayer(torch.nn.Module):
         diff = torch.sum((y2 - y)**2)
         print("diff")
         print(diff)  # should be ~0
-        '''
+        
         y = torch.reshape(y, outshape)
         return y
 
@@ -330,13 +330,15 @@ class KAN(torch.nn.Module):
         grid_eps=0.02,
         grid_range=[-1, 1],
         spline_type="spline",
-        layer_norm = False
+        layer_norm = False,
+        asi_if = False
     ):
         super(KAN, self).__init__()
         self.grid_size = grid_size
         self.spline_order = spline_order
         self.layer_norm = layer_norm
         self.layers = torch.nn.ModuleList()
+        self.asi_if = asi_if
         for layer_i, (in_features, out_features) in enumerate(zip(layers_hidden, layers_hidden[1:])):
             if spline_type == "spline":
                 self.layers.append(

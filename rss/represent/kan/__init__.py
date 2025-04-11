@@ -6,16 +6,16 @@ __all__ = ["EFF_KAN","FastKAN"]
 
 def get_kan(parameter):
     de_para_dict = {'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,
-                    'spline_type':'spline','grid_size':5,'layer_norm':False}
+                    'spline_type':'chebyshev','grid_size':5,'layer_norm':False}
     for key in de_para_dict.keys():
         param_now = parameter.get(key,de_para_dict.get(key))
         parameter[key] = param_now
     # print('KAN : ',parameter)
-    if parameter.get('net_name','SIREN') == "EFF_KAN":
+    if parameter.get('net_name','EFF_KAN') == "EFF_KAN":
         return EFF_KAN([parameter['dim_in'],*[parameter['dim_hidden']]*parameter['num_layers'],parameter['dim_out']],
                        spline_type=parameter['spline_type'],grid_size=parameter['grid_size'],
                       layer_norm = parameter['layer_norm'])
-    elif parameter.get('net_name','SIREN') == "FastKAN":
+    elif parameter.get('net_name','EFF_KAN') == "FastKAN":
         return FastKAN(layers_hidden=[parameter['dim_in'],*[parameter['dim_hidden']]*parameter['num_layers'],parameter['dim_out']],
                        grid_min=-1,grid_max=1,
                        num_grids=parameter['grid_size'])
