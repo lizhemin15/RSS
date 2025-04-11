@@ -54,7 +54,7 @@ def get_nn(parameter={}):
         net = FeatureMap(parameter)
     elif net_name == 'HashEmbedder':
         net = HashEmbedder(parameter)
-    elif net_name in ['EFF_KAN','KAN', 'ChebyKAN']:
+    elif net_name in ['EFF_KAN','KAN', 'ChebyKAN','FastKAN']:
         net = get_kan(parameter)
     elif net_name == 'RecurrentINR':
         net = RecurrentINR(parameter)
