@@ -380,6 +380,7 @@ class KAN(torch.nn.Module):
             if update_grid:
                 layer.update_grid(x)
             if layer_i == self.last_layer_num*2+1:
+                print('layer_i',layer_i)
                 if self.asi_if:
                     x = (self.last_layer(x)- self.last_layer_asi(x))*1.4142135623730951/2
                 else:
