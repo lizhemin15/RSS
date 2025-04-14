@@ -73,7 +73,10 @@ class SafeLayer(nn.Module):
         out = torch.einsum('bod,od->bo', out, cheby_coeffs)
         
         # 添加残差连接
-        if residual is not None and residual.size(-1) == out.size(-1):
+        if residual is not None:
+            # 如果维度不匹配,使用线性投影
+            if residual.size(-1) != out.size(-1):
+                residual = F.linear(residual, torch.zeros(out.size(-1), residual.size(-1)).to(residual.device))
             out = out + residual
             
         return out
@@ -153,8 +156,8 @@ class SafeINR(nn.Module):
 def SAFE(parameter):
     de_para_dict = {
         'dim_in': 2,
-        'dim_hidden': 100,
-        'dim_out': 1,
+        'dim_hidden': 256,  # 保持隐藏层维度为256
+        'dim_out': 1,       # 修改输出维度为1
         'num_layers': 4,
         'degree': 3,
         'asi_if': False
