@@ -132,18 +132,26 @@ class TVLayer(nn.Module):
     
     def compute_gradients(self, x):
         """计算图像的梯度"""
+        # 使用相同的padding确保输出尺寸一致
+        padding = (1, 1)  # 水平和垂直方向使用相同的padding
+        
         # 水平方向梯度
-        h_grad = F.conv2d(x, self.h_kernel, padding=(0, 1), groups=self.in_channels)
+        h_grad = F.conv2d(x, self.h_kernel, padding=padding, groups=self.in_channels)
         # 垂直方向梯度
-        v_grad = F.conv2d(x, self.v_kernel, padding=(1, 0), groups=self.in_channels)
+        v_grad = F.conv2d(x, self.v_kernel, padding=padding, groups=self.in_channels)
+        
         return h_grad, v_grad
     
     def compute_divergence(self, h_grad, v_grad):
         """计算梯度的散度"""
+        # 使用相同的padding确保输出尺寸一致
+        padding = (1, 1)  # 水平和垂直方向使用相同的padding
+        
         # 水平方向散度
-        h_div = F.conv2d(h_grad, self.h_kernel.flip(-1), padding=(0, 1), groups=self.in_channels)
+        h_div = F.conv2d(h_grad, self.h_kernel.flip(-1), padding=padding, groups=self.in_channels)
         # 垂直方向散度
-        v_div = F.conv2d(v_grad, self.v_kernel.flip(-1), padding=(1, 0), groups=self.in_channels)
+        v_div = F.conv2d(v_grad, self.v_kernel.flip(-1), padding=padding, groups=self.in_channels)
+        
         return h_div + v_div
     
     def forward(self, x):
