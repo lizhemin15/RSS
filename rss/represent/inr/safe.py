@@ -133,7 +133,7 @@ class SafeINR(nn.Module):
         else:
             return self.last_layer(x)
 
-def SafeMLP(parameter):
+def SAFE(parameter):
     de_para_dict = {
         'dim_in': 2,
         'dim_hidden': 100,
