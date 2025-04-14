@@ -18,6 +18,9 @@ class SafeLayer(nn.Module):
         self.weight = nn.Parameter(weight)
         self.bias = nn.Parameter(bias) if use_bias else None
         
+        # 添加层归一化
+        self.layer_norm = nn.LayerNorm(dim_out)
+        
         # Dropout
         if drop_out:
             self.dropout = nn.Dropout(p=0.1)
@@ -39,7 +42,7 @@ class SafeLayer(nn.Module):
         if bias is not None:
             bias.uniform_(-w_std, w_std)
 
-    def forward(self, x, cheby_coeffs, arange):
+    def forward(self, x, cheby_coeffs, arange, residual=None):
         # 线性变换
         if self.monoto_mode == 0:
             out = F.linear(x, self.weight, self.bias)
@@ -50,13 +53,16 @@ class SafeLayer(nn.Module):
         else:
             raise('Wrong monoto_mode = ', self.monoto_mode)
             
+        # 层归一化
+        out = self.layer_norm(out)
+            
         # Dropout
         if self.drop_if:
             out = self.dropout(out)
             
         # 切比雪夫多项式激活
-        # 归一化到[-1,1]
-        out = torch.tanh(out)
+        # 使用更平滑的归一化
+        out = torch.tanh(out) * 0.9  # 缩小范围到[-0.9, 0.9]
         # 扩展维度以计算多项式
         out = out.view((-1, self.dim_out, 1)).expand(-1, -1, cheby_coeffs.size(-1))
         # 计算切比雪夫多项式
@@ -66,6 +72,10 @@ class SafeLayer(nn.Module):
         # 组合多项式
         out = torch.einsum('bod,od->bo', out, cheby_coeffs)
         
+        # 添加残差连接
+        if residual is not None and residual.size(-1) == out.size(-1):
+            out = out + residual
+            
         return out
 
 class SafeINR(nn.Module):
@@ -78,15 +88,19 @@ class SafeINR(nn.Module):
         
         # 共享的切比雪夫多项式系数
         self.cheby_coeffs = nn.Parameter(torch.empty(dim_hidden, degree + 1))
-        nn.init.normal_(self.cheby_coeffs, mean=0.0, std=1 / (dim_hidden * (degree + 1)))
+        # 使用更好的初始化
+        nn.init.normal_(self.cheby_coeffs, mean=0.0, std=0.1)
         self.register_buffer("arange", torch.arange(0, degree + 1, 1))
+        
+        # 输入投影层
+        self.input_proj = nn.Linear(dim_in, dim_hidden)
         
         self.layers = nn.ModuleList([])
         
         # 隐藏层
         for ind in range(num_layers):
             is_first = ind == 0
-            layer_dim_in = dim_in if is_first else dim_hidden
+            layer_dim_in = dim_hidden  # 所有层使用相同的维度
             self.layers.append(SafeLayer(
                 dim_in=layer_dim_in,
                 dim_out=dim_hidden,
@@ -121,8 +135,14 @@ class SafeINR(nn.Module):
                 self.last_layer_asi.bias.data.copy_(self.last_layer.bias.data)
 
     def forward(self, x):
+        # 输入投影
+        x = self.input_proj(x)
+        residual = x
+        
+        # 隐藏层
         for layer in self.layers:
-            x = layer(x, self.cheby_coeffs, self.arange)
+            x = layer(x, self.cheby_coeffs, self.arange, residual)
+            residual = x
             
         if self.asi_if:
             return (self.last_layer(x, self.cheby_coeffs, self.arange) - 
