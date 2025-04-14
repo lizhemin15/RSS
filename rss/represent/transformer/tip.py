@@ -115,71 +115,9 @@ class PatchMerging(nn.Module):
             x = self.upsample(x)
         return x
 
-# 添加TV正则化层
-class TVLayer(nn.Module):
-    def __init__(self, in_channels, weight=0.1, num_iter=10):
-        super().__init__()
-        self.in_channels = in_channels
-        self.weight = weight
-        self.num_iter = num_iter
-        
-        # 创建水平和垂直方向的差分核
-        h_kernel = torch.tensor([[-1, 1]], dtype=torch.float32).view(1, 1, 1, 2)
-        v_kernel = torch.tensor([[-1], [1]], dtype=torch.float32).view(1, 1, 2, 1)
-        
-        self.register_buffer('h_kernel', h_kernel.repeat(in_channels, 1, 1, 1))
-        self.register_buffer('v_kernel', v_kernel.repeat(in_channels, 1, 1, 1))
-    
-    def compute_gradients(self, x):
-        """计算图像的梯度"""
-        # 使用相同的padding确保输出尺寸一致
-        padding = (1, 1)  # 水平和垂直方向使用相同的padding
-        
-        # 水平方向梯度
-        h_grad = F.conv2d(x, self.h_kernel, padding=padding, groups=self.in_channels)
-        # 垂直方向梯度
-        v_grad = F.conv2d(x, self.v_kernel, padding=padding, groups=self.in_channels)
-        
-        return h_grad, v_grad
-    
-    def compute_divergence(self, h_grad, v_grad):
-        """计算梯度的散度"""
-        # 使用相同的padding确保输出尺寸一致
-        padding = (1, 1)  # 水平和垂直方向使用相同的padding
-        
-        # 水平方向散度
-        h_div = F.conv2d(h_grad, self.h_kernel.flip(-1), padding=padding, groups=self.in_channels)
-        # 垂直方向散度
-        v_div = F.conv2d(v_grad, self.v_kernel.flip(-1), padding=padding, groups=self.in_channels)
-        
-        return h_div + v_div
-    
-    def forward(self, x):
-        """应用TV正则化"""
-        # 确保输入是4D张量 [B, C, H, W]
-        if len(x.shape) == 3:
-            B, H, W = x.shape
-            x = x.view(B, 1, H, W)
-        
-        # 迭代求解TV正则化问题
-        u = x.clone()
-        for _ in range(self.num_iter):
-            # 计算梯度
-            h_grad, v_grad = self.compute_gradients(u)
-            grad_mag = torch.sqrt(h_grad.pow(2) + v_grad.pow(2) + 1e-10)
-            
-            # 计算散度
-            div = self.compute_divergence(h_grad / grad_mag, v_grad / grad_mag)
-            
-            # 更新u
-            u = u + self.weight * div
-        
-        return u
-
 class TransformerDIP(nn.Module):
     def __init__(self, img_size=256, patch_size=16, stride=8, in_chans=3, 
-                 embed_dim=256, depth=12, num_heads=8, mlp_ratio=4., 
-                 tv_weight=0.1, tv_iterations=10):
+                 embed_dim=256, depth=12, num_heads=8, mlp_ratio=4.):
         super().__init__()
         
         self.img_size = img_size
@@ -226,13 +164,6 @@ class TransformerDIP(nn.Module):
             for _ in range(depth)
         ])
         self.patch_merge = PatchMerging(img_size, patch_size, stride, embed_dim, in_chans)
-        
-        # 添加TV正则化层
-        self.tv_layer = TVLayer(
-            in_channels=in_chans,
-            weight=tv_weight,
-            num_iter=tv_iterations
-        )
         
         self.apply(self._init_weights)
     
@@ -285,39 +216,14 @@ class TransformerDIP(nn.Module):
         for blk in self.transformer:
             x = blk(x)
         x = self.patch_merge(x)
-        
-        # 应用TV正则化
-        x = self.tv_layer(x)
-            
         return x
     
 
 def TIP(parameter):
-    de_para_dict = {
-        'img_size': 256, 
-        'patch_size': 16,
-        'stride': 8, 
-        'in_chans': 1, 
-        'embed_dim': 256, 
-        'depth': 12, 
-        'num_heads': 8,
-        'mlp_ratio': 4.,
-        'tv_weight': 0.1,
-        'tv_iterations': 10
-    }
+    de_para_dict = {'img_size': 256, 'patch_size': 16,'stride': 8, 'in_chans': 1, 'embed_dim': 256, 'depth': 12, 'num_heads': 8,'mlp_ratio': 4.}
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
-    return TransformerDIP(
-        img_size=parameter['img_size'], 
-        patch_size=parameter['patch_size'], 
-        stride=parameter['stride'], 
-        in_chans=parameter['in_chans'],
-        embed_dim=parameter['embed_dim'], 
-        depth=parameter['depth'], 
-        num_heads=parameter['num_heads'], 
-        mlp_ratio=parameter['mlp_ratio'],
-        tv_weight=parameter['tv_weight'],
-        tv_iterations=parameter['tv_iterations']
-    )
+    return TransformerDIP(img_size=parameter['img_size'], patch_size=parameter['patch_size'], stride=parameter['stride'], in_chans=parameter['in_chans'],
+                          embed_dim=parameter['embed_dim'], depth=parameter['depth'], num_heads=parameter['num_heads'], mlp_ratio=parameter['mlp_ratio'])
     
