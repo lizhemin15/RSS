@@ -148,10 +148,16 @@ class SafeINR(nn.Module):
             residual = x
             
         if self.asi_if:
-            return (self.last_layer(x, self.cheby_coeffs, self.arange) - 
-                   self.last_layer_asi(x, self.cheby_coeffs, self.arange)) * 1.4142135623730951/2
+            out = (self.last_layer(x, self.cheby_coeffs, self.arange) - 
+                  self.last_layer_asi(x, self.cheby_coeffs, self.arange)) * 1.4142135623730951/2
         else:
-            return self.last_layer(x, self.cheby_coeffs, self.arange)
+            out = self.last_layer(x, self.cheby_coeffs, self.arange)
+            
+        # 确保输出维度正确
+        if out.size(-1) != 1:
+            out = out[:, :1]
+            
+        return out
 
 def SAFE(parameter):
     de_para_dict = {
