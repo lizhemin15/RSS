@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from rss.represent.utils import get_act
 
 class SafeLayer(nn.Module):
-    def __init__(self, dim_in, dim_out, use_bias=True, drop_out=False, init_mode=None, monoto_mode=0):
+    def __init__(self, dim_in, dim_out, use_bias=True, drop_out=False, init_mode='xavier_uniform', monoto_mode=0):
         super().__init__()
         self.dim_in = dim_in
         self.dim_out = dim_out
