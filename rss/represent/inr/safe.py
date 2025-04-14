@@ -4,11 +4,10 @@ import torch.nn.functional as F
 from rss.represent.utils import get_act
 
 class SafeLayer(nn.Module):
-    def __init__(self, dim_in, dim_out, degree=3, use_bias=True, drop_out=False, init_mode=None, monoto_mode=0):
+    def __init__(self, dim_in, dim_out, use_bias=True, drop_out=False, init_mode=None, monoto_mode=0):
         super().__init__()
         self.dim_in = dim_in
         self.dim_out = dim_out
-        self.degree = degree
         self.init_mode = init_mode
         self.monoto_mode = monoto_mode
         
@@ -18,11 +17,6 @@ class SafeLayer(nn.Module):
         self.init_(weight, bias)
         self.weight = nn.Parameter(weight)
         self.bias = nn.Parameter(bias) if use_bias else None
-        
-        # 切比雪夫多项式系数
-        self.cheby_coeffs = nn.Parameter(torch.empty(dim_out, degree + 1))
-        nn.init.normal_(self.cheby_coeffs, mean=0.0, std=1 / (dim_out * (degree + 1)))
-        self.register_buffer("arange", torch.arange(0, degree + 1, 1))
         
         # Dropout
         if drop_out:
@@ -45,7 +39,7 @@ class SafeLayer(nn.Module):
         if bias is not None:
             bias.uniform_(-w_std, w_std)
 
-    def forward(self, x):
+    def forward(self, x, cheby_coeffs, arange):
         # 线性变换
         if self.monoto_mode == 0:
             out = F.linear(x, self.weight, self.bias)
@@ -64,13 +58,13 @@ class SafeLayer(nn.Module):
         # 归一化到[-1,1]
         out = torch.tanh(out)
         # 扩展维度以计算多项式
-        out = out.view((-1, self.dim_out, 1)).expand(-1, -1, self.degree + 1)
+        out = out.view((-1, self.dim_out, 1)).expand(-1, -1, cheby_coeffs.size(-1))
         # 计算切比雪夫多项式
         out = out.acos()
-        out *= self.arange
+        out *= arange
         out = out.cos()
         # 组合多项式
-        out = torch.einsum('bod,od->bo', out, self.cheby_coeffs)
+        out = torch.einsum('bod,od->bo', out, cheby_coeffs)
         
         return out
 
@@ -81,6 +75,12 @@ class SafeINR(nn.Module):
         self.num_layers = num_layers
         self.dim_hidden = dim_hidden
         self.asi_if = asi_if
+        
+        # 共享的切比雪夫多项式系数
+        self.cheby_coeffs = nn.Parameter(torch.empty(dim_hidden, degree + 1))
+        nn.init.normal_(self.cheby_coeffs, mean=0.0, std=1 / (dim_hidden * (degree + 1)))
+        self.register_buffer("arange", torch.arange(0, degree + 1, 1))
+        
         self.layers = nn.ModuleList([])
         
         # 隐藏层
@@ -90,7 +90,6 @@ class SafeINR(nn.Module):
             self.layers.append(SafeLayer(
                 dim_in=layer_dim_in,
                 dim_out=dim_hidden,
-                degree=degree,
                 use_bias=use_bias,
                 drop_out=0,
                 init_mode=init_mode,
@@ -101,7 +100,6 @@ class SafeINR(nn.Module):
         self.last_layer = SafeLayer(
             dim_in=dim_hidden,
             dim_out=dim_out,
-            degree=degree,
             use_bias=use_bias,
             drop_out=drop_out[-1],
             init_mode=init_mode,
@@ -113,7 +111,6 @@ class SafeINR(nn.Module):
             self.last_layer_asi = SafeLayer(
                 dim_in=dim_hidden,
                 dim_out=dim_out,
-                degree=degree,
                 use_bias=use_bias,
                 drop_out=drop_out[-1],
                 init_mode=init_mode,
@@ -122,16 +119,16 @@ class SafeINR(nn.Module):
             self.last_layer_asi.weight.data.copy_(self.last_layer.weight.data)
             if self.last_layer.bias is not None and self.last_layer_asi.bias is not None:
                 self.last_layer_asi.bias.data.copy_(self.last_layer.bias.data)
-            self.last_layer_asi.cheby_coeffs.data.copy_(self.last_layer.cheby_coeffs.data)
 
     def forward(self, x):
         for layer in self.layers:
-            x = layer(x)
+            x = layer(x, self.cheby_coeffs, self.arange)
             
         if self.asi_if:
-            return (self.last_layer(x) - self.last_layer_asi(x)) * 1.4142135623730951/2
+            return (self.last_layer(x, self.cheby_coeffs, self.arange) - 
+                   self.last_layer_asi(x, self.cheby_coeffs, self.arange)) * 1.4142135623730951/2
         else:
-            return self.last_layer(x)
+            return self.last_layer(x, self.cheby_coeffs, self.arange)
 
 def SAFE(parameter):
     de_para_dict = {
