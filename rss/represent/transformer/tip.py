@@ -115,13 +115,47 @@ class PatchMerging(nn.Module):
             x = self.upsample(x)
         return x
 
+# 添加平滑层
+class SmoothingLayer(nn.Module):
+    def __init__(self, in_channels, kernel_size=5, sigma=1.0):
+        super().__init__()
+        self.kernel_size = kernel_size
+        self.sigma = sigma
+        self.in_channels = in_channels
+        
+        # 创建高斯核
+        kernel = self._create_gaussian_kernel(kernel_size, sigma)
+        kernel = kernel.view(1, 1, kernel_size, kernel_size).repeat(in_channels, 1, 1, 1)
+        self.register_buffer('kernel', kernel)
+        
+    def _create_gaussian_kernel(self, kernel_size, sigma):
+        """创建2D高斯核"""
+        coords = torch.arange(kernel_size) - (kernel_size - 1) / 2
+        x, y = torch.meshgrid(coords, coords, indexing='ij')
+        kernel = torch.exp(-(x.pow(2) + y.pow(2)) / (2 * sigma ** 2))
+        return kernel / kernel.sum()
+    
+    def forward(self, x):
+        """应用高斯平滑"""
+        # 确保输入是4D张量 [B, C, H, W]
+        if len(x.shape) == 3:
+            B, H, W = x.shape
+            x = x.view(B, 1, H, W)
+        
+        # 应用高斯模糊
+        padding = self.kernel_size // 2
+        x = F.conv2d(x, self.kernel, padding=padding, groups=self.in_channels)
+        return x
+
 class TransformerDIP(nn.Module):
     def __init__(self, img_size=256, patch_size=16, stride=8, in_chans=3, 
-                 embed_dim=256, depth=12, num_heads=8, mlp_ratio=4.):
+                 embed_dim=256, depth=12, num_heads=8, mlp_ratio=4., 
+                 smoothing=True, smoothing_kernel_size=5, smoothing_sigma=1.0):
         super().__init__()
         
         self.img_size = img_size
         self.in_chans = in_chans
+        self.smoothing = smoothing
         
         # 从4x4开始
         init_size = img_size // 64  # 4x4
@@ -164,6 +198,14 @@ class TransformerDIP(nn.Module):
             for _ in range(depth)
         ])
         self.patch_merge = PatchMerging(img_size, patch_size, stride, embed_dim, in_chans)
+        
+        # 添加平滑层
+        if smoothing:
+            self.smoothing_layer = SmoothingLayer(
+                in_channels=in_chans,
+                kernel_size=smoothing_kernel_size,
+                sigma=smoothing_sigma
+            )
         
         self.apply(self._init_weights)
     
@@ -216,14 +258,42 @@ class TransformerDIP(nn.Module):
         for blk in self.transformer:
             x = blk(x)
         x = self.patch_merge(x)
+        
+        # 应用平滑层
+        if self.smoothing:
+            x = self.smoothing_layer(x)
+            
         return x
     
 
 def TIP(parameter):
-    de_para_dict = {'img_size': 256, 'patch_size': 16,'stride': 8, 'in_chans': 1, 'embed_dim': 256, 'depth': 12, 'num_heads': 8,'mlp_ratio': 4.}
+    de_para_dict = {
+        'img_size': 256, 
+        'patch_size': 16,
+        'stride': 8, 
+        'in_chans': 1, 
+        'embed_dim': 256, 
+        'depth': 12, 
+        'num_heads': 8,
+        'mlp_ratio': 4.,
+        'smoothing': True,
+        'smoothing_kernel_size': 5,
+        'smoothing_sigma': 1.0
+    }
     for key in de_para_dict.keys():
         param_now = parameter.get(key, de_para_dict.get(key))
         parameter[key] = param_now
-    return TransformerDIP(img_size=parameter['img_size'], patch_size=parameter['patch_size'], stride=parameter['stride'], in_chans=parameter['in_chans'],
-                          embed_dim=parameter['embed_dim'], depth=parameter['depth'], num_heads=parameter['num_heads'], mlp_ratio=parameter['mlp_ratio'])
+    return TransformerDIP(
+        img_size=parameter['img_size'], 
+        patch_size=parameter['patch_size'], 
+        stride=parameter['stride'], 
+        in_chans=parameter['in_chans'],
+        embed_dim=parameter['embed_dim'], 
+        depth=parameter['depth'], 
+        num_heads=parameter['num_heads'], 
+        mlp_ratio=parameter['mlp_ratio'],
+        smoothing=parameter['smoothing'],
+        smoothing_kernel_size=parameter['smoothing_kernel_size'],
+        smoothing_sigma=parameter['smoothing_sigma']
+    )
     
