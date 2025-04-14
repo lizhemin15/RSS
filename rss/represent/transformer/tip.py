@@ -154,6 +154,9 @@ class TransformerDIP(nn.Module):
         # 每个尺度的高斯模糊次数
         self.blur_times = 2
         
+        # 在初始化时完成上采样和高斯模糊的计算
+        self._compute_upsampled_noise()
+        
         # 其他层保持不变
         self.patch_embed = PatchEmbed(img_size, patch_size, stride, in_chans, embed_dim)
         self.transformer = nn.ModuleList([
@@ -184,7 +187,8 @@ class TransformerDIP(nn.Module):
             )
         return x
     
-    def forward(self,x_in, noise_scale=0.1):
+    def _compute_upsampled_noise(self):
+        """在初始化时完成上采样和高斯模糊的计算"""
         x = self.noise
         
         # 逐步上采样和多次平滑
@@ -200,8 +204,12 @@ class TransformerDIP(nn.Module):
             # 多次应用高斯模糊
             x = self.apply_gaussian_blur(x)
         
-        # 应用noise scale
-        x = x * noise_scale
+        # 存储计算结果为不可优化的参数
+        self.upsampled_noise = nn.Parameter(x, requires_grad=False)
+    
+    def forward(self, x_in, noise_scale=0.1):
+        # 直接使用预先计算好的结果，应用noise scale
+        x = self.upsampled_noise * noise_scale
         
         # 后续处理保持不变
         x = self.patch_embed(x)
