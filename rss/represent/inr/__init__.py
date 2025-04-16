@@ -5,10 +5,9 @@ from rss.represent.inr.bacon import BACONS
 from rss.represent.inr.mfn import GaborNets,FourierNets
 from rss.represent.inr.gauss import GAUSS
 from rss.represent.inr.finer import FINER
-from rss.represent.inr.hybrid_freq import HYBRID_FREQ
 
 
-__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER","HYBRID_FREQ"]
+__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER"]
 
 
 

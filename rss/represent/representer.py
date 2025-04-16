@@ -7,7 +7,7 @@ from scipy.ndimage import gaussian_filter
 import numpy as np
 
 
-from rss.represent.inr import MLP,SIREN,WIRE,BACONS,FourierNets,GaborNets,HYBRID_FREQ
+from rss.represent.inr import MLP,SIREN,WIRE,BACONS,FourierNets,GaborNets
 from rss.represent.tensor import DMF,TF
 from rss.represent.utils import reshape2
 from rss.represent.interpolation import Interpolation
@@ -74,8 +74,6 @@ def get_nn(parameter={}):
         net = GAUSS(parameter)
     elif net_name == 'FINER':
         net = FINER(parameter)
-    elif net_name == 'HYBRID_FREQ':
-        net = HYBRID_FREQ(parameter)
     else:
         raise ValueError(f'Wrong net_name = {net_name}')
     if clip_if==False:
