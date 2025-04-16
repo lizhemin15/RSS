@@ -180,16 +180,22 @@ class PositionalEncoding(nn.Module):
         else:
             # 初始化标准位置编码
             if self.log_sampling:
-                self.frequency_bands = 2.0 ** torch.linspace(
-                    0.0,
-                    self.num_encoding_functions - 1,
-                    self.num_encoding_functions
+                self.register_buffer(
+                    'frequency_bands',
+                    2.0 ** torch.linspace(
+                        0.0,
+                        self.num_encoding_functions - 1,
+                        self.num_encoding_functions
+                    )
                 )
             else:
-                self.frequency_bands = torch.linspace(
-                    2.0 ** 0.0,
-                    2.0 ** (self.num_encoding_functions - 1),
-                    self.num_encoding_functions
+                self.register_buffer(
+                    'frequency_bands',
+                    torch.linspace(
+                        2.0 ** 0.0,
+                        2.0 ** (self.num_encoding_functions - 1),
+                        self.num_encoding_functions
+                    )
                 )
 
     def forward(self, x):
@@ -199,7 +205,7 @@ class PositionalEncoding(nn.Module):
             return torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
         else:
             # 应用标准位置编码
-            x_proj = x.unsqueeze(-1) * self.frequency_bands
+            x_proj = x.unsqueeze(-1) * self.frequency_bands.to(x.device)
             return torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
 
 class FusionNet(nn.Module):
