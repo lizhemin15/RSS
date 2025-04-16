@@ -9,9 +9,11 @@ from rss.represent.inr.afn import AFN
 from rss.represent.inr.eoa import EOA
 from rss.represent.inr.apw import APW
 from rss.represent.inr.pps import PPS
+from rss.represent.inr.fqps import FQPS
+from rss.represent.inr.ffps import FFPS
 from torch import nn
 
-__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER", "AFN", "EOA", "APW", "PPS"]
+__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER", "AFN", "EOA", "APW", "PPS", "FQPS", "FFPS"]
 
 
 
