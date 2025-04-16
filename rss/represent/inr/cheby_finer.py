@@ -4,16 +4,14 @@ import numpy as np
 import math
 
 class ChebyFinerLayer(nn.Module):
-    def __init__(self, in_features, out_features, degree=5, bias=True, omega_0=30, scale_req_grad=False):
+    def __init__(self, in_features, out_features, degree=5, bias=True, omega_0=30, scale_req_grad=False, use_sin=True):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.degree = degree
         self.omega_0 = omega_0
         self.scale_req_grad = scale_req_grad
-        
-        # 线性变换
-        self.linear = nn.Linear(in_features, out_features, bias=bias)
+        self.use_sin = use_sin
         
         # 切比雪夫系数
         self.cheby_coeffs = nn.Parameter(torch.empty(out_features, in_features, degree + 1))
@@ -22,8 +20,12 @@ class ChebyFinerLayer(nn.Module):
         # 注册缓冲区
         self.register_buffer("arange", torch.arange(0, degree + 1, 1))
         
-        # 初始化权重
-        self.init_weights()
+        # 只有在使用sin激活函数时才创建线性层
+        if self.use_sin:
+            # 线性变换
+            self.linear = nn.Linear(in_features, out_features, bias=bias)
+            # 初始化权重
+            self.init_weights()
     
     def init_weights(self):
         with torch.no_grad():
@@ -52,37 +54,40 @@ class ChebyFinerLayer(nn.Module):
         return x
     
     def forward(self, input):
-        # 线性变换
-        x = self.linear(input)
-        
-        # 生成scale
-        scale = self.generate_scale(x)
-        
         # 切比雪夫变换
         cheby_x = self.chebyshev_transform(input)
         
         # 计算切比雪夫插值
         cheby_out = torch.einsum("bid,oid->bo", cheby_x, self.cheby_coeffs)
         
-        # 应用Finer激活函数
-        out = torch.sin(self.omega_0 * scale * x) + cheby_out
+        # 根据use_sin参数决定是否使用sin激活函数
+        if self.use_sin:
+            # 线性变换
+            x = self.linear(input)
+            # 生成scale
+            scale = self.generate_scale(x)
+            # 应用Finer激活函数
+            out = torch.sin(self.omega_0 * scale * x) + cheby_out
+        else:
+            # 不使用sin激活函数，只使用切比雪夫变换
+            out = cheby_out
         
         return out
 
 class ChebyFiner(nn.Module):
     def __init__(self, in_features, hidden_features, hidden_layers, out_features, 
-                 degree=5, omega_0=30, bias=True, scale_req_grad=False, asi_if=False):
+                 degree=5, omega_0=30, bias=True, scale_req_grad=False, asi_if=False, use_sin=True):
         super().__init__()
         self.net = []
         
         # 第一层
         self.net.append(ChebyFinerLayer(in_features, hidden_features, degree=degree, 
-                                       omega_0=omega_0, scale_req_grad=scale_req_grad))
+                                       omega_0=omega_0, scale_req_grad=scale_req_grad, use_sin=use_sin))
         
         # 隐藏层
         for i in range(hidden_layers):
             self.net.append(ChebyFinerLayer(hidden_features, hidden_features, degree=degree, 
-                                           omega_0=omega_0, scale_req_grad=scale_req_grad))
+                                           omega_0=omega_0, scale_req_grad=scale_req_grad, use_sin=use_sin))
         
         # 最后一层
         final_linear = nn.Linear(hidden_features, out_features)
@@ -118,7 +123,8 @@ def CHEBYFINER(parameter):
         'omega_0': 30,
         'scale_req_grad': False,
         'bias': True,
-        'asi_if': False
+        'asi_if': False,
+        'use_sin': True
     }  
     
     for key in de_para_dict.keys():
@@ -134,5 +140,6 @@ def CHEBYFINER(parameter):
         omega_0=parameter['omega_0'],
         bias=parameter['bias'], 
         scale_req_grad=parameter['scale_req_grad'],
-        asi_if=parameter['asi_if']
+        asi_if=parameter['asi_if'],
+        use_sin=parameter['use_sin']
     ) 
