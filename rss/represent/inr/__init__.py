@@ -5,10 +5,10 @@ from rss.represent.inr.bacon import BACONS
 from rss.represent.inr.mfn import GaborNets,FourierNets
 from rss.represent.inr.gauss import GAUSS
 from rss.represent.inr.finer import FINER
-from rss.represent.inr.fusion_net import FUSION_NET
+from rss.represent.inr.cheby_finer import CHEBYFINER
 
 
-__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER","FUSION_NET"]
+__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER","CHEBYFINER"]
 
 
 
