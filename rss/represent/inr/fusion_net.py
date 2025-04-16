@@ -8,8 +8,8 @@ from einops import rearrange
 class FusionLayer(nn.Module):
     def __init__(
         self,
-        in_features,
-        out_features,
+        dim_in,
+        dim_out,
         grid_size=5,
         spline_order=3,
         w0=1.0,
@@ -24,8 +24,8 @@ class FusionLayer(nn.Module):
         drop_out=False
     ):
         super().__init__()
-        self.in_features = in_features
-        self.out_features = out_features
+        self.in_features = dim_in
+        self.out_features = dim_out
         self.grid_size = grid_size
         self.spline_order = spline_order
         self.w0 = w0
@@ -46,23 +46,23 @@ class FusionLayer(nn.Module):
                 torch.arange(-spline_order, grid_size + spline_order + 1) * h
                 + grid_range[0]
             )
-            .expand(in_features, -1)
+            .expand(dim_in, -1)
             .contiguous()
         )
         self.register_buffer("grid", grid)
 
         # 初始化权重
-        self.base_weight = nn.Parameter(torch.Tensor(out_features, in_features))
+        self.base_weight = nn.Parameter(torch.Tensor(dim_out, dim_in))
         self.spline_weight = nn.Parameter(
-            torch.Tensor(out_features, in_features, grid_size + spline_order)
+            torch.Tensor(dim_out, dim_in, grid_size + spline_order)
         )
         if enable_standalone_scale_spline:
             self.spline_scaler = nn.Parameter(
-                torch.Tensor(out_features, in_features)
+                torch.Tensor(dim_out, dim_in)
             )
         
         if use_bias:
-            self.bias = nn.Parameter(torch.Tensor(out_features))
+            self.bias = nn.Parameter(torch.Tensor(dim_out))
         else:
             self.register_parameter('bias', None)
 
