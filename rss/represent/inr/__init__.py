@@ -8,9 +8,10 @@ from rss.represent.inr.finer import FINER
 from rss.represent.inr.afn import AFN
 from rss.represent.inr.eoa import EOA
 from rss.represent.inr.apw import APW
+from rss.represent.inr.pps import PPS
 from torch import nn
 
-__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER", "AFN", "EOA", "APW"]
+__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER", "AFN", "EOA", "APW", "PPS"]
 
 
 
