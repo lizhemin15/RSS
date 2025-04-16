@@ -140,8 +140,12 @@ class FusionLayer(nn.Module):
         )
 
     def forward(self, x):
-        assert x.dim() == 2 and x.size(1) == self.in_features
-
+        # 检查输入维度
+        if x.dim() != 2:
+            # 如果输入不是2维的,将其重塑为2维
+            original_shape = x.shape
+            x = x.reshape(-1, self.in_features)
+        
         # 基础变换
         base_output = F.linear(self.base_activation(x), self.base_weight, self.bias)
         
@@ -156,7 +160,11 @@ class FusionLayer(nn.Module):
         
         if self.drop_out:
             out = self.dropout(out)
-            
+        
+        # 如果输入不是2维的,将输出重塑为原始形状
+        if x.dim() != 2:
+            out = out.reshape(*original_shape[:-1], self.out_features)
+        
         return out
 
 class PositionalEncoding(nn.Module):
