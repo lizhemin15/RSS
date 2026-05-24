@@ -5,7 +5,7 @@ Using Pytorch to represent both the signal and regularization term, and then sol
 
 # How to install
 ```
-git clone https://gitee.com/lizhemin15/RSS.git
+git clone https://github.com/lizhemin15/RSS.git
 cd RSS
 pip install -r requirements.txt
 python setup.py build
