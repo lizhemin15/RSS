@@ -356,4 +356,181 @@ all_reg_name_list = [
 ]
 ```
 
+# Reproducing TIP Paper Results
+
+This repository contains the source code for the TIP paper **"INRR: Implicit Neural Representation Regularization"**. The `minim_example/` directory provides minimal reproducible scripts for image completion and denoising tasks with all regularization variants.
+
+```
+minim_example/
+├── completion/run_completion.py    # Image completion (all reg variants)
+└── denoising/run_denoising.py      # Image denoising (all reg variants)
+└── img/                            # Test images (Barbara, Baboon, etc.)
+```
+
+## Image Completion
+
+```python
+import rss
+
+size = 256
+inrr_alpha = 0.2
+nabla_matrix_order_k = 1
+lap_k = 1
+huber_delta = 0.2
+
+parameters = {
+    'net_p': {
+        'gpu_id': 0,
+        'net_name': 'composition',
+        'net_list': [{'net_name': 'SIREN', 'dim_in': 2, 'w0_initial': 30, 'dim_hidden': size}]
+    },
+    'data_p': {
+        'data_shape': (size, size), 'random_rate': 0.5, 'pre_full': True,
+        'mask_type': 'random', 'data_path': 'data/img/Barbara.jpg',
+        'data_type': 'gray_img', 'ymode': 'completion'
+    },
+    'train_p': {'train_epoch': 2000},
+    'opt_p': {
+        'net': {'opt_name': 'Adam', 'lr': 1e-3, 'weight_decay': 0},
+        'reg': {'opt_name': 'Adam', 'lr': 1e-4, 'weight_decay': 0}
+    }
+}
+
+# --- Regularization variants (uncomment one) ---
+
+# TV
+# parameters['reg_p'] = {'reg_name': 'TV', 'coef': 1e-2, 'p_norm': 1}
+
+# STV
+# parameters['reg_p'] = {'reg_name': 'STV', 'coef': 2e-2, 'p_norm': 1}
+
+# AIR (row + col)
+# parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
+#     {'reg_name': 'AIR', 'coef': 1e-3, 'n': 256, 'mode': 0},
+#     {'reg_name': 'AIR', 'coef': 1e-3, 'n': 256, 'mode': 1}]}
+
+# INRR+ (row + col, INRR with TV nabla blend)
+# parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
+#     {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 0, 'w0_initial': 1.,
+#      'lap_k': lap_k, 'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k},
+#     {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 1, 'w0_initial': 1.,
+#      'lap_k': lap_k, 'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k}]}
+
+# INRR+ with Huber (row + col) — recommended
+parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
+    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 0, 'w0_initial': 1.,
+     'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
+     'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
+     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}},
+    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 1, 'w0_initial': 1.,
+     'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
+     'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
+     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}}]}
+
+# INRR+ with logcosh (row + col)
+# parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
+#     {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 0, 'w0_initial': 1.,
+#      'lap_k': lap_k, 'lap_mode': 'logcosh', 'huber_delta': 0.3,
+#      'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k},
+#     {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 1, 'w0_initial': 1.,
+#      'lap_k': lap_k, 'lap_mode': 'logcosh', 'huber_delta': 0.3,
+#      'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k}]}
+
+# GroupReg (patch-level INRR with kmeans grouping)
+# parameters['reg_p'] = {'reg_name': 'GroupReg', 'coef': 1e-2,
+#     'group_para': {'n_clusters': 22, 'metric': 'cosine', 'reg_mode': 'single'},
+#     'each_reg_name': 'INRR', 'start_epoch': 100, 'gpu_id': 0, 'w0_initial': 1.,
+#     'x_trans': 'patch', 'stride': 13, 'patch_size': 16,
+#     'search_epoch': 100, 'filter_type': None, 'sigma': 1.0, 'lap_k': 3}
+
+rssnet = rss.rssnet(parameters, verbose=False)
+rssnet.show_p['show_content'] = 'recovered'
+for i in range(10):
+    rssnet.train(verbose=False)
+    psnr = max(rssnet.log_dict['psnr'])
+    nmae = min(rssnet.log_dict['nmae'])
+    print(f'PSNR: {psnr:.2f}, NMAE: {nmae:.4f}')
+```
+
+## Image Denoising
+
+```python
+import rss
+
+size = 256
+noise_parameter = 15  # sigma = 5, 10, 15, 20
+inrr_alpha = 0.2
+nabla_matrix_order_k = 1
+lap_k = 1
+huber_delta = 0.2
+
+parameters = {
+    'net_p': {
+        'gpu_id': 0,
+        'net_name': 'composition',
+        'net_list': [{'net_name': 'SIREN', 'dim_in': 2, 'w0_initial': 30, 'dim_hidden': size}]
+    },
+    'data_p': {
+        'data_shape': (size, size), 'random_rate': 0., 'pre_full': True,
+        'mask_type': 'random', 'data_path': 'data/img/Barbara.jpg',
+        'data_type': 'gray_img', 'ymode': 'denoising',
+        'noise_mode': 'gaussian', 'noise_parameter': noise_parameter
+    },
+    'train_p': {'train_epoch': 30000},
+    'opt_p': {
+        'net': {'opt_name': 'Adam', 'lr': 1e-3, 'weight_decay': 0},
+        'reg': {'opt_name': 'Adam', 'lr': 1e-4, 'weight_decay': 0}
+    }
+}
+
+# Same regularization variants as completion (see above)
+# INRR+ with Huber (row + col) — recommended
+parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
+    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 0, 'w0_initial': 1.,
+     'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
+     'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
+     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}},
+    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 1, 'w0_initial': 1.,
+     'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
+     'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
+     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}}]}
+
+rssnet = rss.rssnet(parameters, verbose=False)
+rssnet.train(verbose=False)
+psnr = max(rssnet.log_dict['psnr'])
+print(f'PSNR: {psnr:.2f} dB')
+```
+
+## Using FRINR with INRR
+
+FRINR can be used as a drop-in replacement for SIREN. Simply change the `net_list` parameter:
+
+```python
+# ReLU + Fourier reparameterization (recommended)
+net_list = [{'net_name': 'FRINR', 'mode': 'relu+fr', 'dim_in': 2,
+             'dim_hidden': 256, 'dim_out': 1, 'num_layers': 4,
+             'high_freq_num': 128, 'low_freq_num': 128, 'phi_num': 32, 'alpha': 0.05}]
+
+# SIREN + Fourier reparameterization
+net_list = [{'net_name': 'FRINR', 'mode': 'sin+fr', 'dim_in': 2,
+             'dim_hidden': 256, 'dim_out': 1, 'num_layers': 4,
+             'high_freq_num': 128, 'low_freq_num': 128, 'phi_num': 32,
+             'alpha': 0.01, 'first_omega_0': 30.0, 'hidden_omega_0': 30.0}]
+
+# Low-frequency bases only (stronger implicit smoothing)
+net_list = [{'net_name': 'FRINR', 'mode': 'relu+fr', 'dim_in': 2,
+             'dim_hidden': 256, 'dim_out': 1, 'num_layers': 4,
+             'high_freq_num': 0, 'low_freq_num': 128, 'phi_num': 32, 'alpha': 0.05}]
+```
+
+## Available INRR Laplacian Modes
+
+| lap_mode | Description | Key Parameter |
+|----------|-------------|---------------|
+| `nuclear` (default) | Nuclear norm | — |
+| `Huber` | Huber norm | `huber_delta` (default 0.2) |
+| `logcosh` | LogCosh norm | `huber_delta` (default 0.3) |
+| `quantile` | Quantile norm | `quantile_q` (default 0.5) |
+| `lp` | Lp norm | `norm_lap_lp` (default 2) |
+
 
