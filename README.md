@@ -266,15 +266,79 @@ if __name__ == '__main__':
 ## Get a representation and apply it to your own applications
 ```python
 from rss import get_nn
-net = get_nn({'net_name':'SIREN'，'dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'w0':1,'w0_initial':30.,'use_bias':True, 'final_activation':None, 'asi_if':False}) # 
+net = get_nn({'net_name':'SIREN','dim_in':2,'dim_hidden':100,'dim_out':1,'num_layers':4,'w0':1,'w0_initial':30.,'use_bias':True, 'final_activation':None, 'asi_if':False}) # 
 
 all_net_name_list = [
     'composition', 'MLP', 'SIREN', 'WIRE', 'BACON', 'FourierNet', 'GaborNet', 
     'DMF', 'TF', 'Interpolation', 'UNet', 'ResNet', 'skip', 'KNN', 'TDKNN', 
     'FourierFeature', 'HashEmbedder', 'EFF_KAN', 'KAN', 'ChebyKAN', 'FastKAN', 
     'RecurrentINR', 'HashINR', 'DINER', 'SIMINER', 'FFINR', 'KATE', 'TIP', 
-    'GAUSS', 'FINER', 'CHEBYFINER'
+    'GAUSS', 'FINER', 'CHEBYFINER', 'FRINR'
 ]
+```
+
+### FRINR: Fourier Reparameterized INR
+
+FRINR replaces standard linear layers with Fourier-reparameterized layers, where the weight matrix is decomposed as `W = lambda @ B` (`B` = fixed Fourier bases, `lambda` = learnable coefficients). This provides implicit spectral bias control.
+
+**Four modes:**
+- `'relu'`: Standard ReLU network (baseline)
+- `'relu+fr'`: ReLU + Fourier reparameterized hidden layers
+- `'sin'`: SIREN network (baseline)
+- `'sin+fr'`: SIREN + Fourier reparameterized hidden layers
+
+```python
+from rss import get_nn
+
+# ReLU + Fourier reparameterization (recommended for image tasks)
+net = get_nn({
+    'net_name': 'FRINR',
+    'mode': 'relu+fr',
+    'dim_in': 2,
+    'dim_hidden': 256,
+    'dim_out': 1,
+    'num_layers': 4,
+    'high_freq_num': 128,    # number of high-frequency bases
+    'low_freq_num': 128,     # number of low-frequency bases
+    'phi_num': 32,           # phase shifts per frequency
+    'alpha': 0.05            # basis scaling (0.05 for relu, 0.01 for sin)
+})
+
+# SIREN + Fourier reparameterization
+net = get_nn({
+    'net_name': 'FRINR',
+    'mode': 'sin+fr',
+    'dim_in': 2,
+    'dim_hidden': 256,
+    'dim_out': 1,
+    'num_layers': 4,
+    'high_freq_num': 128,
+    'low_freq_num': 128,
+    'phi_num': 32,
+    'alpha': 0.01,           # smaller alpha for sin mode
+    'first_omega_0': 30.0,   # omega for first layer
+    'hidden_omega_0': 30.0   # omega for hidden layers
+})
+
+# Use in image completion task
+result = rss.task.run(
+    'completion',
+    data_path='data/img/example.jpg',
+    net_p={
+        'net_name': 'FRINR',
+        'mode': 'relu+fr',
+        'dim_in': 2,
+        'dim_hidden': 256,
+        'dim_out': 1,
+        'num_layers': 4,
+        'high_freq_num': 128,
+        'low_freq_num': 128,
+        'phi_num': 32,
+        'alpha': 0.05
+    },
+    data_p={'random_rate': 0.7},
+    train_p={'train_epoch': 100}
+)
 ```
 
 

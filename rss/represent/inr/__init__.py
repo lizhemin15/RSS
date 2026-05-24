@@ -6,9 +6,10 @@ from rss.represent.inr.mfn import GaborNets,FourierNets
 from rss.represent.inr.gauss import GAUSS
 from rss.represent.inr.finer import FINER
 from rss.represent.inr.cheby_finer import CHEBYFINER
+from rss.represent.inr.fr_inr import FRINR
 
 
-__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER","CHEBYFINER"]
+__all__ = ["MLP","SIREN","WIRE","BACONS","GaborNets","FourierNets","GAUSS","FINER","CHEBYFINER","FRINR"]
 
 
 
