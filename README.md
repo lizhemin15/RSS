@@ -374,7 +374,7 @@ import rss
 
 size = 256
 inrr_alpha = 0.2
-nabla_matrix_order_k = 1
+nabla_matrix_order_k = 2  # k for INRR+ (Table III default)
 lap_k = 1
 huber_delta = 0.2
 
@@ -418,14 +418,14 @@ parameters = {
 
 # INRR+ with Huber (row + col) — recommended
 parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
-    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 0, 'w0_initial': 1.,
+    {'reg_name': 'INRR', 'coef': 1e-3, 'n': size, 'mode': 0, 'w0_initial': 1.,
      'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
      'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
-     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}},
-    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 1, 'w0_initial': 1.,
+     'inr_parameter': {'dim_in': 1, 'dim_out': 32, 'num_layers': 5, 'w0_initial': 2.}},
+    {'reg_name': 'INRR', 'coef': 1e-3, 'n': size, 'mode': 1, 'w0_initial': 1.,
      'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
      'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
-     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}}]}
+     'inr_parameter': {'dim_in': 1, 'dim_out': 32, 'num_layers': 5, 'w0_initial': 2.}}]}
 
 # INRR+ with logcosh (row + col)
 # parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
@@ -486,14 +486,14 @@ parameters = {
 # Same regularization variants as completion (see above)
 # INRR+ with Huber (row + col) — recommended
 parameters['reg_p'] = {'reg_name': 'MultiReg', 'reg_list': [
-    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 0, 'w0_initial': 1.,
+    {'reg_name': 'INRR', 'coef': 1e-3, 'n': size, 'mode': 0, 'w0_initial': 1.,
      'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
      'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
-     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}},
-    {'reg_name': 'INRR', 'coef': 1e-2, 'n': size, 'mode': 1, 'w0_initial': 1.,
+     'inr_parameter': {'dim_in': 1, 'dim_out': 32, 'num_layers': 5, 'w0_initial': 2.}},
+    {'reg_name': 'INRR', 'coef': 1e-3, 'n': size, 'mode': 1, 'w0_initial': 1.,
      'lap_k': lap_k, 'lap_mode': 'Huber', 'huber_delta': huber_delta,
      'inrr_alpha': inrr_alpha, 'nabla_matrix_order_k': nabla_matrix_order_k,
-     'inr_parameter': {'dim_in': 1, 'dim_out': 100, 'w0_initial': 20.}}]}
+     'inr_parameter': {'dim_in': 1, 'dim_out': 32, 'num_layers': 5, 'w0_initial': 2.}}]}
 
 rssnet = rss.rssnet(parameters, verbose=False)
 rssnet.train(verbose=False)
